@@ -1,0 +1,13 @@
+﻿title: "Tangyixiao GitHub Pages"
+description: "我的个人主页"
+
+# 排除 OI-wiki 目录，避免 Jekyll 处理
+exclude:
+  - OI-wiki/
+  - OI-wiki/**/*
+
+# 使用简单主题
+theme: jekyll-theme-minimal
+
+# 禁用未来文章
+future: false

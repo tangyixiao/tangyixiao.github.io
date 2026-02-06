@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>洛少与交互题：题目拟人化GalGame</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #0a0a1a;
+            color: #e0e0ff;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+        
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: linear-gradient(to bottom, #0a0a1a 0%, #1a1a3a 100%);
+        }
+        
+        /* 标题界面 */
+        .title-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(rgba(10, 10, 26, 0.9), rgba(26, 26, 58, 0.9)), url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MCA1MCI+PHBhdGggZmlsbD0iIzFlMWUzZSIgZD0iTTAgMGg1MHY1MEgweiIvPjxwYXRoIGZpbGw9IiMyNzJjNGEiIGQ9Ik0wIDI1aDUwTDI1IDB6Ii8+PHBhdGggZmlsbD0iIzMxMzQ1MSIgZD0iTTAgMjVoNTBMMjUgNTB6Ii8+PC9zdmc+');
+            z-index: 100;
+            transition: opacity 1s ease;
+        }
+        
+        .game-title {
+            font-size: 4.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #6a5af9, #d66efd, #6a5af9);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 20px rgba(106, 90, 249, 0.3);
+            letter-spacing: 2px;
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 3rem;
+            color: #a0a0ff;
+        }
+        
+        .menu-button {
+            background: rgba(106, 90, 249, 0.2);
+            border: 2px solid #6a5af9;
+            color: #d0d0ff;
+            font-size: 1.5rem;
+            padding: 1rem 2.5rem;
+            margin: 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 300px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        
+        .menu-button:hover {
+            background: rgba(106, 90, 249, 0.4);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(106, 90, 249, 0.3);
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        /* 游戏主界面 */
+        .game-ui {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        /* 背景层 */
+        .background-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            transition: opacity 1s ease;
+        }
+        
+        .bg-classroom {
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAwIDgwMCI+PHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iODAwIiBmaWxsPSIjMWExYjNjIi8+PHJlY3QgeD0iNTAiIHk9IjUwIiB3aWR0aD0iMTEwMCIgaGVpZ2h0PSI3MDAiIGZpbGw9IiMyNzJjNGEiIHJ4PSIyMCIvPjxwYXRoIGQ9Ik0gMjAwIDIwMCBMIDIwMCA1MDAgTCA0MDAgNTAwIEwgNDAwIDIwMCBaIiBmaWxsPSIjMzEzNDUxIi8+PHBhdGggZD0iTSA4MDAgMjAwIEwgODAwIDUwMCBMIDEwMDAgNTAwIEwgMTAwMCAyMDAgWiIgZmlsbD0iIzMxMzQ1MSIvPjxwYXRoIGQ9Ik0gNTAgNTUwIEwgMTE1MCA1NTAgTCAxMDUwIDcwMCBMIDE1MCA3MDAgWiIgZmlsbD0iIzFlMWUzZSIvPjwvc3ZnPg==');
+        }
+        
+        .bg-coding {
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAwIDgwMCI+PHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iODAwIiBmaWxsPSIjMDAwMDAwIi8+PHJlY3QgeD0iMTAwIiB5PSIxMDAiIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iIzAwMTAyMCIvPjxwYXRoIGQ9Ik0gMTUwIDE1MCBMIDExNTAgMTUwIEwgMTE1MCAyMDAgTCAxNTAgMjAwIFoiIGZpbGw9IiMwMGZmMDAiIGZpbGwtb3BhY2l0eT0iMC4xIi8+PHBhdGggZD0iTSAxNTAgMjUwIEwgMTE1MCAyNTAgTCAxMTUwIDMwMCBMIDE1MCAzMDAgWiIgZmlsbD0iIzAwZmYwMCIgZmlsbC1vcGFjaXR5PSIwLjEiLz48cGF0aCBkPSJNIDE1MCAzNTAgTCAxMTUwIDM1MCBMIDExNTAgNDAwIEwgMTUwIDQwMCBaIiBmaWxsPSIjMDBmZjAwIiBmaWxsLW9wYWNpdHk9IjAuMSIvPjxjaXJjbGUgY3g9IjMwMCIgY3k9IjIwMCIgcj0iMTAiIGZpbGw9IiMwMGZmMDAiLz48Y2lyY2xlIGN4PSIzMDAiIGN5PSIzMDAiIHI9IjEwIiBmaWxsPSIjMDBmZjAwIi8+PGNpcmNsZSBjeD0iMzAwIiBjeT0iNDAwIiByPSIxMCIgZmlsbD0iIzAwZmYwMCIvPjwvc3ZnPg==');
+        }
+        
+        .bg-romantic {
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAwIDgwMCI+PHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iODAwIiBmaWxsPSIjMTExOTJhIi8+PHBhdGggZD0iTSAwIDQwMCBDIDIwMCAyMDAgNDAwIDYwMCA2MDAgNDAwIEMgODAwIDIwMCAxMDAwIDYwMCAxMjAwIDQwMCBMIDEyMDAgODAwIEwgMCA4MDAgWiIgZmlsbD0iIzJhMmQzZSIvPjxjaXJjbGUgY3g9IjMwMCIgY3k9IjMwMCIgcj0iODAiIGZpbGw9IiNmZjQ0NzciIGZpbGwtb3BhY2l0eT0iMC42Ii8+PGNpcmNsZSBjeD0iOTAwIiBjeT0iMzUwIiByPSI3MCIgZmlsbD0iI2ZmNDQ3NyIgZmlsbC1vcGFjaXR5PSIwLjYiLz48cGF0aCBkPSJNIDUwMCA1MDAgQyA2MDAgNDAwIDgwMCA2MDAgOTAwIDUwMCIgc3Ryb2tlPSIjZmY0NDc3IiBzdHJva2Utd2lkdGg9IjEwIiBzdHJva2Utb3BhY2l0eT0iMC40IiBmaWxsPSJub25lIi8+PC9zdmc+');
+        }
+        
+        /* 角色立绘层 */
+        .character-container {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 85%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 10;
+        }
+        
+        .character {
+            height: 95%;
+            margin: 0 20px;
+            opacity: 0;
+            transition: opacity 0.8s ease, transform 0.5s ease;
+            transform: translateY(20px);
+        }
+        
+        .character.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .character-left {
+            transform: translateX(-30px);
+        }
+        
+        .character-right {
+            transform: translateX(30px);
+        }
+        
+        /* 对话框 */
+        .dialog-container {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 35%;
+            background: rgba(10, 10, 26, 0.85);
+            border-top: 3px solid #6a5af9;
+            padding: 2rem;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .character-name {
+            font-size: 1.8rem;
+            color: #6a5af9;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        
+        .dialog-text {
+            font-size: 1.4rem;
+            line-height: 1.6;
+            height: 70%;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .dialog-text::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .dialog-text::-webkit-scrollbar-thumb {
+            background-color: #6a5af9;
+            border-radius: 3px;
+        }
+        
+        .continue-prompt {
+            text-align: center;
+            margin-top: 1rem;
+            color: #a0a0ff;
+            font-size: 1.2rem;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        
+        /* 选项容器 */
+        .choices-container {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 26, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 30;
+            padding: 2rem;
+        }
+        
+        .choice {
+            background: rgba(106, 90, 249, 0.15);
+            border: 2px solid #6a5af9;
+            color: #d0d0ff;
+            font-size: 1.4rem;
+            padding: 1.2rem 2rem;
+            margin: 0.8rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 80%;
+            max-width: 700px;
+            text-align: center;
+        }
+        
+        .choice:hover {
+            background: rgba(106, 90, 249, 0.4);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(106, 90, 249, 0.3);
+        }
+        
+        /* 状态栏 */
+        .status-bar {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: rgba(10, 10, 26, 0.7);
+            z-index: 25;
+            border-bottom: 1px solid #333366;
+        }
+        
+        .chapter-title {
+            font-size: 1.5rem;
+            color: #a0a0ff;
+            font-weight: 600;
+        }
+        
+        .relationship-info {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .relationship-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #d0d0ff;
+            font-size: 1.1rem;
+        }
+        
+        .relationship-icon {
+            color: #6a5af9;
+            font-size: 1.3rem;
+        }
+        
+        /* 角色图鉴按钮 */
+        .character-gallery-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(106, 90, 249, 0.2);
+            border: 2px solid #6a5af9;
+            color: #d0d0ff;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 40;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .character-gallery-btn:hover {
+            background: rgba(106, 90, 249, 0.4);
+            transform: scale(1.1);
+        }
+        
+        /* 角色图鉴界面 */
+        .gallery-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 26, 0.95);
+            z-index: 50;
+            padding: 2rem;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .gallery-title {
+            font-size: 2.5rem;
+            color: #6a5af9;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .character-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .character-card {
+            background: rgba(26, 26, 58, 0.8);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid #333366;
+            transition: all 0.3s ease;
+        }
+        
+        .character-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(106, 90, 249, 0.2);
+        }
+        
+        .character-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .character-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #6a5af9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8rem;
+            margin-right: 1rem;
+            color: white;
+        }
+        
+        .character-card-name {
+            font-size: 1.8rem;
+            color: #d0d0ff;
+            font-weight: 600;
+        }
+        
+        .character-card-desc {
+            color: #a0a0ff;
+            line-height: 1.5;
+            font-size: 1.1rem;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 3rem;
+            }
+            
+            .menu-button {
+                width: 250px;
+                font-size: 1.3rem;
+            }
+            
+            .dialog-text {
+                font-size: 1.2rem;
+            }
+            
+            .character-name {
+                font-size: 1.5rem;
+            }
+            
+            .character-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- 标题界面 -->
+        <div class="title-screen" id="titleScreen">
+            <h1 class="game-title">洛少与交互题</h1>
+            <p class="subtitle">题目拟人化视觉小说</p>
+            <div class="menu-button" id="startButton">开始游戏</div>
+            <div class="menu-button" id="continueButton">继续游戏</div>
+            <div class="menu-button" id="galleryButton">角色图鉴</div>
+        </div>
+        
+        <!-- 游戏主界面 -->
+        <div class="game-ui hidden" id="gameUI">
+            <!-- 状态栏 -->
+            <div class="status-bar">
+                <div class="chapter-title" id="chapterTitle">第一章：初见交互题</div>
+                <div class="relationship-info">
+                    <div class="relationship-item">
+                        <i class="fas fa-heart relationship-icon"></i>
+                        <span>交互题: <span id="interactiveScore">50</span></span>
+                    </div>
+                    <div class="relationship-item">
+                        <i class="fas fa-code relationship-icon"></i>
+                        <span>通信题: <span id="communicationScore">30</span></span>
+                    </div>
+                    <div class="relationship-item">
+                        <i class="fas fa-book relationship-icon"></i>
+                        <span>传统题: <span id="traditionalScore">20</span></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 角色图鉴按钮 -->
+            <div class="character-gallery-btn" id="galleryBtn">
+                <i class="fas fa-users"></i>
+            </div>
+            
+            <!-- 背景层 -->
+            <div class="background-layer bg-classroom" id="background"></div>
+            
+            <!-- 角色立绘层 -->
+            <div class="character-container" id="characterContainer">
+                <!-- 角色立绘将通过JS动态添加 -->
+            </div>
+            
+            <!-- 对话框 -->
+            <div class="dialog-container" id="dialogContainer">
+                <div class="character-name" id="characterName">系统</div>
+                <div class="dialog-text" id="dialogText">
+                    欢迎来到「洛少与交互题」的世界。在这里，题目被拟人化，而你将扮演洛少，一个热爱OI的普通高中生，与这些特殊的"题目"展开一段段奇妙的邂逅...
+                </div>
+                <div class="continue-prompt" id="continuePrompt">点击继续</div>
+            </div>
+        </div>
+        
+        <!-- 选项容器 -->
+        <div class="choices-container hidden" id="choicesContainer">
+            <!-- 选项将通过JS动态添加 -->
+        </div>
+        
+        <!-- 角色图鉴界面 -->
+        <div class="gallery-screen hidden" id="galleryScreen">
+            <h2 class="gallery-title">角色图鉴</h2>
+            <div class="character-cards" id="characterCards">
+                <!-- 角色卡片将通过JS动态添加 -->
+            </div>
+            <div style="text-align: center; margin-top: 2rem;">
+                <div class="choice" id="backToGameBtn">返回游戏</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏数据
+        const gameData = {
+            currentScene: 0,
+            relationship: {
+                interactive: 50,
+                communication: 30,
+                traditional: 20,
+                spj: 10
+            },
+            currentBackground: 'bg-classroom',
+            currentCharacters: [],
+            sceneHistory: []
+        };
+
+        // 角色数据
+        const characters = {
+            luoshao: {
+                id: 'luoshao',
+                name: '洛少',
+                color: '#6a5af9',
+                description: '本文主人公，OI天赋极高，性格外向专一，有文采。在与题目的相处中逐渐发现自己的情感。'
+            },
+            interactive: {
+                id: 'interactive',
+                name: '交互题',
+                color: '#ff6b8b',
+                description: '洛少的白月光，活泼热情，聊天时有来有回。在洛少眼中，它是最特别的题目类型。'
+            },
+            communication: {
+                id: 'communication',
+                name: '通信题',
+                color: '#4ecdc4',
+                description: '洛少的第二个最喜欢的题目，古灵精怪，总能用意想不到的方式与洛少交流。'
+            },
+            traditional: {
+                id: 'traditional',
+                name: '传统题',
+                color: '#ffd166',
+                description: '洛少接触最多的题目，由于接触次数太多，爱意已经消散了大半。性格高冷强势。'
+            },
+            spj: {
+                id: 'spj',
+                name: 'SPJ',
+                color: '#06d6a0',
+                description: '洛少挺喜欢的一种题目。人很好，就算你说一大堆话，但只要你的话与它想要你说的话的字完全相同，就会给你一个赞。'
+            },
+            td: {
+                id: 'td',
+                name: 'td',
+                color: '#a0a0ff',
+                description: '洛少的严师，严厉死板，总是给洛少布置大量题目，但内心其实很关心洛少的成长。'
+            },
+            g0: {
+                id: 'g0',
+                name: 'g0',
+                color: '#d66efd',
+                description: '交互题的青梅竹马，性格羞怯、生涩、恬静，常常默默关注着洛少与交互题的互动。'
+            }
+        };
+
+        // 游戏场景数据
+        const scenes = [
+            {
+                id: 0,
+                background: 'bg-classroom',
+                characters: [
+                    { id: 'luoshao', position: 'left', active: true },
+                    { id: 'td', position: 'right', active: true }
+                ],
+                dialog: [
+                    { character: '系统', text: '这是洛少在OI学习中的普通一天...' },
+                    { character: 'td', text: '洛少，今天的训练题已经准备好了。三道传统题，一道交互题，还有一道通信题。' },
+                    { character: '洛少', text: '又是这么多题啊...传统题我已经做腻了，交互题和通信题还有点意思。' },
+                    { character: 'td', text: '不要挑食！每类题目都有其价值。传统题能巩固基础，交互题锻炼思维能力...' },
+                    { character: '洛少', text: '知道了知道了...我先从交互题开始吧，它总是能给我惊喜。' }
+                ]
+            },
+            {
+                id: 1,
+                background: 'bg-coding',
+                characters: [
+                    { id: 'luoshao', position: 'left', active: true },
+                    { id: 'interactive', position: 'right', active: true }
+                ],
+                dialog: [
+                    { character: '交互题', text: '嗨，洛少，今天我们又见面了！今天要和我交互什么呢？' },
+                    { character: '洛少', text: '你今天心情看起来不错啊。让我看看你的题目描述...' },
+                    { character: '交互题', text: '当然啦！每次和你交互都很有趣呢！今天我们来玩猜数字游戏吧，我已经想好了一个1到100之间的数字。' },
+                    { character: '洛少', text: '好啊，不过你可得给我足够的查询次数。' },
+                    { character: '交互题', text: '放心啦，我给你30次查询机会，怎么样，够大方吧？' },
+                    { character: '洛少', text: '交互题，你总是这么善解人意。传统题就从来不会给我这么多机会。' },
+                    { character: '交互题', text: '因为我们是交互题啊！有来有回才是交互嘛！' }
+                ],
+                choices: [
+                    { text: '直接开始猜数字游戏', nextScene: 2, effect: { interactive: 5 } },
+                    { text: '先和交互题聊聊天', nextScene: 3, effect: { interactive: 10 } }
+                ]
+            },
+            {
+                id: 2,
+                background: 'bg-coding',
+                characters: [
+                    { id: 'luoshao', position: 'left', active: true },
+                    { id: 'interactive', position: 'right', active: true }
+                ],
+                dialog: [
+                    { character: '洛少', text: '那我们开始吧！我猜是50。' },
+                    { character: '交互题', text: '太小了哦！' },
+                    { character: '洛少', text: '75呢？' },
+                    { character: '交互题', text: '还是小了！' },
+                    { character: '洛少', text: '87？' },
+                    { character: '交互题', text: '这次大了！' },
+                    { character: '洛少', text: '81！' },
+                    { character: '交互题', text: '恭喜你，猜对了！只用了4次查询，真厉害！' },
+                    { character: '洛少', text: '嘿嘿，二分法的基本应用而已。' },
+                    { character: '交互题', text: '不过你知道吗？我其实很高兴你能这么快猜出来，这说明你很了解我呢！' }
+                ],
+                nextScene: 4
+            },
+            {
+                id: 3,
+                background: 'bg-coding',
+                characters: [
+                    { id: 'luoshao', position: 'left', active: true },
+                    { id: 'interactive', position: 'right', active: true }
+                ],
+                dialog: [
+                    { character: '洛少', text: '猜数字之前，我想问问你，作为交互题，你最喜欢什么样的选手？' },
+                    { character: '交互题', text: '哇，这个问题好有意思！我最喜欢能和我好好交流的选手。' },
+                    { character: '交互题', text: '有些选手完全不理我的提示，自顾自地乱猜；有些则能认真分析我的反馈，一步步接近答案。' },
+                    { character: '洛少', text: '那我属于哪种呢？' },
+                    { character: '交互题', text: '你当然是第二种啦！而且...而且我觉得和你交互特别开心。' },
+                    { character: '洛少', text: '真的吗？我也觉得和你交互比其他题目有趣多了。' },
+                    { character: '交互题', text: '(*/ω＼*) 好啦，我们开始猜数字吧！' }
+                ],
+                nextScene: 2
+            },
+            {
+                id: 4,
+                background: 'bg-classroom',
+                characters: [
+                    { id: 'luoshao', position: 'left', active: true },
+                    { id: 'communication', position: 'right', active: true }
+                ],
+                dialog: [
+                    { character: '系统', text: '第二天，洛少遇到了通信题...' },
+                    { character: '通信题', text: '你好呀洛少！今天轮到我和你玩耍了！' },
+                    { character: '洛少', text: '通信题？你今天准备怎么玩？' },
+                    { character: '通信题', text: '我们今天来玩编码解码游戏吧！我会发送一些加密的信息给你，你需要解码它们。' },
+                    { character: '洛少', text: '听起来比传统题有趣多了。传统题总是冷冰冰的，给个输入就要输出。' },
+                    { character: '通信题', text: '嘻嘻，我可是古灵精怪的通信题呢！准备好了吗？我要开始发送数据了！' }
+                ],
+                choices: [
+                    { text: '认真解码通信题的信息', nextScene: 5, effect: { communication: 10 } },
+                    { text: '一边解码一边和通信题聊天', nextScene: 6, effect: { communication: 15 } }
+                ]
+            },
+            {
+                id: 5,
+                background: 'bg-coding',
+                characters: [
+                    { id: 'luoshao', position: 'left', active: true },
+                    { id: 'communication', position: 'right', active: true }
+                ],
+                dialog: [
+                    { character: '通信题', text: '第一组数据：01001000 01100101 01101100 01101100 01101111' },
+                    { character: '洛少', text: '这是二进制...转换过来是"Hello"！' },
+                    { character: '通信题', text: '正确！第二组：BASE64编码的"SSBsb3ZlIEPDvG1tdW5pY2F0aW9u"（提示：与OI相关）' },
+                    { character: '洛少', text: '解码后是... "I love Communication"！通信题，你这是...' },
+                    { character: '通信题', text: '被发现了！(*/ω＼*) 我只是表达一下对你的喜爱嘛！' },
+                    { character: '洛少', text: '你这样...我会不好意思的。' }
+                ],
+                nextScene: 7
+            },
+            {
+                id: 6,
+                background: 'bg-coding',
+                characters: [
+                    { id: 'luoshao', position: 'left', active: true },
+                    { id: 'communication', position: 'right', active: true }
+                ],
+                dialog: [
+                    { character: '洛少', text: '通信题，你为什么总是用这种加密的方式和人交流呢？' },
+                    { character: '通信题', text: '因为这样很有趣呀！而且...只有真正懂我的人才能理解我的信息。' },
+                    { character: '通信题', text: '传统题总是直来直去的，多没意思。交互题虽然也有交流，但还是太规范了。' },
+                    { character: '洛少', text: '所以你更喜欢这种神秘的方式？' },
+                    { character: '通信题', text: '对呀！而且...我觉得你每次都能懂我的意思，这让我很开心。' },
+                    { character: '通信题', text: '好了，继续解码吧：第三组数据是莫尔斯电码".-.. --- ... .... .- ---"（提示：你的名字）' },
+                    { character: '洛少', text: '这...这是"洛少"！通信题，你...' }
+                ],
+                nextScene: 7
+            },
+            {
+                id: 7,
+                background: 'bg-romantic',
+                characters: [
+                    { id: 'luoshao', position: 'left', active: true },
+                    { id: 'interactive', position: 'right', active: true },
+                    { id: 'communication', position: 'center', active: true }
+                ],
+                dialog: [
+                    { character: '系统', text: '一周后，洛少同时遇到了交互题和通信题...' },
+                    { character: '交互题', text: '洛少，今天是我先和你约好的！' },
+                    { character: '通信题', text: '但是洛少昨天答应今天要和我玩的！' },
+                    { character: '洛少', text: '等等，你们两个别吵...' },
+                    { character: '交互题', text: '洛少，你说，你更喜欢和谁一起？' },
+                    { character: '通信题', text: '对！今天必须说清楚！' }
+                ],
+                choices: [
+                    { text: '选择交互题', nextScene: 8, effect: { interactive: 20, communication: -10 } },
+                    { text: '选择通信题', nextScene: 9, effect: { communication: 20, interactive: -10 } },
+                    { text: '两个都要', nextScene: 10, effect: { interactive: 10, communication: 10 } }
+                ]
+            }
+        ];
+
+        // DOM元素
+        const titleScreen = document.getElementById('titleScreen');
+        const gameUI = document.getElementById('gameUI');
+        const startButton = document.getElementById('startButton');
+        const continueButton = document.getElementById('continueButton');
+        const galleryButton = document.getElementById('galleryButton');
+        const galleryBtn = document.getElementById('galleryBtn');
+        const galleryScreen = document.getElementById('galleryScreen');
+        const backToGameBtn = document.getElementById('backToGameBtn');
+        const background = document.getElementById('background');
+        const characterContainer = document.getElementById('characterContainer');
+        const characterName = document.getElementById('characterName');
+        const dialogText = document.getElementById('dialogText');
+        const continuePrompt = document.getElementById('continuePrompt');
+        const dialogContainer = document.getElementById('dialogContainer');
+        const choicesContainer = document.getElementById('choicesContainer');
+        const chapterTitle = document.getElementById('chapterTitle');
+        const interactiveScore = document.getElementById('interactiveScore');
+        const communicationScore = document.getElementById('communicationScore');
+        const traditionalScore = document.getElementById('traditionalScore');
+        const characterCards = document.getElementById('characterCards');
+
+        // 游戏状态
+        let currentDialogIndex = 0;
+        let currentScene = scenes[0];
+        let isTyping = false;
+        let currentText = '';
+        let typingSpeed = 30; // 打字速度（毫秒）
+
+        // 初始化游戏
+        function initGame() {
+            // 更新关系分数显示
+            updateRelationshipScores();
+            
+            // 生成角色图鉴
+            generateCharacterCards();
+            
+            // 加载初始场景
+            loadScene(0);
+        }
+
+        // 加载场景
+        function loadScene(sceneId) {
+            const scene = scenes.find(s => s.id === sceneId);
+            if (!scene) return;
+            
+            currentScene = scene;
+            currentDialogIndex = 0;
+            gameData.currentScene = sceneId;
+            gameData.sceneHistory.push(sceneId);
+            
+            // 更新章节标题
+            chapterTitle.textContent = `第${Math.floor(sceneId / 3) + 1}章：场景${sceneId % 3 + 1}`;
+            
+            // 更新背景
+            background.className = `background-layer ${scene.background}`;
+            
+            // 清空角色容器
+            characterContainer.innerHTML = '';
+            
+            // 添加角色
+            scene.characters.forEach(char => {
+                const characterDiv = document.createElement('div');
+                characterDiv.id = `char-${char.id}`;
+                characterDiv.className = `character ${char.position === 'left' ? 'character-left' : char.position === 'right' ? 'character-right' : ''} ${char.active ? 'active' : ''}`;
+                
+                // 创建角色内容
+                characterDiv.innerHTML = `
+                    <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;">
+                        <div style="width: 300px; height: 90%; background: ${characters[char.id].color}22; border-radius: 20px 20px 0 0; display: flex; justify-content: center; align-items: flex-end;">
+                            <div style="font-size: 8rem; color: ${characters[char.id].color}; opacity: 0.7;">${getCharacterIcon(char.id)}</div>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 10px; margin-top: 10px; font-size: 1.5rem; font-weight: bold;">
+                            ${characters[char.id].name}
+                        </div>
+                    </div>
+                `;
+                
+                characterContainer.appendChild(characterDiv);
+            });
+            
+            // 显示对话框
+            showDialog();
+            
+            // 如果有选项，在对话框结束后显示
+            if (scene.choices) {
+                setTimeout(() => {
+                    continuePrompt.textContent = "请做出选择...";
+                }, 500);
+            }
+        }
+
+        // 获取角色图标
+        function getCharacterIcon(characterId) {
+            const icons = {
+                luoshao: '洛',
+                interactive: '互',
+                communication: '信',
+                traditional: '传',
+                spj: 'S',
+                td: 'T',
+                g0: 'G'
+            };
+            return icons[characterId] || '?';
+        }
+
+        // 显示对话框
+        function showDialog() {
+            if (currentDialogIndex >= currentScene.dialog.length) {
+                // 对话结束，显示选项或进入下一场景
+                if (currentScene.choices) {
+                    showChoices();
+                } else if (currentScene.nextScene !== undefined) {
+                    setTimeout(() => {
+                        loadScene(currentScene.nextScene);
+                    }, 1000);
+                }
+                return;
+            }
+            
+            const dialog = currentScene.dialog[currentDialogIndex];
+            characterName.textContent = dialog.character;
+            characterName.style.color = getCharacterColor(dialog.character);
+            
+            // 打字机效果
+            typeText(dialog.text);
+            
+            // 更新角色激活状态
+            updateActiveCharacter(dialog.character);
+        }
+
+        // 获取角色颜色
+        function getCharacterColor(characterName) {
+            for (const id in characters) {
+                if (characters[id].name === characterName) {
+                    return characters[id].color;
+                }
+            }
+            return '#6a5af9'; // 默认颜色
+        }
+
+        // 更新激活的角色
+        function updateActiveCharacter(characterName) {
+            // 重置所有角色
+            document.querySelectorAll('.character').forEach(char => {
+                char.classList.remove('active');
+            });
+            
+            // 找到对应的角色并激活
+            for (const id in characters) {
+                if (characters[id].name === characterName) {
+                    const charElement = document.getElementById(`char-${id}`);
+                    if (charElement) {
+                        charElement.classList.add('active');
+                    }
+                }
+            }
+        }
+
+        
+        // 打字机效果
+        function typeText(text) {
+            isTyping = true;
+            currentText = '';
+            dialogText.textContent = '';
+            continuePrompt.style.opacity = '0';
+            
+            let index = 0;
+            const typingInterval = setInterval(() => {
+                if (index < text.length) {
+                    currentText += text.charAt(index);
+                    dialogText.textContent = currentText;
+                    index++;
+                } else {
+                    clearInterval(typingInterval);
+                    isTyping = false;
+                    continuePrompt.style.opacity = '1';
+                }
+            }, typingSpeed);
+        }
+
+        // 显示选项
+        function showChoices() {
+            dialogContainer.classList.add('hidden');
+            choicesContainer.classList.remove('hidden');
+            
+            choicesContainer.innerHTML = '';
+            currentScene.choices.forEach((choice, index) => {
+                const choiceElement = document.createElement('div');
+                choiceElement.className = 'choice';
+                choiceElement.textContent = choice.text;
+                choiceElement.addEventListener('click', () => {
+                    selectChoice(choice);
+                });
+                choicesContainer.appendChild(choiceElement);
+            });
+        }
+
+        // 选择选项
+        function selectChoice(choice) {
+            // 应用效果
+            if (choice.effect) {
+                for (const key in choice.effect) {
+                    gameData.relationship[key] = Math.max(0, Math.min(100, gameData.relationship[key] + choice.effect[key]));
+                }
+                updateRelationshipScores();
+            }
+            
+            // 进入下一场景
+            choicesContainer.classList.add('hidden');
+            dialogContainer.classList.remove('hidden');
+            loadScene(choice.nextScene);
+        }
+
+        // 更新关系分数显示
+        function updateRelationshipScores() {
+            interactiveScore.textContent = gameData.relationship.interactive;
+            communicationScore.textContent = gameData.relationship.communication;
+            traditionalScore.textContent = gameData.relationship.traditional;
+        }
+
+        // 生成角色卡片
+        function generateCharacterCards() {
+            characterCards.innerHTML = '';
+            
+            for (const id in characters) {
+                const char = characters[id];
+                const card = document.createElement('div');
+                card.className = 'character-card';
+                card.innerHTML = `
+                    <div class="character-card-header">
+                        <div class="character-icon" style="background: ${char.color}">
+                            ${getCharacterIcon(id)}
+                        </div>
+                        <div class="character-card-name">${char.name}</div>
+                    </div>
+                    <div class="character-card-desc">
+                        ${char.description}
+                    </div>
+                `;
+                characterCards.appendChild(card);
+            }
+        }
+
+        // 事件监听器
+        startButton.addEventListener('click', () => {
+            titleScreen.classList.add('fade-out');
+            setTimeout(() => {
+                titleScreen.classList.add('hidden');
+                gameUI.classList.remove('hidden');
+                initGame();
+            }, 1000);
+        });
+
+        continueButton.addEventListener('click', () => {
+            alert('继续游戏功能需要保存系统支持，当前为演示版本，请点击"开始游戏"');
+        });
+
+        galleryButton.addEventListener('click', () => {
+            titleScreen.classList.add('hidden');
+            galleryScreen.classList.remove('hidden');
+        });
+
+        galleryBtn.addEventListener('click', () => {
+            gameUI.classList.add('hidden');
+            galleryScreen.classList.remove('hidden');
+        });
+
+        backToGameBtn.addEventListener('click', () => {
+            galleryScreen.classList.add('hidden');
+            gameUI.classList.remove('hidden');
+        });
+
+        // 点击继续对话
+        dialogContainer.addEventListener('click', () => {
+            if (isTyping) {
+                // 如果正在打字，直接完成
+                isTyping = false;
+                dialogText.textContent = currentScene.dialog[currentDialogIndex].text;
+                continuePrompt.style.opacity = '1';
+            } else {
+                // 否则继续下一句对话
+                currentDialogIndex++;
+                showDialog();
+            }
+        });
+
+        // 初始化
+        initGame();
+    </script>
+</body>
+</html>
