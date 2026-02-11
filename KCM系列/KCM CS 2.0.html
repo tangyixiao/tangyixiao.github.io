@@ -1,0 +1,324 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>CS2 Web - Ultra High Fidelity HUD</title>
+    <style>
+        /* CS2 核心配色与字体 */
+        :root {
+            --cs2-orange: #f2ad00;
+            --cs2-bg: rgba(12, 14, 15, 0.85);
+            --cs2-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Segoe UI', Impact, sans-serif; }
+
+        /* 游戏画布 */
+        canvas { display: block; }
+
+        /* --- 顶层 HUD 容器 --- */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        /* 1. 顶部击杀信息 (Kill Feed) */
+        #killfeed {
+            position: absolute; top: 40px; right: 40px;
+            display: flex; flex-direction: column; align-items: flex-end; gap: 5px;
+        }
+        .kill-item {
+            background: var(--cs2-bg); border-right: 4px solid var(--cs2-orange);
+            color: white; padding: 6px 15px; font-size: 14px; font-weight: bold;
+            display: flex; align-items: center; gap: 8px; animation: slideIn 0.2s ease-out;
+        }
+
+        /* 2. 底部核心 UI */
+        #bottom-hud {
+            padding: 0 50px 40px;
+            display: flex; justify-content: space-between; align-items: flex-end;
+        }
+
+        /* 左侧：血量与护甲 (倾斜设计) */
+        .hud-left { display: flex; align-items: center; gap: 10px; }
+        .cs2-box {
+            background: var(--cs2-bg); border: 1px solid var(--cs2-border);
+            padding: 10px 25px; border-radius: 4px; color: white;
+            transform: skewX(-10deg); /* 核心：10度倾斜 */
+        }
+        .stat-content { transform: skewX(10deg); text-align: left; }
+        .label { font-size: 10px; text-transform: uppercase; opacity: 0.7; letter-spacing: 1px; }
+        .value { font-size: 36px; font-weight: 900; line-height: 1; }
+        
+        /* 血条动画 */
+        .hp-bar-bg { width: 120px; height: 6px; background: rgba(255,255,255,0.1); margin-top: 8px; border-radius: 3px; overflow: hidden; }
+        #hp-bar-fill { width: 100%; height: 100%; background: white; transition: width 0.3s; }
+
+        /* 右侧：弹药与武器 */
+        .hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+        .ammo-main { font-size: 48px; font-weight: 900; color: white; display: inline-block; }
+        .ammo-reserve { font-size: 20px; opacity: 0.5; margin-left: 5px; }
+
+        .weapon-slots { display: flex; gap: 6px; }
+        .slot {
+            background: rgba(0,0,0,0.5); width: 60px; height: 30px; 
+            display: flex; align-items: center; justify-content: center;
+            color: #777; font-size: 12px; font-weight: bold; border-radius: 2px;
+        }
+        .slot.active { background: var(--cs2-bg); color: var(--cs2-orange); border-bottom: 2px solid var(--cs2-orange); }
+
+        /* 3. 准星与狙击镜 */
+        #crosshair {
+            position: absolute; top: 50%; left: 50%; width: 18px; height: 18px;
+            transform: translate(-50%, -50%);
+        }
+        .ch-line { position: absolute; background: #00ff00; box-shadow: 0 0 2px rgba(0,0,0,0.8); }
+        .ch-v { width: 2px; height: 100%; left: 8px; }
+        .ch-h { height: 2px; width: 100%; top: 8px; }
+
+        #scope {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 25%, black 60%);
+            display: none;
+        }
+        #scope::after, #scope::before { content: ''; position: absolute; background: rgba(255,255,255,0.2); }
+        #scope::after { width: 100%; height: 1px; top: 50%; }
+        #scope::before { height: 100%; width: 1px; left: 50%; }
+
+        /* 开始引导界面 */
+        #overlay {
+            position: absolute; width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; z-index: 100; cursor: pointer;
+        }
+        .btn-start {
+            padding: 15px 40px; border: 2px solid var(--cs2-orange);
+            color: var(--cs2-orange); font-size: 24px; font-weight: bold;
+            text-transform: uppercase; margin-top: 20px; transition: 0.3s;
+        }
+        .btn-start:hover { background: var(--cs2-orange); color: black; }
+
+        @keyframes slideIn { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <h1 style="letter-spacing: 10px;">COUNTER-STRIKE 2</h1>
+        <div class="btn-start">开始连接 KCM 比赛</div>
+        <p style="margin-top:20px; opacity:0.5;">WASD移动 | 数字键1-5切换武器 | 鼠标左键射击 | 右键开镜(AWP)</p>
+    </div>
+
+    <div id="ui-layer">
+        <div id="killfeed"></div>
+
+        <div id="crosshair"><div class="ch-line ch-v"></div><div class="ch-line ch-h"></div></div>
+        <div id="scope"></div>
+
+        <div id="bottom-hud">
+            <div class="hud-left">
+                <!-- 血量盒子 -->
+                <div class="cs2-box">
+                    <div class="stat-content">
+                        <div class="label">Health</div>
+                        <div class="value" id="hp-val">100</div>
+                        <div class="hp-bar-bg"><div id="hp-bar-fill"></div></div>
+                    </div>
+                </div>
+                <!-- 护甲盒子 -->
+                <div class="cs2-box">
+                    <div class="stat-content">
+                        <div class="label">Armor</div>
+                        <div class="value">100</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-right">
+                <div class="weapon-slots">
+                    <div class="slot" id="slot-1">1</div>
+                    <div class="slot" id="slot-2">2</div>
+                    <div class="slot" id="slot-3">3</div>
+                    <div class="slot active" id="slot-4">4</div>
+                    <div class="slot" id="slot-5">5</div>
+                </div>
+                <div class="cs2-box" style="padding: 10px 40px;">
+                    <div class="stat-content" style="text-align: right;">
+                        <span class="ammo-main" id="ammo-val">30</span>
+                        <span class="ammo-reserve">/ 90</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引用 Three.js 核心 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/PointerLockControls.js"></script>
+
+<script>
+    // 1. 武器数据配置
+    const WEAPONS = {
+        1: { name: "Knife", damage: 100, fireRate: 500, ammo: 0, recoil: 0, range: 3 },
+        2: { name: "USP-S", damage: 34, fireRate: 200, ammo: 12, recoil: 0.02, range: 100 },
+        3: { name: "MAC-10", damage: 20, fireRate: 80, ammo: 30, recoil: 0.05, range: 60 },
+        4: { name: "AK-47", damage: 36, fireRate: 110, ammo: 30, recoil: 0.07, range: 200 },
+        5: { name: "AWP", damage: 200, fireRate: 1400, ammo: 10, recoil: 0.3, range: 500 }
+    };
+
+    let currentSlot = 4;
+    let isScoped = false;
+    let canShoot = true;
+    let botHP = 100;
+
+    // 2. 初始化 3D 环境
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x92a8b3); // 类似沙城的雾蓝色
+    scene.fog = new THREE.Fog(0x92a8b3, 20, 100);
+
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new THREE.PointerLockControls(camera, document.body);
+
+    // 3. 点击进入游戏
+    document.getElementById('overlay').onclick = () => {
+        controls.lock();
+    };
+    controls.addEventListener('lock', () => { document.getElementById('overlay').style.display = 'none'; });
+    controls.addEventListener('unlock', () => { document.getElementById('overlay').style.display = 'flex'; });
+
+    // 4. 构建地图 (简单沙城风格)
+    const light = new THREE.DirectionalLight(0xffffff, 1.2);
+    light.position.set(10, 20, 10);
+    scene.add(light, new THREE.AmbientLight(0xffffff, 0.5));
+
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshStandardMaterial({ color: 0xc2a385 }));
+    floor.rotation.x = -Math.PI/2;
+    scene.add(floor);
+
+    // 添加一些箱子作为掩体
+    const boxGeo = new THREE.BoxGeometry(2, 2, 2);
+    const boxMat = new THREE.MeshStandardMaterial({ color: 0x8b7355 });
+    for(let i=0; i<15; i++){
+        const box = new THREE.Mesh(boxGeo, boxMat);
+        box.position.set(Math.random()*40-20, 1, Math.random()*40-20);
+        scene.add(box);
+    }
+
+    // 5. 人机 (KCM)
+    const bot = new THREE.Group();
+    const botBody = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.8, 0.4), new THREE.MeshStandardMaterial({color: 0xa13333}));
+    botBody.position.y = 0.9;
+    bot.add(botBody);
+    bot.position.set(0, 0, -10);
+    scene.add(bot);
+
+    // 6. 核心逻辑：射击与武器切换
+    function shoot() {
+        if(!canShoot || !controls.isLocked) return;
+        const wep = WEAPONS[currentSlot];
+        
+        if(currentSlot !== 1) {
+            if(wep.ammo <= 0) return;
+            wep.ammo--;
+            document.getElementById('ammo-val').innerText = wep.ammo;
+        }
+
+        canShoot = false;
+        setTimeout(() => canShoot = true, wep.fireRate);
+
+        // 后坐力感
+        camera.rotation.x += wep.recoil;
+
+        // 射线碰撞检测
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera({x:0, y:0}, camera);
+        const hits = raycaster.intersectObject(bot, true);
+
+        if(hits.length > 0) {
+            botHP -= wep.damage;
+            if(botHP <= 0) {
+                botHP = 100;
+                addKillFeed(wep.name);
+                bot.position.set(Math.random()*30-15, 0, Math.random()*30-15);
+            }
+        }
+    }
+
+    function addKillFeed(weaponName) {
+        const feed = document.getElementById('killfeed');
+        const item = document.createElement('div');
+        item.className = 'kill-item';
+        item.innerHTML = `YOU <span style="color:#aaa; font-size:10px;"> [${weaponName.toUpperCase()}] </span> KCM`;
+        feed.appendChild(item);
+        setTimeout(() => item.remove(), 4000);
+    }
+
+    function switchWeapon(slot) {
+        currentSlot = slot;
+        isScoped = false;
+        document.getElementById('scope').style.display = 'none';
+        document.getElementById('crosshair').style.display = 'block';
+        camera.fov = 70;
+        camera.updateProjectionMatrix();
+
+        // UI 状态切换
+        document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
+        document.getElementById('slot-'+slot).classList.add('active');
+        document.getElementById('ammo-val').innerText = WEAPONS[slot].ammo || "-";
+    }
+
+    // 7. 键盘与鼠标监听
+    const keys = {};
+    window.onkeydown = (e) => {
+        keys[e.code] = true;
+        if(e.key >= '1' && e.key <= '5') switchWeapon(parseInt(e.key));
+    };
+    window.onkeyup = (e) => keys[e.code] = false;
+    window.onmousedown = (e) => {
+        if(e.button === 0) shoot();
+        if(e.button === 2 && currentSlot === 5) {
+            isScoped = !isScoped;
+            document.getElementById('scope').style.display = isScoped ? 'block' : 'none';
+            document.getElementById('crosshair').style.display = isScoped ? 'none' : 'block';
+            camera.fov = isScoped ? 20 : 70;
+            camera.updateProjectionMatrix();
+        }
+    };
+    window.oncontextmenu = (e) => e.preventDefault();
+
+    // 8. 游戏主循环 (实现急停感与移动)
+    function animate() {
+        requestAnimationFrame(animate);
+        if (controls.isLocked) {
+            const speed = 0.12;
+            if (keys['KeyW']) controls.moveForward(speed);
+            if (keys['KeyS']) controls.moveForward(-speed);
+            if (keys['KeyA']) controls.moveRight(-speed);
+            if (keys['KeyD']) controls.moveRight(speed);
+
+            // 自动压枪（镜头缓慢回位）
+            camera.rotation.x *= 0.9;
+
+            // KCM 随机小幅度移动
+            bot.position.x += Math.sin(Date.now() * 0.001) * 0.02;
+        }
+        renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // 处理窗口缩放
+    window.onresize = () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+
+</script>
+</body>
+</html>
