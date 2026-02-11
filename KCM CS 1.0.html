@@ -1,0 +1,863 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS2简化版：玩家 vs 人机KCM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background-color: #111;
+            color: #fff;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .hud {
+            position: absolute;
+            width: 100%;
+            padding: 20px;
+        }
+        
+        .top-hud {
+            top: 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .health, .armor, .ammo, .kills {
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 1px solid #333;
+            pointer-events: all;
+        }
+        
+        .health {
+            color: #ff3333;
+        }
+        
+        .armor {
+            color: #33aaff;
+        }
+        
+        .ammo {
+            color: #ffcc00;
+        }
+        
+        .kills {
+            color: #33ff33;
+        }
+        
+        .weapon-selector {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #333;
+            pointer-events: all;
+        }
+        
+        .weapon {
+            width: 60px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #222;
+            border: 2px solid #444;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #fff;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        .weapon.selected {
+            border-color: #ffcc00;
+            background-color: #333;
+        }
+        
+        .weapon:hover {
+            background-color: #2a2a2a;
+        }
+        
+        .center-crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+        }
+        
+        .crosshair {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+        }
+        
+        .crosshair::before, .crosshair::after {
+            content: '';
+            position: absolute;
+            background-color: #fff;
+        }
+        
+        .crosshair::before {
+            top: 9px;
+            left: 0;
+            width: 20px;
+            height: 2px;
+        }
+        
+        .crosshair::after {
+            top: 0;
+            left: 9px;
+            width: 2px;
+            height: 20px;
+        }
+        
+        .message {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 15px 30px;
+            border-radius: 5px;
+            border: 1px solid #ffcc00;
+            text-align: center;
+            min-width: 300px;
+            display: none;
+        }
+        
+        .message h2 {
+            color: #ffcc00;
+            margin-bottom: 10px;
+        }
+        
+        .restart-btn {
+            background-color: #ffcc00;
+            color: #000;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 3px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .restart-btn:hover {
+            background-color: #ffdd33;
+        }
+        
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #333;
+            max-width: 300px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .instructions h3 {
+            color: #ffcc00;
+            margin-bottom: 8px;
+        }
+        
+        .instructions li {
+            margin-left: 20px;
+            margin-bottom: 5px;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #111;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #333;
+            border-top: 5px solid #ffcc00;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="ui">
+            <div class="hud top-hud">
+                <div class="health">生命值: <span id="healthValue">100</span></div>
+                <div class="armor">护甲: <span id="armorValue">100</span></div>
+                <div class="kills">击杀: <span id="killsValue">0</span></div>
+                <div class="ammo">弹药: <span id="ammoValue">30</span>/<span id="ammoTotal">90</span></div>
+            </div>
+            
+            <div class="center-crosshair">
+                <div class="crosshair"></div>
+            </div>
+            
+            <div class="weapon-selector">
+                <div class="weapon selected" data-weapon="pistol">手枪</div>
+                <div class="weapon" data-weapon="rifle">步枪</div>
+                <div class="weapon" data-weapon="shotgun">霰弹枪</div>
+                <div class="weapon" data-weapon="sniper">狙击枪</div>
+                <div class="weapon" data-weapon="knife">匕首</div>
+            </div>
+            
+            <div class="instructions">
+                <h3>操作说明</h3>
+                <ul>
+                    <li>WASD: 移动</li>
+                    <li>鼠标: 视角控制</li>
+                    <li>左键: 射击/攻击</li>
+                    <li>R: 换弹</li>
+                    <li>1-5: 切换武器</li>
+                    <li>空格: 跳跃</li>
+                    <li>ESC: 退出指针锁定</li>
+                </ul>
+                <p>目标: 击败人机KCM (生命值: <span id="kcmHealth">100</span>)</p>
+            </div>
+            
+            <div id="message" class="message">
+                <h2 id="messageTitle">游戏结束</h2>
+                <p id="messageText"></p>
+                <button class="restart-btn" id="restartBtn">重新开始</button>
+            </div>
+        </div>
+        
+        <div id="loading">
+            <div class="loading-spinner"></div>
+            <p>加载游戏中...</p>
+        </div>
+    </div>
+
+    <script>
+        // 游戏主逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            // 游戏变量
+            let scene, renderer, camera, controls;
+            let objects = [];
+            let player, kcm;
+            let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+            let canJump = false;
+            let velocity = new THREE.Vector3();
+            let direction = new THREE.Vector3();
+            let prevTime = performance.now();
+            
+            // 游戏状态
+            let gameState = {
+                playerHealth: 100,
+                playerArmor: 100,
+                playerKills: 0,
+                currentWeapon: 'pistol',
+                ammo: {
+                    pistol: { current: 30, total: 90 },
+                    rifle: { current: 30, total: 90 },
+                    shotgun: { current: 8, total: 24 },
+                    sniper: { current: 5, total: 15 },
+                    knife: { current: 1, total: 1 }
+                },
+                kcmHealth: 100,
+                gameOver: false
+            };
+            
+            // 武器属性
+            const weapons = {
+                pistol: { damage: 15, range: 50, fireRate: 500 },
+                rifle: { damage: 20, range: 100, fireRate: 100 },
+                shotgun: { damage: 40, range: 20, fireRate: 1000 },
+                sniper: { damage: 80, range: 200, fireRate: 1500 },
+                knife: { damage: 50, range: 3, fireRate: 500 }
+            };
+            
+            let canShoot = true;
+            let shootCooldown = false;
+            
+            // 初始化Three.js场景
+            function init() {
+                // 创建场景
+                scene = new THREE.Scene();
+                scene.fog = new THREE.Fog(0x222222, 1, 300);
+                
+                // 创建相机
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.y = 10;
+                
+                // 创建渲染器
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                document.getElementById('gameContainer').appendChild(renderer.domElement);
+                
+                // 添加光源
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(50, 100, 50);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.camera.left = -100;
+                directionalLight.shadow.camera.right = 100;
+                directionalLight.shadow.camera.top = 100;
+                directionalLight.shadow.camera.bottom = -100;
+                scene.add(directionalLight);
+                
+                // 创建地面
+                const groundGeometry = new THREE.PlaneGeometry(200, 200);
+                const groundMaterial = new THREE.MeshPhongMaterial({ color: 0x3a7c3a, side: THREE.DoubleSide });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = Math.PI / 2;
+                ground.receiveShadow = true;
+                scene.add(ground);
+                
+                // 添加网格辅助线
+                const gridHelper = new THREE.GridHelper(200, 20, 0x000000, 0x000000);
+                gridHelper.material.opacity = 0.2;
+                gridHelper.material.transparent = true;
+                scene.add(gridHelper);
+                
+                // 创建墙壁和障碍物
+                createMap();
+                
+                // 创建玩家
+                createPlayer();
+                
+                // 创建人机KCM
+                createKCM();
+                
+                // 初始化指针锁定控制
+                controls = new THREE.PointerLockControls(camera, document.body);
+                scene.add(controls.getObject());
+                
+                // 添加事件监听器
+                document.addEventListener('click', () => {
+                    if (!gameState.gameOver) {
+                        controls.lock();
+                    }
+                });
+                
+                controls.addEventListener('lock', () => {
+                    document.getElementById('loading').style.display = 'none';
+                });
+                
+                controls.addEventListener('unlock', () => {
+                    // 解锁时不执行任何操作
+                });
+                
+                document.addEventListener('keydown', onKeyDown);
+                document.addEventListener('keyup', onKeyUp);
+                document.addEventListener('mousedown', onMouseDown);
+                
+                // 武器选择事件
+                document.querySelectorAll('.weapon').forEach(weapon => {
+                    weapon.addEventListener('click', function() {
+                        if (gameState.gameOver) return;
+                        
+                        document.querySelectorAll('.weapon').forEach(w => w.classList.remove('selected'));
+                        this.classList.add('selected');
+                        
+                        const weaponType = this.getAttribute('data-weapon');
+                        switchWeapon(weaponType);
+                    });
+                });
+                
+                // 重新开始按钮
+                document.getElementById('restartBtn').addEventListener('click', restartGame);
+                
+                // 窗口大小调整
+                window.addEventListener('resize', onWindowResize);
+                
+                // 隐藏加载界面
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                }, 1000);
+                
+                // 开始游戏循环
+                animate();
+            }
+            
+            // 创建地图
+            function createMap() {
+                // 创建墙壁材质
+                const wallMaterial = new THREE.MeshPhongMaterial({ color: 0x808080 });
+                
+                // 创建墙壁
+                const walls = [
+                    { pos: [0, 10, -95], size: [200, 20, 10] }, // 北墙
+                    { pos: [0, 10, 95], size: [200, 20, 10] },  // 南墙
+                    { pos: [-95, 10, 0], size: [10, 20, 190] }, // 西墙
+                    { pos: [95, 10, 0], size: [10, 20, 190] },  // 东墙
+                    
+                    // 内部障碍物
+                    { pos: [-40, 5, -40], size: [20, 10, 20] },
+                    { pos: [40, 5, 40], size: [20, 10, 20] },
+                    { pos: [-40, 5, 40], size: [20, 10, 20] },
+                    { pos: [40, 5, -40], size: [20, 10, 20] },
+                    { pos: [0, 5, 0], size: [30, 10, 30] }
+                ];
+                
+                walls.forEach(wallData => {
+                    const wallGeometry = new THREE.BoxGeometry(...wallData.size);
+                    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+                    wall.position.set(...wallData.pos);
+                    wall.castShadow = true;
+                    wall.receiveShadow = true;
+                    scene.add(wall);
+                    objects.push(wall);
+                });
+                
+                // 创建一些随机箱子
+                const boxMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+                for (let i = 0; i < 10; i++) {
+                    const boxSize = Math.random() * 5 + 3;
+                    const boxGeometry = new THREE.BoxGeometry(boxSize, boxSize, boxSize);
+                    const box = new THREE.Mesh(boxGeometry, boxMaterial);
+                    
+                    let posX, posZ;
+                    do {
+                        posX = Math.random() * 160 - 80;
+                        posZ = Math.random() * 160 - 80;
+                    } while (Math.abs(posX) < 20 && Math.abs(posZ) < 20); // 避免放在中心区域
+                    
+                    box.position.set(posX, boxSize/2, posZ);
+                    box.castShadow = true;
+                    box.receiveShadow = true;
+                    scene.add(box);
+                    objects.push(box);
+                }
+            }
+            
+            // 创建玩家
+            function createPlayer() {
+                // 玩家由相机表示，这里只添加一个视觉表示
+                const playerGeometry = new THREE.CapsuleGeometry(2, 4, 4, 8);
+                const playerMaterial = new THREE.MeshPhongMaterial({ color: 0x0000ff });
+                player = new THREE.Mesh(playerGeometry, playerMaterial);
+                player.position.y = 10;
+                scene.add(player);
+            }
+            
+            // 创建人机KCM
+            function createKCM() {
+                const kcmGeometry = new THREE.CapsuleGeometry(2, 4, 4, 8);
+                const kcmMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+                kcm = new THREE.Mesh(kcmGeometry, kcmMaterial);
+                kcm.position.set(50, 2, 50);
+                scene.add(kcm);
+                objects.push(kcm);
+            }
+            
+            // 切换武器
+            function switchWeapon(weaponType) {
+                gameState.currentWeapon = weaponType;
+                updateAmmoDisplay();
+            }
+            
+            // 更新弹药显示
+            function updateAmmoDisplay() {
+                const weapon = gameState.currentWeapon;
+                document.getElementById('ammoValue').textContent = gameState.ammo[weapon].current;
+                document.getElementById('ammoTotal').textContent = gameState.ammo[weapon].total;
+            }
+            
+            // 更新HUD
+            function updateHUD() {
+                document.getElementById('healthValue').textContent = gameState.playerHealth;
+                document.getElementById('armorValue').textContent = gameState.playerArmor;
+                document.getElementById('killsValue').textContent = gameState.playerKills;
+                document.getElementById('kcmHealth').textContent = gameState.kcmHealth;
+                updateAmmoDisplay();
+            }
+            
+            // 射击
+            function shoot() {
+                if (gameState.gameOver || !canShoot || shootCooldown) return;
+                
+                const weapon = gameState.currentWeapon;
+                const ammo = gameState.ammo[weapon];
+                
+                if (ammo.current <= 0) {
+                    // 没有弹药
+                    return;
+                }
+                
+                // 减少弹药
+                ammo.current--;
+                updateAmmoDisplay();
+                
+                // 设置射击冷却
+                shootCooldown = true;
+                setTimeout(() => {
+                    shootCooldown = false;
+                }, weapons[weapon].fireRate);
+                
+                // 创建射线检测是否命中
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+                
+                const intersects = raycaster.intersectObjects(objects, true);
+                
+                if (intersects.length > 0) {
+                    const target = intersects[0].object;
+                    
+                    // 检查是否击中了KCM
+                    if (target === kcm) {
+                        // 计算伤害
+                        const distance = camera.position.distanceTo(kcm.position);
+                        let damage = weapons[weapon].damage;
+                        
+                        // 距离衰减
+                        if (distance > weapons[weapon].range) {
+                            damage *= 0.5;
+                        }
+                        
+                        // 应用伤害
+                        gameState.kcmHealth -= damage;
+                        
+                        // 检查KCM是否被击败
+                        if (gameState.kcmHealth <= 0) {
+                            gameState.kcmHealth = 0;
+                            gameState.playerKills++;
+                            showMessage("胜利！", "你击败了人机KCM！");
+                            gameState.gameOver = true;
+                        }
+                        
+                        // 更新HUD
+                        updateHUD();
+                    }
+                }
+                
+                // 创建枪口闪光效果
+                createMuzzleFlash();
+            }
+            
+            // 创建枪口闪光
+            function createMuzzleFlash() {
+                const flashLight = new THREE.PointLight(0xffff00, 2, 10);
+                flashLight.position.set(0, 0, -5);
+                camera.add(flashLight);
+                
+                setTimeout(() => {
+                    camera.remove(flashLight);
+                }, 50);
+            }
+            
+            // KCM AI
+            function updateKCM() {
+                if (gameState.gameOver) return;
+                
+                // 简单AI：向玩家移动并随机射击
+                const playerPos = camera.position;
+                const kcmPos = kcm.position;
+                
+                // 计算朝向玩家的方向
+                const direction = new THREE.Vector3();
+                direction.subVectors(playerPos, kcmPos).normalize();
+                
+                // 移动KCM
+                const speed = 0.05;
+                kcm.position.x += direction.x * speed;
+                kcm.position.z += direction.z * speed;
+                
+                // 确保KCM在地图范围内
+                kcm.position.x = Math.max(-90, Math.min(90, kcm.position.x));
+                kcm.position.z = Math.max(-90, Math.min(90, kcm.position.z));
+                
+                // 随机射击
+                if (Math.random() < 0.01) { // 1%概率每帧射击
+                    kcmShoot();
+                }
+                
+                // 更新KCM朝向
+                kcm.lookAt(playerPos);
+            }
+            
+            // KCM射击
+            function kcmShoot() {
+                if (gameState.gameOver) return;
+                
+                // 创建射线检测是否命中玩家
+                const raycaster = new THREE.Raycaster();
+                raycaster.set(kcm.position, new THREE.Vector3().subVectors(camera.position, kcm.position).normalize());
+                
+                const intersects = raycaster.intersectObjects([player], true);
+                
+                if (intersects.length > 0) {
+                    // 击中玩家
+                    const damage = 10 + Math.random() * 10; // 10-20伤害
+                    
+                    if (gameState.playerArmor > 0) {
+                        gameState.playerArmor -= damage * 0.7;
+                        gameState.playerHealth -= damage * 0.3;
+                        
+                        if (gameState.playerArmor < 0) {
+                            gameState.playerHealth += gameState.playerArmor;
+                            gameState.playerArmor = 0;
+                        }
+                    } else {
+                        gameState.playerHealth -= damage;
+                    }
+                    
+                    // 检查玩家是否死亡
+                    if (gameState.playerHealth <= 0) {
+                        gameState.playerHealth = 0;
+                        showMessage("失败！", "你被人机KCM击败了！");
+                        gameState.gameOver = true;
+                    }
+                    
+                    // 更新HUD
+                    updateHUD();
+                }
+            }
+            
+            // 显示消息
+            function showMessage(title, text) {
+                document.getElementById('messageTitle').textContent = title;
+                document.getElementById('messageText').textContent = text;
+                document.getElementById('message').style.display = 'block';
+            }
+            
+            // 重新开始游戏
+            function restartGame() {
+                // 重置游戏状态
+                gameState = {
+                    playerHealth: 100,
+                    playerArmor: 100,
+                    playerKills: 0,
+                    currentWeapon: 'pistol',
+                    ammo: {
+                        pistol: { current: 30, total: 90 },
+                        rifle: { current: 30, total: 90 },
+                        shotgun: { current: 8, total: 24 },
+                        sniper: { current: 5, total: 15 },
+                        knife: { current: 1, total: 1 }
+                    },
+                    kcmHealth: 100,
+                    gameOver: false
+                };
+                
+                // 重置KCM位置
+                kcm.position.set(50, 2, 50);
+                
+                // 重置玩家位置
+                camera.position.set(0, 10, 0);
+                
+                // 隐藏消息
+                document.getElementById('message').style.display = 'none';
+                
+                // 更新HUD
+                updateHUD();
+                
+                // 重置武器选择
+                document.querySelectorAll('.weapon').forEach(w => w.classList.remove('selected'));
+                document.querySelector('.weapon[data-weapon="pistol"]').classList.add('selected');
+                
+                // 重新锁定指针
+                controls.lock();
+            }
+            
+            // 键盘按下事件
+            function onKeyDown(event) {
+                switch (event.code) {
+                    case 'KeyW':
+                        moveForward = true;
+                        break;
+                    case 'KeyA':
+                        moveLeft = true;
+                        break;
+                    case 'KeyS':
+                        moveBackward = true;
+                        break;
+                    case 'KeyD':
+                        moveRight = true;
+                        break;
+                    case 'Space':
+                        if (canJump) {
+                            velocity.y = 15;
+                            canJump = false;
+                        }
+                        break;
+                    case 'KeyR':
+                        reloadWeapon();
+                        break;
+                    case 'Digit1':
+                        switchWeapon('pistol');
+                        document.querySelectorAll('.weapon').forEach(w => w.classList.remove('selected'));
+                        document.querySelector('.weapon[data-weapon="pistol"]').classList.add('selected');
+                        break;
+                    case 'Digit2':
+                        switchWeapon('rifle');
+                        document.querySelectorAll('.weapon').forEach(w => w.classList.remove('selected'));
+                        document.querySelector('.weapon[data-weapon="rifle"]').classList.add('selected');
+                        break;
+                    case 'Digit3':
+                        switchWeapon('shotgun');
+                        document.querySelectorAll('.weapon').forEach(w => w.classList.remove('selected'));
+                        document.querySelector('.weapon[data-weapon="shotgun"]').classList.add('selected');
+                        break;
+                    case 'Digit4':
+                        switchWeapon('sniper');
+                        document.querySelectorAll('.weapon').forEach(w => w.classList.remove('selected'));
+                        document.querySelector('.weapon[data-weapon="sniper"]').classList.add('selected');
+                        break;
+                    case 'Digit5':
+                        switchWeapon('knife');
+                        document.querySelectorAll('.weapon').forEach(w => w.classList.remove('selected'));
+                        document.querySelector('.weapon[data-weapon="knife"]').classList.add('selected');
+                        break;
+                }
+            }
+            
+            // 键盘释放事件
+            function onKeyUp(event) {
+                switch (event.code) {
+                    case 'KeyW':
+                        moveForward = false;
+                        break;
+                    case 'KeyA':
+                        moveLeft = false;
+                        break;
+                    case 'KeyS':
+                        moveBackward = false;
+                        break;
+                    case 'KeyD':
+                        moveRight = false;
+                        break;
+                }
+            }
+            
+            // 鼠标按下事件
+            function onMouseDown(event) {
+                if (event.button === 0 && controls.isLocked && !gameState.gameOver) {
+                    shoot();
+                }
+            }
+            
+            // 换弹
+            function reloadWeapon() {
+                if (gameState.gameOver) return;
+                
+                const weapon = gameState.currentWeapon;
+                const ammo = gameState.ammo[weapon];
+                
+                if (ammo.total <= 0 || ammo.current >= weapons[weapon].fireRate) return;
+                
+                const needed = weapons[weapon].fireRate - ammo.current;
+                const canReload = Math.min(needed, ammo.total);
+                
+                ammo.current += canReload;
+                ammo.total -= canReload;
+                
+                updateAmmoDisplay();
+            }
+            
+            // 窗口大小调整
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+            
+            // 动画循环
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                if (controls.isLocked && !gameState.gameOver) {
+                    const time = performance.now();
+                    const delta = (time - prevTime) / 1000;
+                    
+                    // 玩家移动
+                    velocity.x -= velocity.x * 5.0 * delta;
+                    velocity.z -= velocity.z * 5.0 * delta;
+                    
+                    direction.z = Number(moveForward) - Number(moveBackward);
+                    direction.x = Number(moveRight) - Number(moveLeft);
+                    direction.normalize();
+                    
+                    if (moveForward || moveBackward) velocity.z -= direction.z * 20.0 * delta;
+                    if (moveLeft || moveRight) velocity.x -= direction.x * 20.0 * delta;
+                    
+                    // 应用重力
+                    velocity.y -= 9.8 * 15.0 * delta;
+                    
+                    controls.moveRight(-velocity.x * delta);
+                    controls.moveForward(-velocity.z * delta);
+                    
+                    controls.getObject().position.y += velocity.y * delta;
+                    
+                    // 检测玩家是否在地面上
+                    if (controls.getObject().position.y < 10) {
+                        velocity.y = 0;
+                        controls.getObject().position.y = 10;
+                        canJump = true;
+                    }
+                    
+                    prevTime = time;
+                    
+                    // 更新KCM AI
+                    updateKCM();
+                }
+                
+                renderer.render(scene, camera);
+            }
+            
+            // 初始化游戏
+            init();
+            updateHUD();
+        });
+    </script>
+</body>
+</html>
