@@ -1,0 +1,1634 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>炮轰KCM - 躲子弹&土豆反击版</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: 'Arial', 'Microsoft YaHei', sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #0c2461 0%, #1e3799 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #game-container { 
+            position: relative;
+            width: 100%;
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); 
+            padding: 30px; 
+            border-radius: 20px; 
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border: 8px solid #0f3460;
+        }
+        
+        .game-header {
+            text-align: center;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .game-header h2 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin: 0 0 10px 0;
+            background: linear-gradient(90deg, #ff9a00, #ff5500);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(255, 85, 0, 0.5);
+        }
+        
+        .game-subtitle {
+            color: #a0a0a0;
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+        
+        canvas { 
+            background: linear-gradient(to bottom, #0c2461, #1a1a2e); 
+            border: 4px solid #0f3460; 
+            display: block; 
+            margin: 0 auto; 
+            border-radius: 10px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        
+        .controls { 
+            margin: 20px 0; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(15, 52, 96, 0.7);
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            border: 1px solid #1e3c72;
+        }
+        
+        .control-group span {
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .speed-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        input[type="range"] {
+            width: 150px;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #ff9a00, #ff5500);
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #fff;
+            border: 3px solid #ff5500;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 85, 0, 0.8);
+        }
+        
+        .game-stats {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .stat-box {
+            background: linear-gradient(135deg, #ff9a00, #ff5500);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-width: 120px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            border: 1px solid #ff7700;
+        }
+        
+        .stat-box .stat-value {
+            font-size: 1.5rem;
+            margin-top: 5px;
+        }
+        
+        .weapon-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ff9a00;
+            font-weight: bold;
+        }
+        
+        .weapon-icon {
+            font-size: 1.5rem;
+        }
+        
+        #leaderboard { 
+            margin-top: 30px; 
+            border: 2px solid #0f3460; 
+            border-radius: 15px;
+            padding: 20px; 
+            max-height: 300px; 
+            overflow-y: auto;
+            background: rgba(15, 52, 96, 0.3);
+        }
+        
+        #leaderboard h3 {
+            text-align: center;
+            margin-top: 0;
+            color: #ff9a00;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0f3460;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #ff9a00, #ff5500);
+            color: white;
+            padding: 12px 8px;
+            text-align: center;
+        }
+        
+        tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        tr:hover {
+            background-color: rgba(255, 154, 0, 0.1);
+        }
+        
+        td {
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        
+        #KCM-speech {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: #ff9a00;
+            padding: 8px 15px;
+            border-radius: 15px;
+            display: none;
+            max-width: 200px;
+            word-wrap: break-word;
+            text-align: center;
+            z-index: 100;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            border: 2px solid #ff5500;
+            font-weight: bold;
+            animation: speechBubble 0.3s ease-out;
+        }
+        
+        @keyframes speechBubble {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        #start-btn, #game-control-btn {
+            background: linear-gradient(135deg, #ff9a00, #ff5500);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        #start-btn:hover, #game-control-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+        }
+        
+        #start-btn:active, #game-control-btn:active {
+            transform: translateY(0);
+        }
+        
+        #start-btn::after, #game-control-btn::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: 0.5s;
+        }
+        
+        #start-btn:hover::after, #game-control-btn:hover::after {
+            left: 100%;
+        }
+        
+        .btn-icon {
+            font-size: 1.2rem;
+        }
+        
+        #name-modal { 
+            position: fixed; 
+            top: 0; 
+            left: 0;
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.9); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); 
+            padding: 40px; 
+            text-align: center; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            max-width: 400px;
+            width: 90%;
+            animation: modalAppear 0.4s ease-out;
+            border: 4px solid #0f3460;
+        }
+        
+        @keyframes modalAppear {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .modal-content h2 {
+            margin-top: 0;
+            color: #ff9a00;
+            font-size: 1.8rem;
+        }
+        
+        .modal-content p {
+            color: #a0a0a0;
+            margin-bottom: 25px;
+        }
+        
+        #player-name {
+            padding: 12px 15px; 
+            font-size: 1rem; 
+            margin: 15px 0 25px; 
+            width: 100%;
+            border: 2px solid #0f3460;
+            border-radius: 10px;
+            transition: border-color 0.3s;
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        #player-name:focus {
+            border-color: #ff5500;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 85, 0, 0.3);
+        }
+        
+        .game-instructions {
+            background: rgba(15, 52, 96, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #ccc;
+            border-left: 4px solid #ff5500;
+        }
+        
+        .instructions-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #ff9a00;
+        }
+        
+        .instructions-list {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .instructions-list li {
+            margin-bottom: 5px;
+        }
+        
+        .game-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #a0a0a0;
+            font-size: 0.9rem;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            #game-container {
+                padding: 20px;
+            }
+            
+            canvas {
+                width: 100%;
+                height: auto;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .game-stats {
+                justify-content: center;
+            }
+            
+            .stat-box {
+                min-width: 100px;
+                padding: 10px 15px;
+            }
+        }
+        
+        /* 粒子效果 */
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ff9a00;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        /* 排名徽章 */
+        .rank-1 { background: linear-gradient(135deg, #ffd700, #ffaa00) !important; }
+        .rank-2 { background: linear-gradient(135deg, #c0c0c0, #a0a0a0) !important; }
+        .rank-3 { background: linear-gradient(135deg, #cd7f32, #a0522d) !important; }
+        
+        .rank-badge {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            line-height: 24px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+        
+        /* 难度指示器 */
+        .difficulty-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #ff9a00;
+            font-weight: bold;
+        }
+        
+        .difficulty-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #333;
+        }
+        
+        .difficulty-dot.active {
+            background: #ff9a00;
+        }
+        
+        /* 躲避指示器 */
+        .dodge-indicator {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px dashed #ff9a00;
+            pointer-events: none;
+            z-index: 5;
+            animation: dodgePulse 1s infinite;
+        }
+        
+        @keyframes dodgePulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* 土豆样式 */
+        .potato {
+            position: absolute;
+            pointer-events: none;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+    <div id="name-modal">
+        <div class="modal-content">
+            <h2>炮轰KCM - 躲子弹&土豆反击版</h2>
+            <p>输入你的名字开始游戏</p>
+            <input type="text" id="player-name" placeholder="你的名字" maxlength="10">
+            <button id="start-btn">
+                <span class="btn-icon">🔫</span> 开始扫射
+            </button>
+            <div class="game-instructions">
+                <div class="instructions-title">游戏说明：</div>
+                <ul class="instructions-list">
+                    <li>使用 W A S D 键控制角色移动</li>
+                    <li>鼠标点击或拖动瞄准射击</li>
+                    <li>按住鼠标左键持续射击（加特林模式）</li>
+                    <li>KCM会智能躲避子弹并发射土豆反击</li>
+                    <li>击中KCM得分，注意躲避土豆</li>
+                    <li>可以调整KCM速度增加挑战性</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <div class="game-header">
+            <h2>炮轰KCM - 躲子弹&土豆反击</h2>
+            <div class="game-subtitle">KCM会躲子弹了！还会发射土豆反击！</div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <span>KCM速度: </span>
+                <div class="speed-slider-container">
+                    <input type="range" id="speed-slider" min="1" max="10" value="3">
+                    <span id="speed-value">3x</span>
+                </div>
+            </div>
+            
+            <div class="weapon-info">
+                <div class="weapon-icon">🔫</div>
+                <div>加特林机枪</div>
+            </div>
+            
+            <div class="difficulty-indicator">
+                <span>躲避AI: </span>
+                <div class="difficulty-dot active"></div>
+                <div class="difficulty-dot active"></div>
+                <div class="difficulty-dot"></div>
+            </div>
+            
+            <div class="game-stats">
+                <div class="stat-box">
+                    <div>时间</div>
+                    <div id="timer" class="stat-value">60</div>
+                </div>
+                <div class="stat-box">
+                    <div>击中</div>
+                    <div id="score" class="stat-value">0</div>
+                </div>
+                <div class="stat-box">
+                    <div>弹药</div>
+                    <div id="ammo" class="stat-value">100</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="ammo-indicator" style="margin-bottom: 10px;">
+            <span>弹药: </span>
+            <div class="ammo-bar">
+                <div id="ammo-fill" class="ammo-fill" style="width: 100%"></div>
+            </div>
+        </div>
+        
+        <canvas id="game-canvas" width="800" height="500"></canvas>
+        
+        <div class="controls">
+            <button id="game-control-btn">
+                <span class="btn-icon">🔫</span> 开始扫射
+            </button>
+        </div>
+        
+        <div id="leaderboard">
+            <h3>排行榜</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>排名</th>
+                        <th>玩家</th>
+                        <th>速度</th>
+                        <th>击中</th>
+                        <th>时间</th>
+                    </tr>
+                </thead>
+                <tbody id="score-table"></tbody>
+            </table>
+        </div>
+        
+        <div id="KCM-speech"></div>
+        
+        <div class="game-footer">
+            SXYZ OIer 专属游戏 | KCM会躲子弹+土豆反击 | 使用WASD控制移动，鼠标射击
+        </div>
+    </div>
+
+    <script>
+        // 游戏对象
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const hitPhrases = ["打不中！", "我闪！", "就这？", "太慢了！", "土豆攻击！"];
+        const idlePhrases = ["我先打东方了", "好无聊...", "加特林？就这？", "挖土豆去~"];
+        const dodgePhrases = ["预判！", "我躲！", "打不到~", "太简单了"];
+        
+        // 游戏元素
+        const player = { 
+            x: 100, 
+            y: 250, 
+            radius: 20, 
+            color: '#ff9a00',
+            shadowColor: '#ff5500',
+            isShooting: false,
+            lastShot: 0,
+            shotCooldown: 50, // 毫秒
+            ammo: 100,
+            maxAmmo: 100,
+            ammoRegenRate: 0.5, // 每帧恢复的弹药
+            hitByPotato: false,
+            potatoHitTime: 0
+        };
+        
+        const KCM = { 
+            x: 600, 
+            y: 250, 
+            radius: 20, 
+            color: '#4a69bd',
+            shadowColor: '#1e3799',
+            health: 100,
+            maxHealth: 100,
+            dodgeCooldown: 0,
+            lastDodgeTime: 0,
+            dodgeCooldownTime: 1000, // 毫秒
+            lastPotatoShot: 0,
+            potatoShotCooldown: 1500, // 毫秒
+            dodgeLevel: 2, // 躲避等级 1-3
+            movePattern: 0, // 移动模式
+            movePatternTimer: 0
+        };
+        
+        // 游戏状态
+        let gameInterval, timerInterval;
+        let KCMSpeed = 3, timeLeft = 60, score = 0;
+        let playerName = "玩家";
+        let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+        let isPlaying = false;
+        let particles = [];
+        let bullets = [];
+        let potatoes = []; // KCM发射的土豆
+        let crosshair = { x: 0, y: 0, visible: false };
+        let mouseX = 0, mouseY = 0;
+        let isMouseDown = false;
+        let lastMouseClick = 0;
+        let clickCooldown = 100; // 毫秒
+        let dodgeIndicator = { x: 0, y: 0, visible: false, timer: 0 };
+
+        // 初始化游戏
+        function initGame() {
+            clearIntervals();
+            resetPositions();
+            updateDisplay();
+            drawGame();
+            
+            document.getElementById('speed-slider').disabled = false;
+            document.getElementById('speed-slider').value = 3;
+            document.getElementById('speed-value').textContent = '3x';
+            KCMSpeed = 3;
+            
+            document.getElementById('game-control-btn').innerHTML = '<span class="btn-icon">🔫</span> 开始扫射';
+            isPlaying = false;
+            
+            // 隐藏十字准星
+            crosshair.visible = false;
+            dodgeIndicator.visible = false;
+        }
+
+        function startGame() {
+            playerName = document.getElementById('player-name').value || "玩家";
+            document.getElementById('name-modal').style.display = 'none';
+            
+            document.getElementById('speed-slider').disabled = true;
+            document.getElementById('game-control-btn').innerHTML = '<span class="btn-icon">⏹️</span> 停止扫射';
+            isPlaying = true;
+            
+            // 根据速度设置KCM的躲避等级
+            KCM.dodgeLevel = Math.min(3, Math.max(1, Math.floor(KCMSpeed / 3)));
+            updateDifficultyIndicator();
+            
+            // 显示十字准星
+            crosshair.visible = true;
+            
+            gameInterval = setInterval(gameLoop, 16);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+                if(timeLeft <= 0) endGame();
+            }, 1000);
+            
+            // 添加开始游戏粒子效果
+            createParticleEffect(canvas.width/2, canvas.height/2, 20, '#ff9a00');
+        }
+
+        function gameLoop() {
+            handleControls();
+            updateBullets();
+            updatePotatoes();
+            KCMAI();
+            updateParticles();
+            regenAmmo();
+            updateDodgeIndicator();
+            updatePlayerHitEffect();
+            drawGame();
+        }
+
+        function updateBullets() {
+            // 更新子弹位置
+            for(let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                bullet.x += bullet.vx;
+                bullet.y += bullet.vy;
+                bullet.life--;
+                
+                // 检查子弹是否出界
+                if(bullet.x < 0 || bullet.x > canvas.width || 
+                   bullet.y < 0 || bullet.y > canvas.height || 
+                   bullet.life <= 0) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+                
+                // 检查子弹是否击中KCM
+                if(checkBulletCollision(bullet, KCM)) {
+                    // 根据KCM的躲避等级决定是否真的击中
+                    const dodgeChance = KCM.dodgeLevel * 0.2; // 20%, 40%, 60%躲避几率
+                    if(Math.random() > dodgeChance) {
+                        // 真正击中KCM
+                        score++;
+                        KCM.health -= 10;
+                        updateDisplay();
+                        
+                        // 创建击中效果
+                        createHitEffect(bullet.x, bullet.y);
+                        createParticleEffect(bullet.x, bullet.y, 10, '#ff5500');
+                        
+                        // 显示KCM说话
+                        if(Math.random() < 0.3) {
+                            showSpeech(hitPhrases);
+                        }
+                        
+                        // 如果KCM生命值耗尽，重置位置和生命值
+                        if(KCM.health <= 0) {
+                            KCM.x = Math.random() * (canvas.width - 100) + 50;
+                            KCM.y = Math.random() * (canvas.height - 100) + 50;
+                            KCM.health = KCM.maxHealth;
+                        }
+                    } else {
+                        // KCM成功躲避
+                        createDodgeEffect(bullet.x, bullet.y);
+                        if(Math.random() < 0.3) {
+                            showSpeech(dodgePhrases);
+                        }
+                    }
+                    
+                    bullets.splice(i, 1);
+                }
+            }
+            
+            // 如果鼠标按下且弹药足够，自动射击
+            if(isMouseDown && isPlaying && player.ammo > 0) {
+                const now = Date.now();
+                if(now - player.lastShot > player.shotCooldown) {
+                    shootBullet();
+                    player.lastShot = now;
+                }
+            }
+        }
+
+        function updatePotatoes() {
+            // 更新土豆位置
+            for(let i = potatoes.length - 1; i >= 0; i--) {
+                const potato = potatoes[i];
+                potato.x += potato.vx;
+                potato.y += potato.vy;
+                potato.life--;
+                
+                // 检查土豆是否出界
+                if(potato.x < 0 || potato.x > canvas.width || 
+                   potato.y < 0 || potato.y > canvas.height || 
+                   potato.life <= 0) {
+                    potatoes.splice(i, 1);
+                    continue;
+                }
+                
+                // 检查土豆是否击中玩家
+                if(checkPotatoCollision(potato, player)) {
+                    // 土豆击中玩家，但没有伤害，只是效果
+                    player.hitByPotato = true;
+                    player.potatoHitTime = Date.now();
+                    
+                    // 创建土豆击中效果
+                    createPotatoHitEffect(potato.x, potato.y);
+                    
+                    potatoes.splice(i, 1);
+                }
+            }
+        }
+
+        function updatePlayerHitEffect() {
+            if(player.hitByPotato) {
+                const now = Date.now();
+                if(now - player.potatoHitTime > 1000) { // 1秒效果
+                    player.hitByPotato = false;
+                }
+            }
+        }
+
+        function shootBullet() {
+            if(player.ammo <= 0) return;
+            
+            // 消耗弹药
+            player.ammo--;
+            updateAmmoDisplay();
+            
+            // 计算射击方向
+            const dx = mouseX - player.x;
+            const dy = mouseY - player.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            // 添加随机散布（模拟后坐力）
+            const spread = 0.05;
+            const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * spread;
+            const speed = 15;
+            
+            // 创建子弹
+            bullets.push({
+                x: player.x + Math.cos(angle) * player.radius,
+                y: player.y + Math.sin(angle) * player.radius,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 100,
+                color: '#ff9a00'
+            });
+            
+            // 创建枪口闪光
+            createMuzzleFlash(player.x, player.y, angle);
+            
+            // 创建射击粒子效果
+            createParticleEffect(
+                player.x + Math.cos(angle) * player.radius, 
+                player.y + Math.sin(angle) * player.radius, 
+                3, 
+                '#ff9a00'
+            );
+        }
+
+        function shootPotato() {
+            const now = Date.now();
+            if(now - KCM.lastPotatoShot < KCM.potatoShotCooldown) return;
+            
+            KCM.lastPotatoShot = now;
+            
+            // 计算土豆发射方向（朝向玩家）
+            const dx = player.x - KCM.x;
+            const dy = player.y - KCM.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            if(distance === 0) return;
+            
+            const angle = Math.atan2(dy, dx);
+            const speed = 3 + Math.random() * 2; // 土豆速度较慢
+            
+            // 添加一些随机偏差
+            const deviation = 0.3;
+            const finalAngle = angle + (Math.random() - 0.5) * deviation;
+            
+            // 创建土豆
+            potatoes.push({
+                x: KCM.x + Math.cos(finalAngle) * KCM.radius,
+                y: KCM.y + Math.sin(finalAngle) * KCM.radius,
+                vx: Math.cos(finalAngle) * speed,
+                vy: Math.sin(finalAngle) * speed,
+                life: 200, // 土豆存在时间
+                rotation: 0,
+                rotationSpeed: (Math.random() - 0.5) * 0.1,
+                size: 12 + Math.random() * 6
+            });
+            
+            // 创建土豆发射效果
+            createParticleEffect(
+                KCM.x + Math.cos(finalAngle) * KCM.radius,
+                KCM.y + Math.sin(finalAngle) * KCM.radius,
+                5,
+                '#8B4513'
+            );
+        }
+
+        function createMuzzleFlash(x, y, angle) {
+            const flashX = x + Math.cos(angle) * (player.radius + 5);
+            const flashY = y + Math.sin(angle) * (player.radius + 5);
+            
+            // 创建枪口闪光效果
+            for(let i = 0; i < 5; i++) {
+                const flashAngle = angle + (Math.random() - 0.5) * 0.5;
+                const flashDistance = 5 + Math.random() * 10;
+                const flashSize = 3 + Math.random() * 4;
+                
+                particles.push({
+                    x: flashX,
+                    y: flashY,
+                    vx: Math.cos(flashAngle) * 5,
+                    vy: Math.sin(flashAngle) * 5,
+                    color: '#ffcc00',
+                    life: 0.5,
+                    decay: 0.1,
+                    radius: flashSize
+                });
+            }
+        }
+
+        function createHitEffect(x, y) {
+            // 创建击中KCM的效果
+            for(let i = 0; i < 8; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2 + Math.random() * 3;
+                const size = 2 + Math.random() * 3;
+                
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    color: '#ff5500',
+                    life: 1.0,
+                    decay: 0.05 + Math.random() * 0.05,
+                    radius: size
+                });
+            }
+        }
+
+        function createDodgeEffect(x, y) {
+            // 创建躲避效果
+            for(let i = 0; i < 6; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 1 + Math.random() * 2;
+                const size = 2 + Math.random() * 3;
+                
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    color: '#4a69bd',
+                    life: 0.8,
+                    decay: 0.05 + Math.random() * 0.05,
+                    radius: size
+                });
+            }
+        }
+
+        function createPotatoHitEffect(x, y) {
+            // 创建土豆击中玩家的效果
+            for(let i = 0; i < 10; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 1 + Math.random() * 2;
+                const size = 3 + Math.random() * 4;
+                
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    color: '#8B4513',
+                    life: 1.0,
+                    decay: 0.05 + Math.random() * 0.05,
+                    radius: size
+                });
+            }
+        }
+
+        function checkBulletCollision(bullet, target) {
+            const dx = bullet.x - target.x;
+            const dy = bullet.y - target.y;
+            return Math.sqrt(dx*dx + dy*dy) < target.radius + 3;
+        }
+
+        function checkPotatoCollision(potato, target) {
+            const dx = potato.x - target.x;
+            const dy = potato.y - target.y;
+            return Math.sqrt(dx*dx + dy*dy) < target.radius + potato.size/2;
+        }
+
+        function KCMAI() {
+            const now = Date.now();
+            
+            // 更新移动模式计时器
+            KCM.movePatternTimer++;
+            if(KCM.movePatternTimer > 100) {
+                KCM.movePattern = Math.floor(Math.random() * 3);
+                KCM.movePatternTimer = 0;
+            }
+            
+            // 检查是否需要躲避子弹
+            let shouldDodge = false;
+            let dodgeX = 0, dodgeY = 0;
+            
+            // 检查最近的子弹
+            for(const bullet of bullets) {
+                const dx = bullet.x - KCM.x;
+                const dy = bullet.y - KCM.y;
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                const timeToHit = distance / Math.sqrt(bullet.vx*bullet.vx + bullet.vy*bullet.vy);
+                
+                // 如果子弹在2秒内会击中KCM，尝试躲避
+                if(timeToHit < 2 && distance < 300) {
+                    shouldDodge = true;
+                    
+                    // 计算子弹方向
+                    const bulletAngle = Math.atan2(bullet.vy, bullet.vx);
+                    
+                    // 计算躲避方向（垂直于子弹方向）
+                    const dodgeAngle = bulletAngle + (Math.random() > 0.5 ? Math.PI/2 : -Math.PI/2);
+                    
+                    dodgeX = Math.cos(dodgeAngle);
+                    dodgeY = Math.sin(dodgeAngle);
+                    
+                    // 显示躲避指示器
+                    dodgeIndicator.x = KCM.x + dodgeX * 30;
+                    dodgeIndicator.y = KCM.y + dodgeY * 30;
+                    dodgeIndicator.visible = true;
+                    dodgeIndicator.timer = 10;
+                    
+                    break;
+                }
+            }
+            
+            // 执行躲避或正常移动
+            if(shouldDodge && now - KCM.lastDodgeTime > KCM.dodgeCooldownTime) {
+                // 躲避子弹
+                KCM.x += dodgeX * KCMSpeed * 1.5;
+                KCM.y += dodgeY * KCMSpeed * 1.5;
+                KCM.lastDodgeTime = now;
+                
+                if(Math.random() < 0.1) {
+                    showSpeech(dodgePhrases);
+                }
+            } else {
+                // 正常移动模式
+                switch(KCM.movePattern) {
+                    case 0: // 随机漫步
+                        KCM.x += (Math.random() - 0.5) * KCMSpeed;
+                        KCM.y += (Math.random() - 0.5) * KCMSpeed;
+                        break;
+                    case 1: // 绕圈移动
+                        const circleAngle = KCM.movePatternTimer * 0.1;
+                        KCM.x += Math.cos(circleAngle) * KCMSpeed * 0.5;
+                        KCM.y += Math.sin(circleAngle) * KCMSpeed * 0.5;
+                        break;
+                    case 2: // 接近玩家
+                        const dx = player.x - KCM.x;
+                        const dy = player.y - KCM.y;
+                        const distance = Math.sqrt(dx*dx + dy*dy);
+                        if(distance > 150) {
+                            KCM.x += (dx/distance) * KCMSpeed * 0.7;
+                            KCM.y += (dy/distance) * KCMSpeed * 0.7;
+                        }
+                        break;
+                }
+            }
+            
+            // 确保KCM在画布内
+            KCM.x = Math.max(50, Math.min(canvas.width-50, KCM.x));
+            KCM.y = Math.max(50, Math.min(canvas.height-50, KCM.y));
+            
+            // 偶尔说话
+            if(Math.random() < 0.005) {
+                showSpeech(idlePhrases);
+            }
+            
+            // 发射土豆反击
+            if(Math.random() < 0.02) { // 2%概率每帧发射土豆
+                shootPotato();
+            }
+        }
+
+        function updateDodgeIndicator() {
+            if(dodgeIndicator.timer > 0) {
+                dodgeIndicator.timer--;
+            } else {
+                dodgeIndicator.visible = false;
+            }
+        }
+
+        function regenAmmo() {
+            if(player.ammo < player.maxAmmo) {
+                player.ammo = Math.min(player.maxAmmo, player.ammo + player.ammoRegenRate);
+                updateAmmoDisplay();
+            }
+        }
+
+        function showSpeech(phrases) {
+            const bubble = document.getElementById('KCM-speech');
+            bubble.textContent = phrases[Math.floor(Math.random()*phrases.length)];
+            bubble.style.display = 'block';
+            
+            const bubbleWidth = bubble.offsetWidth;
+            const maxLeft = canvas.width - bubbleWidth - 20;
+            const bubbleX = Math.max(20, Math.min(maxLeft, KCM.x - bubbleWidth/2));
+            
+            bubble.style.left = (canvas.offsetLeft + bubbleX) + 'px';
+            bubble.style.top = (canvas.offsetTop + KCM.y - 40) + 'px';
+            
+            setTimeout(() => {
+                bubble.style.opacity = '0';
+                setTimeout(() => {
+                    bubble.style.display = 'none';
+                    bubble.style.opacity = '1';
+                }, 300);
+            }, 2000);
+        }
+
+        function drawGame() {
+            // 清除画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制背景网格
+            drawGrid();
+            
+            // 绘制粒子
+            drawParticles();
+            
+            // 绘制子弹
+            drawBullets();
+            
+            // 绘制土豆
+            drawPotatoes();
+            
+            // 绘制玩家
+            drawCharacter(player, playerName, true);
+            
+            // 绘制KCM
+            drawCharacter(KCM, 'KCM', false);
+            
+            // 绘制生命条
+            drawHealthBar();
+            
+            // 绘制十字准星
+            if(crosshair.visible) {
+                drawCrosshair();
+            }
+            
+            // 绘制躲避指示器
+            if(dodgeIndicator.visible) {
+                drawDodgeIndicator();
+            }
+        }
+        
+        function drawGrid() {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            
+            // 垂直线
+            for(let x = 0; x < canvas.width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            // 水平线
+            for(let y = 0; y < canvas.height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+        
+        function drawCharacter(character, text, isPlayer) {
+            // 如果是玩家且被土豆击中，添加闪烁效果
+            if(isPlayer && player.hitByPotato) {
+                const flash = Math.sin(Date.now() / 100) > 0;
+                if(!flash) return; // 闪烁效果
+            }
+            
+            // 阴影
+            ctx.beginPath();
+            ctx.arc(character.x, character.y + 3, character.radius, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fill();
+            
+            // 主体
+            ctx.beginPath();
+            ctx.arc(character.x, character.y, character.radius, 0, Math.PI*2);
+            const gradient = ctx.createRadialGradient(
+                character.x - character.radius/3, 
+                character.y - character.radius/3, 
+                0,
+                character.x, 
+                character.y, 
+                character.radius*1.5
+            );
+            
+            if(isPlayer) {
+                gradient.addColorStop(0, '#ff9a00');
+                gradient.addColorStop(1, '#ff5500');
+            } else {
+                gradient.addColorStop(0, '#4a69bd');
+                gradient.addColorStop(1, '#1e3799');
+            }
+            
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // 边框
+            ctx.beginPath();
+            ctx.arc(character.x, character.y, character.radius, 0, Math.PI*2);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = isPlayer ? '#ff7700' : '#0c2461';
+            ctx.stroke();
+            
+            // 如果是玩家，绘制枪管
+            if(isPlayer && crosshair.visible) {
+                const angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+                const barrelLength = player.radius + 10;
+                const barrelEndX = player.x + Math.cos(angle) * barrelLength;
+                const barrelEndY = player.y + Math.sin(angle) * barrelLength;
+                
+                ctx.beginPath();
+                ctx.moveTo(player.x, player.y);
+                ctx.lineTo(barrelEndX, barrelEndY);
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#333';
+                ctx.stroke();
+                
+                // 枪口
+                ctx.beginPath();
+                ctx.arc(barrelEndX, barrelEndY, 3, 0, Math.PI*2);
+                ctx.fillStyle = '#666';
+                ctx.fill();
+            }
+            
+            // 文本
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, character.x, character.y);
+        }
+        
+        function drawBullets() {
+            for(const bullet of bullets) {
+                // 子弹尾迹
+                ctx.beginPath();
+                ctx.moveTo(bullet.x, bullet.y);
+                ctx.lineTo(bullet.x - bullet.vx * 0.3, bullet.y - bullet.vy * 0.3);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'rgba(255, 154, 0, 0.7)';
+                ctx.stroke();
+                
+                // 子弹主体
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI*2);
+                ctx.fillStyle = bullet.color;
+                ctx.fill();
+                
+                // 子弹发光效果
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 5, 0, Math.PI*2);
+                const glowGradient = ctx.createRadialGradient(
+                    bullet.x, bullet.y, 0,
+                    bullet.x, bullet.y, 5
+                );
+                glowGradient.addColorStop(0, 'rgba(255, 154, 0, 0.8)');
+                glowGradient.addColorStop(1, 'rgba(255, 154, 0, 0)');
+                ctx.fillStyle = glowGradient;
+                ctx.fill();
+            }
+        }
+        
+        function drawPotatoes() {
+            for(const potato of potatoes) {
+                // 更新土豆旋转
+                potato.rotation += potato.rotationSpeed;
+                
+                // 保存画布状态
+                ctx.save();
+                
+                // 移动到土豆位置并旋转
+                ctx.translate(potato.x, potato.y);
+                ctx.rotate(potato.rotation);
+                
+                // 绘制土豆（椭圆形）
+                ctx.beginPath();
+                ctx.ellipse(0, 0, potato.size, potato.size * 0.7, 0, 0, Math.PI * 2);
+                
+                // 土豆渐变颜色
+                const potatoGradient = ctx.createRadialGradient(
+                    0, 0, 0,
+                    0, 0, potato.size
+                );
+                potatoGradient.addColorStop(0, '#DEB887');
+                potatoGradient.addColorStop(1, '#8B4513');
+                
+                ctx.fillStyle = potatoGradient;
+                ctx.fill();
+                
+                // 土豆斑点
+                ctx.fillStyle = '#A0522D';
+                for(let i = 0; i < 5; i++) {
+                    const spotX = (Math.random() - 0.5) * potato.size * 0.8;
+                    const spotY = (Math.random() - 0.5) * potato.size * 0.6;
+                    const spotSize = potato.size * 0.2;
+                    
+                    ctx.beginPath();
+                    ctx.arc(spotX, spotY, spotSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // 土豆阴影
+                ctx.beginPath();
+                ctx.ellipse(2, 2, potato.size, potato.size * 0.7, 0, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.fill();
+                
+                // 恢复画布状态
+                ctx.restore();
+                
+                // 土豆轨迹
+                ctx.beginPath();
+                ctx.moveTo(potato.x, potato.y);
+                ctx.lineTo(potato.x - potato.vx * 2, potato.y - potato.vy * 2);
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = 'rgba(139, 69, 19, 0.3)';
+                ctx.stroke();
+            }
+        }
+        
+        function drawHealthBar() {
+            // KCM生命条背景
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(KCM.x - 30, KCM.y - 40, 60, 8);
+            
+            // KCM生命条填充
+            const healthPercent = KCM.health / KCM.maxHealth;
+            ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : 
+                           healthPercent > 0.25 ? '#ffff00' : '#ff0000';
+            ctx.fillRect(KCM.x - 30, KCM.y - 40, 60 * healthPercent, 8);
+            
+            // 生命条边框
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(KCM.x - 30, KCM.y - 40, 60, 8);
+            
+            // 显示躲避等级
+            ctx.fillStyle = '#ff9a00';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`躲避Lv.${KCM.dodgeLevel}`, KCM.x, KCM.y - 50);
+        }
+        
+        function drawCrosshair() {
+            const size = 10;
+            const thickness = 2;
+            
+            ctx.strokeStyle = player.hitByPotato ? '#8B4513' : '#ff5500';
+            ctx.lineWidth = thickness;
+            
+            // 水平线
+            ctx.beginPath();
+            ctx.moveTo(mouseX - size, mouseY);
+            ctx.lineTo(mouseX + size, mouseY);
+            ctx.stroke();
+            
+            // 垂直线
+            ctx.beginPath();
+            ctx.moveTo(mouseX, mouseY - size);
+            ctx.lineTo(mouseX, mouseY + size);
+            ctx.stroke();
+            
+            // 中心点
+            ctx.beginPath();
+            ctx.arc(mouseX, mouseY, 2, 0, Math.PI*2);
+            ctx.fillStyle = player.hitByPotato ? '#8B4513' : '#ff5500';
+            ctx.fill();
+            
+            // 如果被土豆击中，显示特殊效果
+            if(player.hitByPotato) {
+                ctx.beginPath();
+                ctx.arc(mouseX, mouseY, 5, 0, Math.PI*2);
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+        
+        function drawDodgeIndicator() {
+            ctx.strokeStyle = '#ff9a00';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 3]);
+            
+            ctx.beginPath();
+            ctx.arc(dodgeIndicator.x, dodgeIndicator.y, 15, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+            
+            // 箭头指示躲避方向
+            const arrowX = dodgeIndicator.x;
+            const arrowY = dodgeIndicator.y;
+            
+            ctx.fillStyle = '#ff9a00';
+            ctx.beginPath();
+            ctx.moveTo(arrowX, arrowY - 8);
+            ctx.lineTo(arrowX + 5, arrowY);
+            ctx.lineTo(arrowX, arrowY + 8);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        function createParticleEffect(x, y, count, color) {
+            for(let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    color: color,
+                    life: 1.0,
+                    decay: 0.02 + Math.random() * 0.03,
+                    radius: 3 + Math.random() * 5
+                });
+            }
+        }
+        
+        function updateParticles() {
+            for(let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= p.decay;
+                
+                if(p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+        
+        function drawParticles() {
+            for(const p of particles) {
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
+                
+                // 粒子发光效果
+                const gradient = ctx.createRadialGradient(
+                    p.x, p.y, 0,
+                    p.x, p.y, p.radius
+                );
+                gradient.addColorStop(0, p.color);
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
+        }
+
+        function endGame() {
+            clearIntervals();
+            
+            leaderboard.push({
+                name: playerName,
+                speed: KCMSpeed,
+                score: score,
+                time: 60-timeLeft
+            });
+            
+            leaderboard.sort((a,b) => 
+                b.speed - a.speed || 
+                b.score - a.score || 
+                a.time - b.time || 
+                a.name.localeCompare(b.name));
+            
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            updateLeaderboard();
+            
+            // 游戏结束效果
+            createParticleEffect(canvas.width/2, canvas.height/2, 30, '#ff5500');
+            
+            setTimeout(() => {
+                alert(`游戏结束！\n玩家: ${playerName}\n得分: ${score}\n速度: ${KCMSpeed}x\nKCM躲避等级: ${KCM.dodgeLevel}`);
+                initGame();
+            }, 500);
+        }
+
+        function updateLeaderboard() {
+            const table = document.getElementById('score-table');
+            table.innerHTML = leaderboard.slice(0,10).map((entry,i) => {
+                let rankClass = '';
+                if(i === 0) rankClass = 'rank-1';
+                else if(i === 1) rankClass = 'rank-2';
+                else if(i === 2) rankClass = 'rank-3';
+                
+                return `<tr>
+                    <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
+                    <td>${entry.name}</td>
+                    <td>${entry.speed}x</td>
+                    <td>${entry.score}</td>
+                    <td>${entry.time}s</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function updateDifficultyIndicator() {
+            const dots = document.querySelectorAll('.difficulty-dot');
+            dots.forEach((dot, index) => {
+                if(index < KCM.dodgeLevel) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        function resetPositions() {
+            player.x = 100; player.y = 250;
+            player.ammo = player.maxAmmo;
+            player.isShooting = false;
+            player.hitByPotato = false;
+            
+            KCM.x = 600; KCM.y = 250;
+            KCM.health = KCM.maxHealth;
+            KCM.dodgeCooldown = 0;
+            KCM.movePattern = 0;
+            KCM.movePatternTimer = 0;
+            
+            timeLeft = 60; 
+            score = 0;
+            bullets = [];
+            potatoes = [];
+            particles = [];
+            dodgeIndicator.visible = false;
+        }
+
+        function clearIntervals() {
+            clearInterval(gameInterval);
+            clearInterval(timerInterval);
+        }
+
+        function updateDisplay() {
+            document.getElementById('timer').textContent = timeLeft;
+            document.getElementById('score').textContent = score;
+            
+            // 时间警告
+            if(timeLeft <= 10) {
+                document.getElementById('timer').style.color = '#ff6b6b';
+            } else {
+                document.getElementById('timer').style.color = 'white';
+            }
+        }
+        
+        function updateAmmoDisplay() {
+            document.getElementById('ammo').textContent = Math.floor(player.ammo);
+            const ammoPercent = (player.ammo / player.maxAmmo) * 100;
+            document.getElementById('ammo-fill').style.width = ammoPercent + '%';
+            
+            // 弹药警告
+            if(player.ammo < 20) {
+                document.getElementById('ammo-fill').style.background = 'linear-gradient(to right, #ff0000, #ff5500)';
+            } else if(player.ammo < 50) {
+                document.getElementById('ammo-fill').style.background = 'linear-gradient(to right, #ffff00, #ffaa00)';
+            } else {
+                document.getElementById('ammo-fill').style.background = 'linear-gradient(to right, #00ff00, #ffaa00)';
+            }
+        }
+
+        // 事件监听
+        document.getElementById('speed-slider').addEventListener('input', e => {
+            KCMSpeed = parseInt(e.target.value);
+            document.getElementById('speed-value').textContent = KCMSpeed + 'x';
+        });
+        
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('game-control-btn').addEventListener('click', function() {
+            if(!isPlaying) {
+                document.getElementById('name-modal').style.display = 'flex';
+            } else {
+                endGame();
+            }
+        });
+        
+        // 按Enter键也可以开始游戏
+        document.getElementById('player-name').addEventListener('keypress', function(e) {
+            if(e.key === 'Enter') {
+                startGame();
+            }
+        });
+
+        // 键盘控制
+        const keys = {};
+        document.addEventListener('keydown', e => {
+            keys[e.key.toLowerCase()] = true;
+        });
+        document.addEventListener('keyup', e => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // 鼠标控制
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        });
+        
+        canvas.addEventListener('mousedown', (e) => {
+            isMouseDown = true;
+            
+            // 点击射击
+            if(isPlaying && player.ammo > 0) {
+                const now = Date.now();
+                if(now - lastMouseClick > clickCooldown) {
+                    shootBullet();
+                    lastMouseClick = now;
+                }
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            isMouseDown = false;
+        });
+
+        function handleControls() {
+            const speed = 8;
+            if(keys['a'] || keys['arrowleft']) player.x -= speed;
+            if(keys['d'] || keys['arrowright']) player.x += speed;
+            if(keys['w'] || keys['arrowup']) player.y -= speed;
+            if(keys['s'] || keys['arrowdown']) player.y += speed;
+            
+            player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+            player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+        }
+
+        // 初始化游戏
+        initGame();
+        updateLeaderboard();
+        updateAmmoDisplay();
+        
+        // 添加一些初始粒子效果
+        setTimeout(() => {
+            createParticleEffect(100, 250, 10, player.color);
+            createParticleEffect(600, 250, 10, KCM.color);
+        }, 500);
+    </script>
+</body>
+</html>
