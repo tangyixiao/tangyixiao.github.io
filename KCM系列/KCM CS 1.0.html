@@ -230,12 +230,89 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+        }
+        
+        #startScreen h1 {
+            color: #ffcc00;
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+        }
+        
+        #startScreen p {
+            color: #fff;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            max-width: 600px;
+            text-align: center;
+            line-height: 1.6;
+        }
+        
+        #startBtn {
+            background-color: #ffcc00;
+            color: #000;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        
+        #startBtn:hover {
+            background-color: #ffdd33;
+        }
+        
+        #controls {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            max-width: 500px;
+        }
+        
+        #controls h3 {
+            color: #33aaff;
+            margin-bottom: 15px;
+        }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
 </head>
 <body>
     <div id="gameContainer">
+        <div id="startScreen">
+            <h1>CS2简化版</h1>
+            <p>玩家 vs 人机KCM</p>
+            <div id="controls">
+                <h3>操作说明</h3>
+                <ul>
+                    <li><strong>WASD</strong>: 前后左右移动</li>
+                    <li><strong>鼠标</strong>: 视角控制</li>
+                    <li><strong>左键点击</strong>: 射击/攻击</li>
+                    <li><strong>R键</strong>: 换弹</li>
+                    <li><strong>1-5键</strong>: 切换武器</li>
+                    <li><strong>空格键</strong>: 跳跃</li>
+                    <li><strong>ESC键</strong>: 退出指针锁定</li>
+                </ul>
+                <p><strong>目标</strong>: 击败人机KCM！</p>
+            </div>
+            <button id="startBtn">开始游戏</button>
+        </div>
+        
         <div id="ui">
             <div class="hud top-hud">
                 <div class="health">生命值: <span id="healthValue">100</span></div>
@@ -257,17 +334,10 @@
             </div>
             
             <div class="instructions">
-                <h3>操作说明</h3>
-                <ul>
-                    <li>WASD: 移动</li>
-                    <li>鼠标: 视角控制</li>
-                    <li>左键: 射击/攻击</li>
-                    <li>R: 换弹</li>
-                    <li>1-5: 切换武器</li>
-                    <li>空格: 跳跃</li>
-                    <li>ESC: 退出指针锁定</li>
-                </ul>
-                <p>目标: 击败人机KCM (生命值: <span id="kcmHealth">100</span>)</p>
+                <h3>游戏状态</h3>
+                <p>人机KCM生命值: <span id="kcmHealth">100</span></p>
+                <p>当前武器: <span id="currentWeaponName">手枪</span></p>
+                <p>按下ESC可退出指针锁定模式</p>
             </div>
             
             <div id="message" class="message">
@@ -277,12 +347,212 @@
             </div>
         </div>
         
-        <div id="loading">
+        <div id="loading" style="display: none;">
             <div class="loading-spinner"></div>
             <p>加载游戏中...</p>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        // PointerLockControls 实现
+        class PointerLockControls {
+            constructor(camera, domElement) {
+                this.camera = camera;
+                this.domElement = domElement || document.body;
+                this.isLocked = false;
+                
+                // 欧拉角
+                this.euler = new THREE.Euler(0, 0, 0, 'YXZ');
+                
+                // 移动速度
+                this.moveSpeed = 5.0;
+                this.lookSpeed = 0.002;
+                
+                // 移动状态
+                this.moveForward = false;
+                this.moveBackward = false;
+                this.moveLeft = false;
+                this.moveRight = false;
+                
+                // 初始化
+                this.init();
+            }
+            
+            init() {
+                // 添加事件监听器
+                document.addEventListener('mousemove', this.onMouseMove.bind(this), false);
+                document.addEventListener('pointerlockchange', this.onPointerLockChange.bind(this), false);
+                document.addEventListener('mozpointerlockchange', this.onPointerLockChange.bind(this), false);
+                
+                // 键盘事件
+                document.addEventListener('keydown', this.onKeyDown.bind(this), false);
+                document.addEventListener('keyup', this.onKeyUp.bind(this), false);
+                
+                // 点击锁定
+                this.domElement.addEventListener('click', () => {
+                    if (!this.isLocked) {
+                        this.lock();
+                    }
+                });
+            }
+            
+            onMouseMove(event) {
+                if (!this.isLocked) return;
+                
+                const movementX = event.movementX || event.mozMovementX || 0;
+                const movementY = event.movementY || event.mozMovementY || 0;
+                
+                // 更新欧拉角
+                this.euler.setFromQuaternion(this.camera.quaternion);
+                
+                // 绕Y轴旋转（左右看）
+                this.euler.y -= movementX * this.lookSpeed;
+                
+                // 绕X轴旋转（上下看）
+                this.euler.x -= movementY * this.lookSpeed;
+                
+                // 限制垂直视角范围（-85度到85度）
+                this.euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.euler.x));
+                
+                // 应用旋转
+                this.camera.quaternion.setFromEuler(this.euler);
+            }
+            
+            onPointerLockChange() {
+                this.isLocked = (
+                    document.pointerLockElement === this.domElement ||
+                    document.mozPointerLockElement === this.domElement
+                );
+                
+                if (this.isLocked) {
+                    this.dispatchEvent({ type: 'lock' });
+                } else {
+                    this.dispatchEvent({ type: 'unlock' });
+                }
+            }
+            
+            onKeyDown(event) {
+                if (!this.isLocked) return;
+                
+                switch (event.code) {
+                    case 'KeyW':
+                        this.moveForward = true;
+                        break;
+                    case 'KeyA':
+                        this.moveLeft = true;
+                        break;
+                    case 'KeyS':
+                        this.moveBackward = true;
+                        break;
+                    case 'KeyD':
+                        this.moveRight = true;
+                        break;
+                }
+            }
+            
+            onKeyUp(event) {
+                switch (event.code) {
+                    case 'KeyW':
+                        this.moveForward = false;
+                        break;
+                    case 'KeyA':
+                        this.moveLeft = false;
+                        break;
+                    case 'KeyS':
+                        this.moveBackward = false;
+                        break;
+                    case 'KeyD':
+                        this.moveRight = false;
+                        break;
+                }
+            }
+            
+            lock() {
+                this.domElement.requestPointerLock = this.domElement.requestPointerLock || this.domElement.mozRequestPointerLock;
+                this.domElement.requestPointerLock();
+            }
+            
+            unlock() {
+                document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
+                document.exitPointerLock();
+            }
+            
+            getObject() {
+                return this.camera;
+            }
+            
+            getDirection() {
+                const direction = new THREE.Vector3(0, 0, -1);
+                direction.applyQuaternion(this.camera.quaternion);
+                return direction;
+            }
+            
+            update(delta) {
+                if (!this.isLocked) return;
+                
+                const velocity = new THREE.Vector3();
+                const direction = new THREE.Vector3();
+                
+                // 计算移动方向
+                if (this.moveForward) direction.z -= 1;
+                if (this.moveBackward) direction.z += 1;
+                if (this.moveLeft) direction.x -= 1;
+                if (this.moveRight) direction.x += 1;
+                
+                // 标准化方向向量
+                if (direction.lengthSq() > 0) {
+                    direction.normalize();
+                }
+                
+                // 根据相机方向计算移动
+                const forward = new THREE.Vector3(0, 0, -1);
+                const right = new THREE.Vector3(1, 0, 0);
+                
+                forward.applyQuaternion(this.camera.quaternion);
+                right.applyQuaternion(this.camera.quaternion);
+                
+                forward.y = 0;
+                right.y = 0;
+                forward.normalize();
+                right.normalize();
+                
+                // 计算最终速度
+                velocity.add(forward.multiplyScalar(-direction.z * this.moveSpeed * delta));
+                velocity.add(right.multiplyScalar(direction.x * this.moveSpeed * delta));
+                
+                // 应用移动
+                this.camera.position.add(velocity);
+            }
+            
+            // 添加事件监听支持
+            _listeners = {};
+            
+            addEventListener(type, listener) {
+                if (!this._listeners[type]) {
+                    this._listeners[type] = [];
+                }
+                this._listeners[type].push(listener);
+            }
+            
+            removeEventListener(type, listener) {
+                if (!this._listeners[type]) return;
+                const index = this._listeners[type].indexOf(listener);
+                if (index !== -1) {
+                    this._listeners[type].splice(index, 1);
+                }
+            }
+            
+            dispatchEvent(event) {
+                if (!this._listeners[event.type]) return;
+                for (const listener of this._listeners[event.type]) {
+                    listener(event);
+                }
+            }
+        }
+    </script>
+    
     <script>
         // 游戏主逻辑
         document.addEventListener('DOMContentLoaded', function() {
@@ -290,10 +560,8 @@
             let scene, renderer, camera, controls;
             let objects = [];
             let player, kcm;
-            let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-            let canJump = false;
             let velocity = new THREE.Vector3();
-            let direction = new THREE.Vector3();
+            let canJump = false;
             let prevTime = performance.now();
             
             // 游戏状态
@@ -315,25 +583,37 @@
             
             // 武器属性
             const weapons = {
-                pistol: { damage: 15, range: 50, fireRate: 500 },
-                rifle: { damage: 20, range: 100, fireRate: 100 },
-                shotgun: { damage: 40, range: 20, fireRate: 1000 },
-                sniper: { damage: 80, range: 200, fireRate: 1500 },
-                knife: { damage: 50, range: 3, fireRate: 500 }
+                pistol: { name: "手枪", damage: 15, range: 50, fireRate: 500 },
+                rifle: { name: "步枪", damage: 20, range: 100, fireRate: 100 },
+                shotgun: { name: "霰弹枪", damage: 40, range: 20, fireRate: 1000 },
+                sniper: { name: "狙击枪", damage: 80, range: 200, fireRate: 1500 },
+                knife: { name: "匕首", damage: 50, range: 3, fireRate: 500 }
             };
             
             let canShoot = true;
             let shootCooldown = false;
             
-            // 初始化Three.js场景
-            function init() {
+            // 开始游戏按钮
+            document.getElementById('startBtn').addEventListener('click', startGame);
+            
+            // 开始游戏函数
+            function startGame() {
+                document.getElementById('startScreen').style.display = 'none';
+                document.getElementById('loading').style.display = 'flex';
+                
+                // 初始化游戏
+                initGame();
+            }
+            
+            // 初始化游戏
+            function initGame() {
                 // 创建场景
                 scene = new THREE.Scene();
                 scene.fog = new THREE.Fog(0x222222, 1, 300);
                 
                 // 创建相机
                 camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-                camera.position.y = 10;
+                camera.position.set(0, 10, 0);
                 
                 // 创建渲染器
                 renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -378,25 +658,27 @@
                 // 创建人机KCM
                 createKCM();
                 
-                // 初始化指针锁定控制
-                controls = new THREE.PointerLockControls(camera, document.body);
-                scene.add(controls.getObject());
+                // 创建PointerLockControls
+                controls = new PointerLockControls(camera, renderer.domElement);
                 
-                // 添加事件监听器
-                document.addEventListener('click', () => {
-                    if (!gameState.gameOver) {
-                        controls.lock();
-                    }
-                });
-                
+                // 添加事件监听
                 controls.addEventListener('lock', () => {
                     document.getElementById('loading').style.display = 'none';
                 });
                 
                 controls.addEventListener('unlock', () => {
-                    // 解锁时不执行任何操作
+                    if (!gameState.gameOver) {
+                        document.getElementById('startScreen').style.display = 'flex';
+                    }
                 });
                 
+                // 隐藏加载界面
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                    controls.lock();
+                }, 500);
+                
+                // 添加事件监听器
                 document.addEventListener('keydown', onKeyDown);
                 document.addEventListener('keyup', onKeyUp);
                 document.addEventListener('mousedown', onMouseDown);
@@ -420,10 +702,8 @@
                 // 窗口大小调整
                 window.addEventListener('resize', onWindowResize);
                 
-                // 隐藏加载界面
-                setTimeout(() => {
-                    document.getElementById('loading').style.display = 'none';
-                }, 1000);
+                // 更新HUD
+                updateHUD();
                 
                 // 开始游戏循环
                 animate();
@@ -483,7 +763,7 @@
             // 创建玩家
             function createPlayer() {
                 // 玩家由相机表示，这里只添加一个视觉表示
-                const playerGeometry = new THREE.CapsuleGeometry(2, 4, 4, 8);
+                const playerGeometry = new THREE.SphereGeometry(2, 16, 16);
                 const playerMaterial = new THREE.MeshPhongMaterial({ color: 0x0000ff });
                 player = new THREE.Mesh(playerGeometry, playerMaterial);
                 player.position.y = 10;
@@ -492,7 +772,7 @@
             
             // 创建人机KCM
             function createKCM() {
-                const kcmGeometry = new THREE.CapsuleGeometry(2, 4, 4, 8);
+                const kcmGeometry = new THREE.SphereGeometry(2, 16, 16);
                 const kcmMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
                 kcm = new THREE.Mesh(kcmGeometry, kcmMaterial);
                 kcm.position.set(50, 2, 50);
@@ -503,6 +783,7 @@
             // 切换武器
             function switchWeapon(weaponType) {
                 gameState.currentWeapon = weaponType;
+                document.getElementById('currentWeaponName').textContent = weapons[weaponType].name;
                 updateAmmoDisplay();
             }
             
@@ -524,7 +805,7 @@
             
             // 射击
             function shoot() {
-                if (gameState.gameOver || !canShoot || shootCooldown) return;
+                if (gameState.gameOver || !canShoot || shootCooldown || !controls.isLocked) return;
                 
                 const weapon = gameState.currentWeapon;
                 const ammo = gameState.ammo[weapon];
@@ -546,7 +827,9 @@
                 
                 // 创建射线检测是否命中
                 const raycaster = new THREE.Raycaster();
-                raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+                
+                // 从相机位置向前发射射线
+                raycaster.set(camera.position, controls.getDirection());
                 
                 const intersects = raycaster.intersectObjects(objects, true);
                 
@@ -577,6 +860,9 @@
                         
                         // 更新HUD
                         updateHUD();
+                        
+                        // 创建命中效果
+                        createHitEffect(intersects[0].point);
                     }
                 }
                 
@@ -587,12 +873,29 @@
             // 创建枪口闪光
             function createMuzzleFlash() {
                 const flashLight = new THREE.PointLight(0xffff00, 2, 10);
-                flashLight.position.set(0, 0, -5);
-                camera.add(flashLight);
+                
+                // 将闪光灯放在相机前方
+                const direction = controls.getDirection().clone();
+                flashLight.position.copy(camera.position).add(direction.multiplyScalar(5));
+                
+                scene.add(flashLight);
                 
                 setTimeout(() => {
-                    camera.remove(flashLight);
+                    scene.remove(flashLight);
                 }, 50);
+            }
+            
+            // 创建命中效果
+            function createHitEffect(position) {
+                const hitGeometry = new THREE.SphereGeometry(0.5, 8, 8);
+                const hitMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                const hitEffect = new THREE.Mesh(hitGeometry, hitMaterial);
+                hitEffect.position.copy(position);
+                scene.add(hitEffect);
+                
+                setTimeout(() => {
+                    scene.remove(hitEffect);
+                }, 200);
             }
             
             // KCM AI
@@ -617,11 +920,11 @@
                 kcm.position.z = Math.max(-90, Math.min(90, kcm.position.z));
                 
                 // 随机射击
-                if (Math.random() < 0.01) { // 1%概率每帧射击
+                if (Math.random() < 0.005) { // 0.5%概率每帧射击
                     kcmShoot();
                 }
                 
-                // 更新KCM朝向
+                // 更新KCM朝向玩家
                 kcm.lookAt(playerPos);
             }
             
@@ -692,8 +995,9 @@
                 // 重置KCM位置
                 kcm.position.set(50, 2, 50);
                 
-                // 重置玩家位置
+                // 重置相机位置
                 camera.position.set(0, 10, 0);
+                camera.rotation.set(0, 0, 0);
                 
                 // 隐藏消息
                 document.getElementById('message').style.display = 'none';
@@ -704,6 +1008,7 @@
                 // 重置武器选择
                 document.querySelectorAll('.weapon').forEach(w => w.classList.remove('selected'));
                 document.querySelector('.weapon[data-weapon="pistol"]').classList.add('selected');
+                document.getElementById('currentWeaponName').textContent = "手枪";
                 
                 // 重新锁定指针
                 controls.lock();
@@ -711,18 +1016,20 @@
             
             // 键盘按下事件
             function onKeyDown(event) {
+                if (!controls.isLocked) return;
+                
                 switch (event.code) {
                     case 'KeyW':
-                        moveForward = true;
+                        controls.moveForward = true;
                         break;
                     case 'KeyA':
-                        moveLeft = true;
+                        controls.moveLeft = true;
                         break;
                     case 'KeyS':
-                        moveBackward = true;
+                        controls.moveBackward = true;
                         break;
                     case 'KeyD':
-                        moveRight = true;
+                        controls.moveRight = true;
                         break;
                     case 'Space':
                         if (canJump) {
@@ -763,18 +1070,20 @@
             
             // 键盘释放事件
             function onKeyUp(event) {
+                if (!controls.isLocked) return;
+                
                 switch (event.code) {
                     case 'KeyW':
-                        moveForward = false;
+                        controls.moveForward = false;
                         break;
                     case 'KeyA':
-                        moveLeft = false;
+                        controls.moveLeft = false;
                         break;
                     case 'KeyS':
-                        moveBackward = false;
+                        controls.moveBackward = false;
                         break;
                     case 'KeyD':
-                        moveRight = false;
+                        controls.moveRight = false;
                         break;
                 }
             }
@@ -788,14 +1097,14 @@
             
             // 换弹
             function reloadWeapon() {
-                if (gameState.gameOver) return;
+                if (gameState.gameOver || !controls.isLocked) return;
                 
                 const weapon = gameState.currentWeapon;
                 const ammo = gameState.ammo[weapon];
                 
-                if (ammo.total <= 0 || ammo.current >= weapons[weapon].fireRate) return;
+                if (ammo.total <= 0 || ammo.current >= 30) return;
                 
-                const needed = weapons[weapon].fireRate - ammo.current;
+                const needed = 30 - ammo.current;
                 const canReload = Math.min(needed, ammo.total);
                 
                 ammo.current += canReload;
@@ -815,37 +1124,31 @@
             function animate() {
                 requestAnimationFrame(animate);
                 
+                const time = performance.now();
+                const delta = (time - prevTime) / 1000;
+                prevTime = time;
+                
                 if (controls.isLocked && !gameState.gameOver) {
-                    const time = performance.now();
-                    const delta = (time - prevTime) / 1000;
-                    
-                    // 玩家移动
-                    velocity.x -= velocity.x * 5.0 * delta;
-                    velocity.z -= velocity.z * 5.0 * delta;
-                    
-                    direction.z = Number(moveForward) - Number(moveBackward);
-                    direction.x = Number(moveRight) - Number(moveLeft);
-                    direction.normalize();
-                    
-                    if (moveForward || moveBackward) velocity.z -= direction.z * 20.0 * delta;
-                    if (moveLeft || moveRight) velocity.x -= direction.x * 20.0 * delta;
+                    // 更新控制器
+                    controls.update(delta);
                     
                     // 应用重力
                     velocity.y -= 9.8 * 15.0 * delta;
-                    
-                    controls.moveRight(-velocity.x * delta);
-                    controls.moveForward(-velocity.z * delta);
-                    
-                    controls.getObject().position.y += velocity.y * delta;
+                    camera.position.y += velocity.y * delta;
                     
                     // 检测玩家是否在地面上
-                    if (controls.getObject().position.y < 10) {
+                    if (camera.position.y < 10) {
                         velocity.y = 0;
-                        controls.getObject().position.y = 10;
+                        camera.position.y = 10;
                         canJump = true;
                     }
                     
-                    prevTime = time;
+                    // 限制玩家在地图范围内
+                    camera.position.x = Math.max(-90, Math.min(90, camera.position.x));
+                    camera.position.z = Math.max(-90, Math.min(90, camera.position.z));
+                    
+                    // 更新玩家模型位置
+                    player.position.copy(camera.position);
                     
                     // 更新KCM AI
                     updateKCM();
@@ -854,8 +1157,7 @@
                 renderer.render(scene, camera);
             }
             
-            // 初始化游戏
-            init();
+            // 初始化HUD
             updateHUD();
         });
     </script>
