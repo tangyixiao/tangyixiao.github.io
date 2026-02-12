@@ -1,246 +1,305 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Phantom Dash - 极致身法</title>
     <style>
-        body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
-        canvas { display: block; }
-        #ui {
-            position: absolute; top: 20px; left: 20px; color: #0f0;
-            text-shadow: 0 0 10px #0f0; pointer-events: none;
+      body {
+        margin: 0;
+        background: #000;
+        overflow: hidden;
+        font-family: "Courier New", Courier, monospace;
+      }
+      canvas {
+        display: block;
+      }
+      #ui {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        color: #0f0;
+        text-shadow: 0 0 10px #0f0;
+        pointer-events: none;
+      }
+      .level-up {
+        position: absolute;
+        top: 40%;
+        width: 100%;
+        text-align: center;
+        color: #fff;
+        font-size: 50px;
+        font-weight: bold;
+        text-shadow: 0 0 20px #0ff;
+        display: none;
+        animation: pulse 1s infinite;
+      }
+      @keyframes pulse {
+        0% {
+          opacity: 0;
         }
-        .level-up {
-            position: absolute; top: 40%; width: 100%; text-align: center;
-            color: #fff; font-size: 50px; font-weight: bold;
-            text-shadow: 0 0 20px #0ff; display: none;
-            animation: pulse 1s infinite;
+        50% {
+          opacity: 1;
         }
-        @keyframes pulse { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
+        100% {
+          opacity: 0;
+        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <div id="ui">
+      <div style="font-size: 24px">等级: <span id="lv">1</span></div>
+      <div style="font-size: 16px">存活: <span id="time">0</span>s</div>
+      <div style="color: #ff0055">警告: <span id="danger">常规</span></div>
+    </div>
 
-<div id="ui">
-    <div style="font-size: 24px;">等级: <span id="lv">1</span></div>
-    <div style="font-size: 16px;">存活: <span id="time">0</span>s</div>
-    <div style="color: #ff0055;">警告: <span id="danger">常规</span></div>
-</div>
+    <div id="levelMsg" class="level-up">LEVEL UP!</div>
 
-<div id="levelMsg" class="level-up">LEVEL UP!</div>
+    <canvas id="gameCanvas"></canvas>
 
-<canvas id="gameCanvas"></canvas>
+    <script>
+      /** @type {HTMLCanvasElement} */
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const lvEl = document.getElementById("lv");
+      const timeEl = document.getElementById("time");
+      const dangerEl = document.getElementById("danger");
+      const levelMsg = document.getElementById("levelMsg");
 
-<script>
-/** @type {HTMLCanvasElement} */
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const lvEl = document.getElementById('lv');
-const timeEl = document.getElementById('time');
-const dangerEl = document.getElementById('danger');
-const levelMsg = document.getElementById('levelMsg');
+      let width,
+        height,
+        player,
+        particles,
+        projectiles,
+        frame = 0;
+      let level = 1;
+      let startTime = Date.now();
+      let keys = {};
+      let gameActive = true;
 
-let width, height, player, particles, projectiles, frame = 0;
-let level = 1;
-let startTime = Date.now();
-let keys = {};
-let gameActive = true;
+      // 物理配置
+      const GRAVITY = 0.4;
+      const FRICTION = 0.85;
+      const JUMP_FORCE = -10;
+      const ACCEL = 1.2;
 
-// 物理配置
-const GRAVITY = 0.4;
-const FRICTION = 0.85;
-const JUMP_FORCE = -10;
-const ACCEL = 1.2;
+      function init() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
 
-function init() {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-    
-    player = {
-        x: width / 2,
-        y: height / 2,
-        vx: 0,
-        vy: 0,
-        w: 16,
-        h: 16,
-        color: '#00ffcc',
-        jumps: 0,
-        isGrounded: false,
-        dashCD: 0,
-        trail: []
-    };
-    
-    projectiles = [];
-    particles = [];
-    animate();
-}
+        player = {
+          x: width / 2,
+          y: height / 2,
+          vx: 0,
+          vy: 0,
+          w: 16,
+          h: 16,
+          color: "#00ffcc",
+          jumps: 0,
+          isGrounded: false,
+          dashCD: 0,
+          trail: [],
+        };
 
-window.onkeydown = (e) => keys[e.code] = true;
-window.onkeyup = (e) => keys[e.code] = false;
+        projectiles = [];
+        particles = [];
+        animate();
+      }
 
-class Projectile {
-    constructor(level) {
-        this.size = Math.random() * 4 + 2;
-        // 随机从屏幕边缘生成
-        const side = Math.floor(Math.random() * 4);
-        if (side === 0) { this.x = Math.random()*width; this.y = -20; }
-        else if (side === 1) { this.x = Math.random()*width; this.y = height+20; }
-        else if (side === 2) { this.x = -20; this.y = Math.random()*height; }
-        else { this.x = width+20; this.y = Math.random()*height; }
+      window.onkeydown = (e) => (keys[e.code] = true);
+      window.onkeyup = (e) => (keys[e.code] = false);
 
-        const angle = Math.atan2(player.y - this.y, player.x - this.x);
-        const speed = (Math.random() * 3 + 2) * (1 + level * 0.1);
-        this.vx = Math.cos(angle) * speed;
-        this.vy = Math.sin(angle) * speed;
-        this.color = level > 5 ? '#ff0055' : '#ffaa00';
-    }
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
-    }
-    draw() {
-        ctx.fillStyle = this.color;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
-        ctx.fill();
-    }
-}
+      class Projectile {
+        constructor(level) {
+          this.size = Math.random() * 4 + 2;
+          // 只从上方、左侧、右侧生成，移除下方
+          const side = Math.floor(Math.random() * 3); // 0,1,2
+          if (side === 0) {
+            this.x = Math.random() * width;
+            this.y = -20;
+          } // 上
+          else if (side === 1) {
+            this.x = -20;
+            this.y = Math.random() * height;
+          } // 左
+          else {
+            this.x = width + 20;
+            this.y = Math.random() * height;
+          } // 右
 
-function spawnParticles(x, y, color) {
-    for(let i=0; i<15; i++) {
-        particles.push({
-            x, y,
-            vx: (Math.random()-0.5)*10,
-            vy: (Math.random()-0.5)*10,
+          const angle = Math.atan2(player.y - this.y, player.x - this.x);
+          const speed = (Math.random() * 3 + 2) * (1 + level * 0.1);
+          this.vx = Math.cos(angle) * speed;
+          this.vy = Math.sin(angle) * speed;
+          this.color = level > 5 ? "#ff0055" : "#ffaa00";
+        }
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+        }
+        draw() {
+          ctx.fillStyle = this.color;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = this.color;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function spawnParticles(x, y, color) {
+        for (let i = 0; i < 15; i++) {
+          particles.push({
+            x,
+            y,
+            vx: (Math.random() - 0.5) * 10,
+            vy: (Math.random() - 0.5) * 10,
             life: 1.0,
-            color
+            color,
+          });
+        }
+      }
+
+      function updatePlayer() {
+        // 左右移动
+        if (keys["ArrowLeft"] || keys["KeyA"]) player.vx -= ACCEL;
+        if (keys["ArrowRight"] || keys["KeyD"]) player.vx += ACCEL;
+
+        // 跳跃逻辑 (支持二段跳)
+        if (
+          (keys["ArrowUp"] || keys["KeyW"] || keys["Space"]) &&
+          player.jumps > 0 &&
+          player.dashCD === 0
+        ) {
+          player.vy = JUMP_FORCE;
+          player.jumps--;
+          player.dashCD = 15; // 防止连按直接消耗两段跳
+          spawnParticles(player.x, player.y + 10, "#fff");
+        }
+        if (player.dashCD > 0) player.dashCD--;
+
+        player.vy += GRAVITY;
+        player.vx *= FRICTION;
+        player.x += player.vx;
+        player.y += player.vy;
+
+        // 地面碰撞 —— 唯一重置二段跳的方式
+        if (player.y > height - player.h) {
+          player.y = height - player.h;
+          player.vy = 0;
+          player.isGrounded = true;
+          player.jumps = 2;
+        } else {
+          player.isGrounded = false;
+        }
+
+        // 左右墙壁碰撞 —— 仅物理反弹，不再恢复跳跃次数（蹬墙跳已删除）
+        if (player.x < 0) {
+          player.x = 0;
+          player.vx *= -0.5;
+        }
+        if (player.x > width - player.w) {
+          player.x = width - player.w;
+          player.vx *= -0.5;
+        }
+
+        // 记录拖影
+        player.trail.push({ x: player.x, y: player.y });
+        if (player.trail.length > 10) player.trail.shift();
+      }
+
+      function animate() {
+        if (!gameActive) return;
+        requestAnimationFrame(animate);
+        frame++;
+
+        // 动态升级逻辑
+        let currentTime = Math.floor((Date.now() - startTime) / 1000);
+        let newLevel = Math.floor(currentTime / 10) + 1;
+        if (newLevel > level) {
+          level = newLevel;
+          levelMsg.style.display = "block";
+          setTimeout(() => (levelMsg.style.display = "none"), 1000);
+          if (level > 10) dangerEl.innerText = "极度致命";
+          else if (level > 5) dangerEl.innerText = "高危警告";
+        }
+        lvEl.innerText = level;
+        timeEl.innerText = currentTime;
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0.2)"; // 留白拖影
+        ctx.fillRect(0, 0, width, height);
+
+        // 绘制玩家拖影
+        player.trail.forEach((t, i) => {
+          ctx.fillStyle = `rgba(0, 255, 204, ${(i / 10) * 0.5})`;
+          ctx.fillRect(t.x, t.y, player.w, player.h);
         });
-    }
-}
 
-function updatePlayer() {
-    // 左右移动
-    if (keys['ArrowLeft'] || keys['KeyA']) player.vx -= ACCEL;
-    if (keys['ArrowRight'] || keys['KeyD']) player.vx += ACCEL;
-    
-    // 跳跃逻辑 (支持二段跳)
-    if ((keys['ArrowUp'] || keys['KeyW'] || keys['Space']) && player.jumps > 0 && player.dashCD === 0) {
-        player.vy = JUMP_FORCE;
-        player.jumps--;
-        player.dashCD = 15; // 防止连按直接消耗两段跳
-        spawnParticles(player.x, player.y + 10, '#fff');
-    }
-    if (player.dashCD > 0) player.dashCD--;
+        // 绘制玩家
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#00ffcc";
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x, player.y, player.w, player.h);
+        ctx.shadowBlur = 0;
 
-    player.vy += GRAVITY;
-    player.vx *= FRICTION;
-    player.x += player.vx;
-    player.y += player.vy;
+        // 生成弹幕 (随等级增加频率)
+        const spawnChance = 0.05 + level * 0.02;
+        if (Math.random() < spawnChance) {
+          projectiles.push(new Projectile(level));
+        }
 
-    // 墙壁碰撞与蹬墙跳重置
-    if (player.y > height - player.h) {
-        player.y = height - player.h;
-        player.vy = 0;
-        player.isGrounded = true;
-        player.jumps = 2;
-    } else {
-        player.isGrounded = false;
-    }
+        // 弹幕更新与碰撞
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+          const p = projectiles[i];
+          p.update();
+          p.draw();
 
-    if (player.x < 0) { player.x = 0; player.vx *= -0.5; player.jumps = 1; }
-    if (player.x > width - player.w) { player.x = width - player.w; player.vx *= -0.5; player.jumps = 1; }
-
-    // 记录拖影
-    player.trail.push({x: player.x, y: player.y});
-    if (player.trail.length > 10) player.trail.shift();
-}
-
-function animate() {
-    if (!gameActive) return;
-    requestAnimationFrame(animate);
-    frame++;
-
-    // 动态升级逻辑
-    let currentTime = Math.floor((Date.now() - startTime) / 1000);
-    let newLevel = Math.floor(currentTime / 10) + 1;
-    if (newLevel > level) {
-        level = newLevel;
-        levelMsg.style.display = 'block';
-        setTimeout(() => levelMsg.style.display = 'none', 1000);
-        if(level > 10) dangerEl.innerText = "极度致命";
-        else if(level > 5) dangerEl.innerText = "高危警告";
-    }
-    lvEl.innerText = level;
-    timeEl.innerText = currentTime;
-
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // 留白拖影
-    ctx.fillRect(0, 0, width, height);
-
-    // 绘制玩家拖影
-    player.trail.forEach((t, i) => {
-        ctx.fillStyle = `rgba(0, 255, 204, ${i/10 * 0.5})`;
-        ctx.fillRect(t.x, t.y, player.w, player.h);
-    });
-
-    // 绘制玩家
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = '#00ffcc';
-    ctx.fillStyle = player.color;
-    ctx.fillRect(player.x, player.y, player.w, player.h);
-    ctx.shadowBlur = 0;
-
-    // 生成弹幕 (随等级增加频率)
-    const spawnChance = 0.05 + (level * 0.02);
-    if (Math.random() < spawnChance) {
-        projectiles.push(new Projectile(level));
-    }
-
-    // 弹幕更新与碰撞
-    for (let i = projectiles.length - 1; i >= 0; i--) {
-        const p = projectiles[i];
-        p.update();
-        p.draw();
-
-        // 碰撞检测
-        if (p.x > player.x && p.x < player.x + player.w &&
-            p.y > player.y && p.y < player.y + player.h) {
+          // 碰撞检测
+          if (
+            p.x > player.x &&
+            p.x < player.x + player.w &&
+            p.y > player.y &&
+            p.y < player.y + player.h
+          ) {
             gameOver();
-        }
+          }
 
-        // 移除屏幕外弹幕
-        if (p.x < -50 || p.x > width + 50 || p.y < -50 || p.y > height + 50) {
+          // 移除屏幕外弹幕
+          if (p.x < -50 || p.x > width + 50 || p.y < -50 || p.y > height + 50) {
             projectiles.splice(i, 1);
+          }
         }
-    }
 
-    // 粒子动画
-    for (let i = particles.length - 1; i >= 0; i--) {
-        const pt = particles[i];
-        pt.x += pt.vx; pt.y += pt.vy;
-        pt.life -= 0.02;
-        ctx.fillStyle = `rgba(255, 255, 255, ${pt.life})`;
-        ctx.fillRect(pt.x, pt.y, 2, 2);
-        if (pt.life <= 0) particles.splice(i, 1);
-    }
+        // 粒子动画
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const pt = particles[i];
+          pt.x += pt.vx;
+          pt.y += pt.vy;
+          pt.life -= 0.02;
+          ctx.fillStyle = `rgba(255, 255, 255, ${pt.life})`;
+          ctx.fillRect(pt.x, pt.y, 2, 2);
+          if (pt.life <= 0) particles.splice(i, 1);
+        }
 
-    updatePlayer();
-}
+        updatePlayer();
+      }
 
-function gameOver() {
-    gameActive = false;
-    spawnParticles(player.x, player.y, '#ff0055');
-    ctx.fillStyle = "white";
-    ctx.font = "40px Courier New";
-    ctx.textAlign = "center";
-    ctx.fillText("身法终结 - 等级 " + level, width/2, height/2);
-    ctx.font = "20px Courier New";
-    ctx.fillText("按 F5 重新开始挑战", width/2, height/2 + 50);
-}
+      function gameOver() {
+        gameActive = false;
+        spawnParticles(player.x, player.y, "#ff0055");
+        ctx.fillStyle = "white";
+        ctx.font = "40px Courier New";
+        ctx.textAlign = "center";
+        ctx.fillText("身法终结 - 等级 " + level, width / 2, height / 2);
+        ctx.font = "20px Courier New";
+        ctx.fillText("按 F5 重新开始挑战", width / 2, height / 2 + 50);
+      }
 
-init();
-window.onresize = () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; };
-</script>
-</body>
+      init();
+      window.onresize = () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      };
+    </script>
+  </body>
 </html>
