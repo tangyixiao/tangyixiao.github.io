@@ -1,0 +1,2212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>击败WTD - 超强进化</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #e0f7fa, #bbdefb, #e1bee7);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(156, 39, 176, 0.4);
+            border: 4px solid #7b1fa2;
+            max-width: 1100px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+        
+        .game-title {
+            color: #7b1fa2;
+            font-size: 4rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(156, 39, 176, 0.3);
+            letter-spacing: 4px;
+            background: linear-gradient(to right, #7b1fa2, #0288d1, #ff9800);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleGlow 2s infinite alternate;
+        }
+        
+        @keyframes titleGlow {
+            0% { text-shadow: 0 0 10px rgba(156, 39, 176, 0.4), 0 0 20px rgba(156, 39, 176, 0.3); }
+            100% { text-shadow: 0 0 20px rgba(156, 39, 176, 0.5), 0 0 30px rgba(156, 39, 176, 0.4), 0 0 40px rgba(156, 39, 176, 0.3); }
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            color: #0288d1;
+            margin-bottom: 15px;
+        }
+        
+        .game-container {
+            position: relative;
+            width: 1100px;
+            height: 700px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(156, 39, 176, 0.4);
+            border: 4px solid #7b1fa2;
+            margin-bottom: 20px;
+        }
+        
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .hud {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr) 3fr;
+            gap: 15px;
+            width: 1100px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(156, 39, 176, 0.3);
+            border: 3px solid #7b1fa2;
+        }
+        
+        .hud-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(237, 231, 246, 0.9);
+            border-radius: 10px;
+            border: 2px solid #7b1fa2;
+        }
+        
+        .hud-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #0288d1;
+            text-shadow: 0 0 10px rgba(2, 136, 209, 0.4);
+            margin-bottom: 5px;
+            animation: valuePulse 2s infinite;
+        }
+        
+        @keyframes valuePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .hud-label {
+            font-size: 1.1rem;
+            color: #5d4037;
+        }
+        
+        .ability-bar {
+            grid-column: 6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .ability {
+            width: 70px;
+            height: 70px;
+            border-radius: 15px;
+            background: rgba(237, 231, 246, 0.9);
+            border: 3px solid #7b1fa2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ability:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(156, 39, 176, 0.5);
+        }
+        
+        .ability:active {
+            transform: scale(0.95);
+        }
+        
+        .ability-icon {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .ability-key {
+            font-size: 0.9rem;
+            color: #ff9800;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 3px 6px;
+            border-radius: 5px;
+        }
+        
+        .ability-cooldown {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(244, 67, 54, 0.8);
+            transition: height 0.3s;
+        }
+        
+        .auto-toggle {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #bdbdbd;
+            border: 2px solid #757575;
+            cursor: pointer;
+        }
+        
+        .auto-toggle.active {
+            background: #4caf50;
+            box-shadow: 0 0 10px #4caf50;
+        }
+        
+        .controls {
+            width: 1100px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 16px 32px;
+            font-size: 1.3rem;
+            background: linear-gradient(to bottom, #7b1fa2, #6a1b9a);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            flex: 1;
+            min-width: 160px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:hover {
+            background: linear-gradient(to bottom, #8e24aa, #7b1fa2);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        #start-btn {
+            background: linear-gradient(to bottom, #00c853, #00b248);
+        }
+        
+        #start-btn:hover {
+            background: linear-gradient(to bottom, #00e676, #00c853);
+        }
+        
+        #upgrade-btn {
+            background: linear-gradient(to bottom, #ff9800, #f57c00);
+        }
+        
+        #upgrade-btn:hover {
+            background: linear-gradient(to bottom, #ffb300, #ff9800);
+        }
+        
+        .instructions {
+            width: 1100px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 10px;
+            border: 3px solid #7b1fa2;
+            box-shadow: 0 0 25px rgba(156, 39, 176, 0.3);
+        }
+        
+        .instructions h2 {
+            color: #7b1fa2;
+            margin-bottom: 15px;
+            font-size: 2rem;
+            text-shadow: 0 0 10px rgba(156, 39, 176, 0.3);
+        }
+        
+        .instructions-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .instructions-section {
+            background: rgba(237, 231, 246, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #7b1fa2;
+        }
+        
+        .instructions-section h3 {
+            color: #0288d1;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .instructions-section ul {
+            list-style-type: none;
+            padding-left: 10px;
+        }
+        
+        .instructions-section li {
+            margin-bottom: 8px;
+            color: #5d4037;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .instructions-section li:before {
+            content: "⚡⚡";
+            color: #7b1fa2;
+            font-size: 1rem;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .game-over h2 {
+            font-size: 5rem;
+            color: #d32f2f;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(211, 47, 47, 0.5);
+            animation: gameOverPulse 1.5s infinite;
+        }
+        
+        @keyframes gameOverPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .game-over p {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: #0288d1;
+            text-shadow: 0 0 10px rgba(2, 136, 209, 0.4);
+        }
+        
+        .mobile-controls {
+            display: none;
+            width: 100%;
+            margin-top: 20px;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        
+        .mobile-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(156, 39, 176, 0.8);
+            color: white;
+            font-size: 28px;
+            border: 4px solid rgba(255, 255, 255, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            margin: 5px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .mobile-shoot {
+            background: rgba(2, 136, 209, 0.8);
+        }
+        
+        .mobile-ability {
+            background: rgba(255, 152, 0, 0.8);
+            font-size: 22px;
+        }
+        
+        .boss-health {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 3px solid #d32f2f;
+            border-radius: 20px;
+            overflow: hidden;
+            z-index: 10;
+            display: none;
+        }
+        
+        .boss-health-bar {
+            height: 100%;
+            background: linear-gradient(to right, #f44336, #ef5350, #e57373);
+            width: 100%;
+            transition: width 0.5s;
+        }
+        
+        .boss-health-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+        }
+        
+        .powerup-indicator {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid #0288d1;
+            border-radius: 10px;
+            padding: 10px 20px;
+            display: none;
+            z-index: 10;
+            color: #0288d1;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(2, 136, 209, 0.3);
+        }
+        
+        @media (max-width: 1150px) {
+            .game-container, .hud, .controls, .instructions {
+                width: 95vw;
+            }
+            
+            .game-container {
+                height: 70vh;
+            }
+            
+            .game-title {
+                font-size: 3rem;
+            }
+            
+            .ability-bar {
+                grid-column: 1 / span 6;
+                grid-row: 2;
+                margin-top: 10px;
+            }
+            
+            .hud {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .mobile-controls {
+                display: flex;
+            }
+        }
+        
+        @media (max-width: 750px) {
+            .instructions-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .hud {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .btn {
+                min-width: 140px;
+                font-size: 1.1rem;
+                padding: 14px 20px;
+            }
+        }
+        
+        .auto-toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+            color: #5d4037;
+            font-size: 0.9rem;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            margin-left: 10px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #bdbdbd;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #4caf50;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* 天赋升级提示 */
+        .upgrade-notification {
+            position: absolute;
+            top: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #ff9800;
+            border-radius: 15px;
+            padding: 25px;
+            z-index: 80;
+            color: #ff9800;
+            text-align: center;
+            min-width: 400px;
+            display: none;
+            box-shadow: 0 0 30px rgba(255, 152, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+        
+        .upgrade-notification h3 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 152, 0, 0.4);
+        }
+        
+        .upgrade-notification p {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #0288d1;
+        }
+        
+        .upgrade-notification .upgrade-effect {
+            font-size: 1.2rem;
+            color: #5d4037;
+            margin-bottom: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <h1 class="game-title">击败WTD - 超强进化</h1>
+        <p class="subtitle">极致弹幕体验！新增第5Boss：Wild flower🌸 三角形尖刺！</p>
+    </div>
+    
+    <div class="hud">
+        <div class="hud-item">
+            <div class="hud-label">得分</div>
+            <div id="score" class="hud-value">0</div>
+        </div>
+        <div class="hud-item">
+            <div class="hud-label">生命值</div>
+            <div id="health" class="hud-value">200</div>
+        </div>
+        <div class="hud-item">
+            <div class="hud-label">等级</div>
+            <div id="level" class="hud-value">1</div>
+        </div>
+        <div class="hud-item">
+            <div class="hud-label">连击</div>
+            <div id="combo" class="hud-value">0</div>
+        </div>
+        <div class="hud-item">
+            <div class="hud-label">攻击力</div>
+            <div id="damage-value" class="hud-value">50</div>
+        </div>
+        
+        <div class="ability-bar">
+            <div class="ability" id="ability1" data-key="Q">
+                <div class="ability-icon">⚡⚡</div>
+                <div class="ability-key">Q</div>
+                <div class="auto-toggle active" id="auto-toggle-1"></div>
+                <div class="ability-cooldown" id="cooldown1"></div>
+            </div>
+            <div class="ability" id="ability2" data-key="W">
+                <div class="ability-icon">🛡🛡🛡️</div>
+                <div class="ability-key">W</div>
+                <div class="auto-toggle active" id="auto-toggle-2"></div>
+                <div class="ability-cooldown" id="cooldown2"></div>
+            </div>
+            <div class="ability" id="ability3" data-key="E">
+                <div class="ability-icon">💣💣</div>
+                <div class="ability-key">E</div>
+                <div class="auto-toggle active" id="auto-toggle-3"></div>
+                <div class="ability-cooldown" id="cooldown3"></div>
+            </div>
+            <div class="ability" id="ability4" data-key="R">
+                <div class="ability-icon">🌟</div>
+                <div class="ability-key">R</div>
+                <div class="auto-toggle active" id="auto-toggle-4"></div>
+                <div class="ability-cooldown" id="cooldown4"></div>
+            </div>
+            <div class="ability" id="ability5" data-key="T">
+                <div class="ability-icon">🌀</div>
+                <div class="ability-key">T</div>
+                <div class="auto-toggle active" id="auto-toggle-5"></div>
+                <div class="ability-cooldown" id="cooldown5"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="game-container">
+        <div class="boss-health" id="boss-health">
+            <div class="boss-health-bar" id="boss-health-bar"></div>
+            <div class="boss-health-text" id="boss-health-text">WTD BOSS: 100%</div>
+        </div>
+        
+        <div class="powerup-indicator" id="powerup-indicator">
+            攻击力提升！
+        </div>
+        
+        <!-- 天赋升级提示 - 移除确认按钮 -->
+        <div class="upgrade-notification" id="upgrade-notification">
+            <h3>🎉🎉 等级提升！</h3>
+            <p id="upgrade-title">获得新天赋</p>
+            <div class="upgrade-effect" id="upgrade-effect">天赋效果描述</div>
+            <!-- 按钮已移除，2秒后自动消失 -->
+        </div>
+        
+        <canvas id="game-canvas" width="1100" height="700"></canvas>
+        
+        <div class="game-over" id="game-over">
+            <h2>游戏结束</h2>
+            <p id="final-score">得分: 0</p>
+            <p id="final-level">等级: 1</p>
+            <p id="final-combo">最高连击: 0</p>
+            <button class="btn" id="restart-btn">重新开始</button>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button class="btn" id="start-btn">开始游戏</button>
+        <button class="btn" id="pause-btn">暂停游戏</button>
+        <button class="btn" id="instructions-btn">游戏说明</button>
+        <button class="btn" id="godmode-btn">上帝模式</button>
+    </div>
+    
+    <div class="mobile-controls">
+        <div class="mobile-btn" id="mobile-left">←</div>
+        <div class="mobile-btn" id="mobile-up">↑</div>
+        <div class="mobile-btn" id="mobile-down">↓</div>
+        <div class="mobile-btn" id="mobile-right">→</div>
+        <div class="mobile-btn mobile-shoot" id="mobile-shoot">⚡⚡</div>
+        <div class="mobile-btn mobile-ability" id="mobile-ability1">Q</div>
+        <div class="mobile-btn mobile-ability" id="mobile-ability2">W</div>
+        <div class="mobile-btn mobile-ability" id="mobile-ability3">E</div>
+    </div>
+    
+    <div class="instructions" id="instructions-panel" style="display: none;">
+        <h2>游戏说明 - 超强进化版</h2>
+        <div class="instructions-content">
+            <div class="instructions-section">
+                <h3>超强初始属性</h3>
+                <ul>
+                    <li>初始生命值：200（原100）</li>
+                    <li>初始攻击力：50（原10）</li>
+                    <li>初始射速：每秒10发（原5发）</li>
+                    <li>初始移动速度：8（原5）</li>
+                    <li>三连发子弹，自动瞄准</li>
+                    <li>连续击中敌人增加连击，提升攻击力</li>
+                </ul>
+            </div>
+            <div class="instructions-section">
+                <h3>技能系统（默认自动释放）</h3>
+                <ul>
+                    <li>Q键：超电磁炮 - 敌人≥3时释放，连锁攻击</li>
+                    <li>W键：绝对防御 - 生命值<50%时释放，无敌4秒</li>
+                    <li>E键：黑洞炸弹 - 敌人≥5时释放，吸聚敌人</li>
+                    <li>R键：浮游炮 - 无无人机时释放，召唤4个浮游炮</li>
+                    <li>T键：时间停滞 - 子弹≥20时释放，冻结3秒</li>
+                    <li>所有技能默认自动释放，可手动切换</li>
+                </ul>
+            </div>
+            <div class="instructions-section">
+                <h3>强化敌人系统</h3>
+                <ul>
+                    <li>普通WTD：生命值500，速度更快</li>
+                    <li>闪电WTD：超高速度，残影效果</li>
+                    <li>重甲WTD：生命值1500，减伤50%</li>
+                    <li>狙击WTD：超远距离精准射击</li>
+                    <li>召唤WTD：召唤更多WTD</li>
+                    <li>Gay0：彩虹追踪子弹，中等生命值</li>
+                    <li>Sigma：激光分裂攻击，高科技敌人</li>
+                    <li>gqh学姐：超高生命值，中等速度</li>
+                    <li>WTD BOSS：多重攻击模式，多种弹幕</li>
+                    <li style="color: #ff69b4; font-weight: bold;">✨ Wild flower🌸：第5个Boss，超强生命值，快速发射三角形尖刺！</li>
+                </ul>
+            </div>
+            <div class="instructions-section">
+                <h3>随机升级系统</h3>
+                <ul>
+                    <li>每次升级随机获得一个天赋</li>
+                    <li>天赋效果立即生效</li>
+                    <li>显示天赋加成提示</li>
+                    <li>升级效果大幅增强，性价比更高</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 获取Canvas和上下文 ====================
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // ==================== 游戏状态 ====================
+        let gameRunning = false;
+        let gamePaused = false;
+        let gameLoop;
+        let score = 0;
+        let health = 200;
+        let maxHealth = 200;
+        let playerLevel = 1;
+        let xp = 0;
+        let xpToNextLevel = 100;
+        let wave = 1;
+        let enemiesRemaining = 0;
+        let bossActive = false;
+        let godMode = false;
+        let combo = 0;
+        let maxCombo = 0;
+        let comboTimeout = null;
+        let frenzyMode = false;
+        let autoSkills = true;
+
+        // ========== 新增：记录Boss生成次数，用于第5个Boss变为Wild flower🌸 ==========
+        let bossSpawnCount = 0;
+        
+        // ==================== 玩家属性 ====================
+        const player = {
+            x: canvas.width / 2 - 25,
+            y: canvas.height / 2 - 25,
+            width: 50,
+            height: 50,
+            speed: 8,
+            color: '#0288d1', // 改为浅色主题的颜色
+            bullets: [],
+            lastShot: 0,
+            shotDelay: 100,
+            damage: 50,
+            pierce: 0,
+            explosive: false,
+            tripleShot: true,
+            homing: false,
+            attackRange: 1.0,
+            bulletCount: 1,
+            regenHealth: false,
+            regenRate: 0,
+            dodgeChance: 0
+        };
+        
+        // ==================== 升级系统 ====================
+        const upgrades = {
+            damage: { level: 1, cost: 100, name: "毁灭攻击", effect: "增加子弹伤害100%，攻击范围扩大" },
+            fireRate: { level: 1, cost: 100, name: "极限射速", effect: "增加射击速度150%，可同时发射多颗子弹" },
+            health: { level: 1, cost: 100, name: "无敌之躯", effect: "增加最大生命值200%，每秒恢复生命值" },
+            speed: { level: 1, cost: 100, name: "光速移动", effect: "增加移动速度100%，增加闪避几率" },
+            pierce: { level: 0, cost: 300, name: "无限穿透", effect: "子弹可以无限穿透敌人，伤害不衰减" },
+            explosive: { level: 0, cost: 500, name: "核爆子弹", effect: "子弹击中时产生大范围爆炸，连锁反应" },
+            critical: { level: 0, cost: 400, name: "致命一击", effect: "增加暴击几率25%，暴击伤害提升300%" },
+            vampire: { level: 0, cost: 350, name: "吸血攻击", effect: "造成伤害的10%转化为生命值" }
+        };
+        
+        // 暴击系统
+        let criticalChance = 0;
+        let criticalMultiplier = 2.0;
+        
+        // 吸血系统
+        let vampiricRatio = 0;
+        
+        // ==================== 技能系统 ====================
+        const abilities = {
+            chainLightning: {
+                name: "超电磁炮", key: "Q", cooldown: 8000, lastUsed: 0, active: false, auto: true
+            },
+            shield: {
+                name: "绝对防御", key: "W", cooldown: 12000, lastUsed: 0, active: false, duration: 4000, auto: true
+            },
+            bomb: {
+                name: "黑洞炸弹", key: "E", cooldown: 15000, lastUsed: 0, active: false, auto: true
+            },
+            drone: {
+                name: "浮游炮", key: "R", cooldown: 20000, lastUsed: 0, active: false, drones: [], auto: true
+            },
+            timeStop: {
+                name: "时间停滞", key: "T", cooldown: 25000, lastUsed: 0, active: false, duration: 3000, auto: true
+            }
+        };
+        
+        // 时间停滞
+        let timeStopActive = false;
+        let timeStopEnd = 0;
+        
+        // 敌人数组
+        let enemies = [];
+        // Boss对象
+        let boss = null;
+        // 粒子数组
+        let particles = [];
+        // 敌人子弹数组
+        let enemyBullets = [];
+        
+        // 控制状态
+        const keys = {};
+        const mouse = { x: 0, y: 0, pressed: false };
+        
+        // ==================== 初始化游戏 ====================
+        function initGame() {
+            score = 0;
+            health = maxHealth;
+            playerLevel = 1;
+            xp = 0;
+            xpToNextLevel = 100;
+            wave = 1;
+            enemiesRemaining = 0;
+            bossActive = false;
+            combo = 0;
+            maxCombo = 0;
+            frenzyMode = false;
+            timeStopActive = false;
+            criticalChance = 0;
+            criticalMultiplier = 2.0;
+            vampiricRatio = 0;
+            
+            // 重置Boss生成计数
+            bossSpawnCount = 0;
+            
+            player.x = canvas.width / 2 - 25;
+            player.y = canvas.height / 2 - 25;
+            player.bullets = [];
+            player.lastShot = 0;
+            player.speed = 8;
+            player.damage = 50;
+            player.pierce = 0;
+            player.explosive = false;
+            player.tripleShot = true;
+            player.homing = false;
+            player.attackRange = 1.0;
+            player.bulletCount = 1;
+            player.regenHealth = false;
+            player.regenRate = 0;
+            player.dodgeChance = 0;
+            
+            upgrades.damage.level = 1;
+            upgrades.fireRate.level = 1;
+            upgrades.health.level = 1;
+            upgrades.speed.level = 1;
+            upgrades.pierce.level = 0;
+            upgrades.explosive.level = 0;
+            upgrades.critical.level = 0;
+            upgrades.vampire.level = 0;
+            
+            for (let ability in abilities) {
+                abilities[ability].lastUsed = 0;
+                abilities[ability].active = false;
+                abilities[ability].auto = true;
+                if (abilities[ability].drones) abilities[ability].drones = [];
+            }
+            
+            enemies = [];
+            particles = [];
+            enemyBullets = [];
+            boss = null;
+            
+            updateUI();
+            
+            document.getElementById('game-over').style.display = 'none';
+            document.getElementById('upgrade-notification').style.display = 'none';
+            document.getElementById('boss-health').style.display = 'none';
+            document.getElementById('powerup-indicator').style.display = 'none';
+            
+            spawnWave();
+        }
+        
+        // ==================== 开始游戏 ====================
+        function startGame() {
+            if (gameRunning) return;
+            initGame();
+            gameRunning = true;
+            gamePaused = false;
+            gameLoop = requestAnimationFrame(updateGame);
+            document.getElementById('start-btn').textContent = '游戏中...';
+            document.getElementById('pause-btn').textContent = '暂停游戏';
+        }
+        
+        // ==================== 暂停游戏 ====================
+        function pauseGame() {
+            if (!gameRunning) return;
+            gamePaused = !gamePaused;
+            if (gamePaused) {
+                cancelAnimationFrame(gameLoop);
+                document.getElementById('pause-btn').textContent = '继续游戏';
+            } else {
+                gameLoop = requestAnimationFrame(updateGame);
+                document.getElementById('pause-btn').textContent = '暂停游戏';
+            }
+        }
+        
+        // ==================== 结束游戏 ====================
+        function endGame() {
+            gameRunning = false;
+            cancelAnimationFrame(gameLoop);
+            const gameOverScreen = document.getElementById('game-over');
+            document.getElementById('final-score').textContent = `得分: ${score}`;
+            document.getElementById('final-level').textContent = `等级: ${playerLevel}`;
+            document.getElementById('final-combo').textContent = `最高连击: ${maxCombo}`;
+            gameOverScreen.style.display = 'flex';
+            document.getElementById('start-btn').textContent = '开始游戏';
+        }
+        
+        // ==================== 更新UI ====================
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('health').textContent = Math.round(health);
+            document.getElementById('level').textContent = playerLevel;
+            document.getElementById('combo').textContent = combo;
+            let averageDamage = player.damage * (1 + criticalChance * (criticalMultiplier - 1));
+            document.getElementById('damage-value').textContent = Math.floor(averageDamage * (1 + combo/100));
+            updateAbilityCooldowns();
+            updateAutoToggleDisplay();
+        }
+        
+        // 技能冷却显示
+        function updateAbilityCooldowns() {
+            const now = Date.now();
+            for (let i = 1; i <= 5; i++) {
+                const abilityKey = Object.keys(abilities)[i-1];
+                const ability = abilities[abilityKey];
+                const cooldownElement = document.getElementById(`cooldown${i}`);
+                if (!ability) continue;
+                const timeSinceLastUse = now - ability.lastUsed;
+                const cooldownPercent = Math.min(100, (timeSinceLastUse / ability.cooldown) * 100);
+                cooldownElement.style.height = `${100 - cooldownPercent}%`;
+                if (timeSinceLastUse < ability.cooldown) {
+                    cooldownElement.style.backgroundColor = 'rgba(244, 67, 54, 0.8)';
+                } else {
+                    cooldownElement.style.backgroundColor = ability.auto ? 'rgba(76, 175, 80, 0.5)' : 'transparent';
+                }
+            }
+        }
+        
+        // 自动释放显示
+        function updateAutoToggleDisplay() {
+            for (let i = 1; i <= 5; i++) {
+                const abilityKey = Object.keys(abilities)[i-1];
+                const ability = abilities[abilityKey];
+                const toggleElement = document.getElementById(`auto-toggle-${i}`);
+                if (!ability) continue;
+                if (ability.auto) {
+                    toggleElement.classList.add('active');
+                } else {
+                    toggleElement.classList.remove('active');
+                }
+            }
+        }
+        
+        // ==================== 生成敌人 ====================
+        function spawnWave() {
+            enemiesRemaining = Math.min(4 + wave * 2, 25);
+            for (let i = 0; i < enemiesRemaining; i++) {
+                let enemyType;
+                const rand = Math.random();
+                if (wave < 3) {
+                    if (rand < 0.7) enemyType = 'normal';
+                    else if (rand < 0.9) enemyType = 'fast';
+                    else enemyType = 'gqh';
+                } else if (wave < 5) {
+                    if (rand < 0.5) enemyType = 'normal';
+                    else if (rand < 0.7) enemyType = 'fast';
+                    else if (rand < 0.8) enemyType = 'tank';
+                    else if (rand < 0.9) enemyType = 'gqh';
+                    else enemyType = 'shooter';
+                } else if (wave < 8) {
+                    if (rand < 0.3) enemyType = 'normal';
+                    else if (rand < 0.45) enemyType = 'fast';
+                    else if (rand < 0.55) enemyType = 'tank';
+                    else if (rand < 0.65) enemyType = 'shooter';
+                    else if (rand < 0.7) enemyType = 'gqh';
+                    else if (rand < 0.8) enemyType = 'splitter';
+                    else if (rand < 0.95) enemyType = 'gay0';
+                    else enemyType = 'summoner';
+                } else if (wave < 12) {
+                    if (rand < 0.25) enemyType = 'normal';
+                    else if (rand < 0.35) enemyType = 'fast';
+                    else if (rand < 0.45) enemyType = 'tank';
+                    else if (rand < 0.55) enemyType = 'shooter';
+                    else if (rand < 0.6) enemyType = 'splitter';
+                    else if (rand < 0.65) enemyType = 'gqh';
+                    else if (rand < 0.75) enemyType = 'gay0';
+                    else if (rand < 0.9) enemyType = 'sigma';
+                    else enemyType = 'summoner';
+                } else {
+                    if (rand < 0.15) enemyType = 'normal';
+                    else if (rand < 0.25) enemyType = 'fast';
+                    else if (rand < 0.35) enemyType = 'tank';
+                    else if (rand < 0.45) enemyType = 'shooter';
+                    else if (rand < 0.5) enemyType = 'splitter';
+                    else if (rand < 0.55) enemyType = 'gqh';
+                    else if (rand < 0.65) enemyType = 'gay0';
+                    else if (rand < 0.8) enemyType = 'sigma';
+                    else if (rand < 0.9) enemyType = 'summoner';
+                    else enemyType = 'gqh';
+                }
+                spawnEnemy(enemyType);
+            }
+            if (wave % 3 === 0) {
+                spawnBoss();
+            }
+        }
+        
+        function spawnEnemy(type) {
+            const enemy = {
+                x: Math.random() < 0.5 ? -60 : canvas.width + 60,
+                y: Math.random() * canvas.height,
+                width: 40,
+                height: 40,
+                health: 0,
+                maxHealth: 0,
+                speed: 0,
+                color: '#f44336', // 改为浅色主题的颜色
+                type: type,
+                lastShot: 0,
+                shotDelay: 1500,
+                bullets: [],
+                trail: []
+            };
+            switch(type) {
+                case 'normal':
+                    enemy.width = 40; enemy.height = 40;
+                    enemy.health = 500 + wave * 30; enemy.maxHealth = enemy.health;
+                    enemy.speed = Math.min(2.5 + wave * 0.25,9); enemy.color = '#f44336'; break;
+                case 'fast':
+                    enemy.width = 30; enemy.height = 30;
+                    enemy.health = 300 + wave * 20; enemy.maxHealth = enemy.health;
+                    enemy.speed =Math.min( 6 + wave * 0.4,11); enemy.color = '#ff9800'; break;
+                case 'tank':
+                    enemy.width = 70; enemy.height = 70;
+                    enemy.health = 1500 + wave * 80; enemy.maxHealth = enemy.health;
+                    enemy.speed = Math.min(1.5 + wave * 0.15,7); enemy.color = '#2196f3';
+                    enemy.damageReduction = 0.5; break;
+                case 'shooter':
+                    enemy.width = 45; enemy.height = 45;
+                    enemy.health = 400 + wave * 35; enemy.maxHealth = enemy.health;
+                    enemy.speed = Math.min(2.5 + wave * 0.2,8); enemy.color = '#9c27b0';
+                    enemy.shotDelay = 1200; enemy.range = 600; break;
+                case 'splitter':
+                    enemy.width = 50; enemy.height = 50;
+                    enemy.health = 600 + wave * 50; enemy.maxHealth = enemy.health;
+                    enemy.speed = Math.min(2 + wave * 0.2,8); enemy.color = '#4caf50'; break;
+                case 'summoner':
+                    enemy.width = 60; enemy.height = 60;
+                    enemy.health = 800 + wave * 80; enemy.maxHealth = enemy.health;
+                    enemy.speed =Math. min(1.5 + wave * 0.15,7); enemy.color = '#e91e63';
+                    enemy.lastSummon = 0; enemy.summonDelay = 5000; break;
+                case 'gay0':
+                    enemy.width = 45; enemy.height = 45;
+                    enemy.health = 600 + wave * 40; enemy.maxHealth = enemy.health;
+                    enemy.speed =Math. min(4.5 + wave * 0.3,9); enemy.color = 'rainbow';
+                    enemy.shotDelay = 2000; enemy.range = 500; enemy.homingBullets = true; break;
+                case 'sigma':
+                    enemy.width = 50; enemy.height = 50;
+                    enemy.health = 800 + wave * 60; enemy.maxHealth = enemy.health;
+                    enemy.speed =Math. min(4 + wave * 0.25,9); enemy.color = '#607d8b';
+                    enemy.secondaryColor = '#ffffff'; enemy.shotDelay = 2500; enemy.range = 450;
+                    enemy.laserAttack = true; enemy.splitBullets = true; break;
+                case 'gqh':
+                    enemy.width = 65; enemy.height = 65;
+                    enemy.health = 2000 + wave * 180; enemy.maxHealth = enemy.health;
+                    enemy.speed = Math.min(2.5 + wave * 0.2,6.5); enemy.color = '#ff69b4';
+                    enemy.shotDelay = 1800; enemy.range = 400; enemy.damageReduction = 0.3; break;
+            }
+            enemies.push(enemy);
+        }
+        
+        // ==================== 生成Boss（核心修改：第5个Boss为Wild flower🌸）====================
+        function spawnBoss() {
+            bossActive = true;
+            bossSpawnCount++;   // 每次生成Boss计数+1
+            
+            // 判断是否为第5、10、15...个Boss
+            let isWildFlower = (bossSpawnCount % 5 === 0);
+            
+            if (!isWildFlower) {
+                // 普通Boss（原有配置）
+                boss = {
+                    x: canvas.width / 2 - 100,
+                    y: -150,
+                    width: 200,
+                    height: 200,
+                    health: 3000 + wave * 600+wave*wave,
+                    maxHealth: 3000 + wave * 600+wave*wave,
+                    speed: 1.5,
+                    color: '#9c27b0',
+                    phase: 1,
+                    lastShot: 0,
+                    shotDelay: 800,
+                    bullets: [],
+                    lastPhaseChange: 0,
+                    phaseChangeDelay: 15000,
+                    moveDirection: 1,
+                    pattern: 0,
+                    lastPatternChange: 0,
+                    patternChangeDelay: 3000,
+                    type: 'normal'
+                };
+            } else {
+                // ===== Wild flower🌸 超强Boss =====
+                boss = {
+                    x: canvas.width / 2 - 100,
+                    y: -150,
+                    width: 200,
+                    height: 200,
+                    health: 60000 + wave * 10000,      // 血量翻倍
+                    maxHealth: 60000 + wave * 10000,
+                    speed: 2.0,
+                    color: '#ff69b4',
+                    phase: 1,
+                    lastShot: 0,
+                    shotDelay: Math.min(1000+wave*3,2000),                 // 初始射速更快
+                    bullets: [],
+                    lastPhaseChange: 0,
+                    phaseChangeDelay: 12000,        // 阶段切换更快
+                    moveDirection: 1,
+                    pattern: 0,
+                    lastPatternChange: 0,
+                    patternChangeDelay: 4000,
+                    type: 'wildflower',
+                    spikeCount: 20,                  // 初始尖刺数量
+                    spikeDamage: 150+wave*10,                // 初始伤害
+                    spikeSpeed: 10                  // 尖刺速度
+                };
+            }
+            
+            document.getElementById('boss-health').style.display = 'block';
+            updateBossHealthBar();
+        }
+        
+        // 更新Boss血条（根据类型显示不同名称）
+        function updateBossHealthBar() {
+            if (!boss) return;
+            const healthPercent = (boss.health / boss.maxHealth) * 100;
+            document.getElementById('boss-health-bar').style.width = `${healthPercent}%`;
+            let bossName = (boss.type === 'wildflower') ? '🌸 Wild flower 🌸🌸' : 'WTD BOSS';
+            document.getElementById('boss-health-text').textContent = `${bossName}: ${Math.round(healthPercent)}%`;
+        }
+        
+        // ==================== 绘制玩家 ====================
+        function drawPlayer() {
+            ctx.save();
+            ctx.fillStyle = player.color;
+            ctx.shadowColor = player.color;
+            ctx.shadowBlur = 20;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            if (abilities.shield.active) {
+                ctx.strokeStyle = '#0288d1'; ctx.lineWidth = 5;
+                ctx.shadowColor = '#0288d1'; ctx.shadowBlur = 30;
+                ctx.beginPath(); ctx.arc(player.x + player.width/2, player.y + player.height/2, player.width/2 + 15, 0, Math.PI * 2); ctx.stroke();
+                const pulse = Math.sin(Date.now() / 150) * 0.3 + 0.7;
+                ctx.globalAlpha = pulse * 0.6;
+                ctx.fillStyle = '#0288d1';
+                ctx.beginPath(); ctx.arc(player.x + player.width/2, player.y + player.height/2, player.width/2 + 10, 0, Math.PI * 2); ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(player.x + 8, player.y + 8, 15, 15);
+            ctx.fillRect(player.x + player.width - 23, player.y + 8, 15, 15);
+            if (frenzyMode) {
+                ctx.strokeStyle = '#ff9800'; ctx.lineWidth = 4;
+                ctx.shadowColor = '#ff9800'; ctx.shadowBlur = 40;
+                ctx.beginPath(); ctx.arc(player.x + player.width/2, player.y + player.height/2, player.width/2 + 25, 0, Math.PI * 2); ctx.stroke();
+                for (let i = 0; i < 8; i++) {
+                    const angle = (Date.now() / 200 + i * Math.PI / 4) % (Math.PI * 2);
+                    const pulseSize = Math.sin(Date.now() / 100 + i) * 10 + 20;
+                    ctx.fillStyle = '#ff9800';
+                    ctx.beginPath(); ctx.arc(player.x + player.width/2 + Math.cos(angle) * 40, player.y + player.height/2 + Math.sin(angle) * 40, pulseSize * 0.3, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+            ctx.restore();
+        }
+        
+        // ==================== 绘制敌人（完整保留原有所有敌人绘制）====================
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                if (enemy.type === 'fast' && enemy.trail.length > 0) {
+                    enemy.trail.forEach((pos, index) => {
+                        const alpha = (index + 1) / enemy.trail.length * 0.3;
+                        ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = enemy.color; ctx.fillRect(pos.x, pos.y, enemy.width, enemy.height); ctx.restore();
+                    });
+                }
+                if (enemy.type === 'gay0') {
+                    ctx.save();
+                    const gradient = ctx.createLinearGradient(enemy.x, enemy.y, enemy.x + enemy.width, enemy.y + enemy.height);
+                    gradient.addColorStop(0, '#ff0000'); gradient.addColorStop(0.2, '#ff8800'); gradient.addColorStop(0.4, '#ffff00');
+                    gradient.addColorStop(0.6, '#00ff00'); gradient.addColorStop(0.8, '#0088ff'); gradient.addColorStop(1, '#8800ff');
+                    ctx.fillStyle = gradient; ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 15; ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                    ctx.fillStyle = 'white'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.shadowColor = 'black'; ctx.shadowBlur = 3; ctx.fillText('Gay0', enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                    ctx.restore();
+                } else if (enemy.type === 'sigma') {
+                    ctx.save();
+                    ctx.fillStyle = enemy.color; ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 15; ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                    ctx.fillStyle = enemy.secondaryColor;
+                    ctx.fillRect(enemy.x + 5, enemy.y, 5, enemy.height); ctx.fillRect(enemy.x + enemy.width - 10, enemy.y, 5, enemy.height);
+                    ctx.fillRect(enemy.x, enemy.y + 5, enemy.width, 5); ctx.fillRect(enemy.x, enemy.y + enemy.height - 10, enemy.width, 5);
+                    ctx.fillStyle = 'white'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.shadowColor = 'black'; ctx.shadowBlur = 3; ctx.fillText('Sigma', enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                    ctx.restore();
+                } else if (enemy.type === 'gqh') {
+                    ctx.save();
+                    ctx.fillStyle = enemy.color; ctx.shadowColor = enemy.color; ctx.shadowBlur = 20; ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.strokeRect(enemy.x + 3, enemy.y + 3, enemy.width - 6, enemy.height - 6);
+                    ctx.fillStyle = 'white'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.shadowColor = 'black'; ctx.shadowBlur = 3; ctx.fillText('gqh学姐', enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                    ctx.fillStyle = '#ff1493';
+                    ctx.beginPath(); ctx.moveTo(enemy.x + 15, enemy.y + 15);
+                    ctx.bezierCurveTo(enemy.x + 15, enemy.y + 10, enemy.x + 20, enemy.y + 10, enemy.x + 20, enemy.y + 15);
+                    ctx.bezierCurveTo(enemy.x + 20, enemy.y + 20, enemy.x + 15, enemy.y + 25, enemy.x + 15, enemy.y + 25);
+                    ctx.bezierCurveTo(enemy.x + 15, enemy.y + 25, enemy.x + 10, enemy.y + 20, enemy.x + 10, enemy.y + 15);
+                    ctx.bezierCurveTo(enemy.x + 10, enemy.y + 10, enemy.x + 15, enemy.y + 10, enemy.x + 15, enemy.y + 15);
+                    ctx.fill();
+                    ctx.restore();
+                } else {
+                    ctx.fillStyle = enemy.color; ctx.shadowColor = enemy.color; ctx.shadowBlur = 15; ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                    ctx.fillStyle = 'white'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.shadowBlur = 0;
+                    let enemyText = 'WTD';
+                    if (enemy.type === 'fast') enemyText = '😈😈';
+                    if (enemy.type === 'tank') enemyText = '奶龙';
+                    if (enemy.type === 'shooter') enemyText = '😡😡';
+                    if (enemy.type === 'splitter') enemyText = 'yyy';
+                    if (enemy.type === 'summoner') enemyText = 'Null';
+                    ctx.fillText(enemyText, enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                }
+                if (enemy.health < enemy.maxHealth) {
+                    const healthPercent = enemy.health / enemy.maxHealth;
+                    const barWidth = Math.min(enemy.width, 50);
+                    const barHeight = 6;
+                    const barX = enemy.x + (enemy.width - barWidth) / 2;
+                    const barY = enemy.y - 10;
+                    ctx.fillStyle = '#f44336'; ctx.fillRect(barX, barY, barWidth, barHeight);
+                    ctx.fillStyle = enemy.type === 'tank' ? '#4caf50' : enemy.type === 'sigma' ? '#0288d1' : enemy.type === 'gqh' ? '#ff69b4' : '#8bc34a';
+                    ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+                    ctx.strokeStyle = '#000000'; ctx.lineWidth = 1; ctx.strokeRect(barX, barY, barWidth, barHeight);
+                }
+            });
+            if (boss) drawBoss();
+        }
+        
+        // ==================== 绘制Boss（新增Wild flower分支）====================
+        function drawBoss() {
+            ctx.save();
+            if (boss.type === 'wildflower') {
+                // Wild flower🌸 独特外观
+                ctx.fillStyle = 'rgba(255, 105, 180, 0.9)';
+                ctx.shadowColor = '#ff69b4';
+                ctx.shadowBlur = 40;
+                ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+                // 花瓣
+                ctx.fillStyle = '#ffb6c1';
+                ctx.shadowBlur = 30;
+                ctx.beginPath(); ctx.arc(boss.x - 20, boss.y + boss.height/2, 30, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(boss.x + boss.width + 20, boss.y + boss.height/2, 30, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(boss.x + boss.width/2, boss.y - 20, 30, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(boss.x + boss.width/2, boss.y + boss.height + 20, 30, 0, Math.PI * 2); ctx.fill();
+                // 花符号
+                ctx.fillStyle = '#ff1493';
+                ctx.shadowBlur = 30;
+                ctx.font = 'bold 48px Arial';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText('🌸', boss.x + boss.width/2, boss.y + boss.height/2);
+                // 名称
+                ctx.fillStyle = '#333333';
+                ctx.font = 'bold 28px Arial';
+                ctx.shadowBlur = 10;
+                ctx.fillText('Wild flower', boss.x + boss.width/2, boss.y - 40);
+            } else {
+                // 普通Boss绘制（原样保留）
+                ctx.fillStyle = boss.color;
+                ctx.shadowColor = boss.color;
+                ctx.shadowBlur = 30;
+                ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+                ctx.fillStyle = '#f44336';
+                ctx.beginPath(); ctx.arc(boss.x + boss.width/2, boss.y + boss.height/2, 50, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 32px Arial';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'black'; ctx.shadowBlur = 10;
+                ctx.fillText('WTD BOSS', boss.x + boss.width/2, boss.y + boss.height/2);
+                if (boss.phase === 2) {
+                    const pulse = Math.sin(Date.now() / 200) * 0.5 + 0.5;
+                    ctx.strokeStyle = `rgba(244, 67, 54, ${pulse})`; ctx.lineWidth = 8;
+                    ctx.shadowColor = '#f44336'; ctx.shadowBlur = 20;
+                    ctx.beginPath(); ctx.arc(boss.x + boss.width/2, boss.y + boss.height/2, boss.width/2 + 30, 0, Math.PI * 2); ctx.stroke();
+                } else if (boss.phase === 3) {
+                    ctx.save();
+                    ctx.translate(boss.x + boss.width/2, boss.y + boss.height/2);
+                    ctx.rotate(Date.now() / 500);
+                    ctx.fillStyle = '#ff9800'; ctx.shadowColor = '#ff9800'; ctx.shadowBlur = 20;
+                    for (let i = 0; i < 6; i++) {
+                        ctx.save(); ctx.rotate(i * Math.PI / 3); ctx.fillRect(-20, -20, 40, 40); ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            }
+            ctx.restore();
+        }
+        
+        // ==================== 绘制子弹（新增三角形尖刺）====================
+        function drawBullets() {
+            // 玩家子弹
+            player.bullets.forEach(bullet => {
+                ctx.save();
+                if (frenzyMode) { ctx.fillStyle = '#ff9800'; ctx.shadowColor = '#ff9800'; }
+                else if (bullet.explosive) { ctx.fillStyle = '#ff9800'; ctx.shadowColor = '#ff9800'; }
+                else { ctx.fillStyle = '#0288d1'; ctx.shadowColor = '#0288d1'; }
+                ctx.shadowBlur = 20;
+                ctx.beginPath(); ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2); ctx.fill();
+                if (player.tripleShot) {
+                    ctx.globalAlpha = 0.5;
+                    ctx.beginPath(); ctx.arc(bullet.x, bullet.y, bullet.radius * 1.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+                ctx.restore();
+            });
+            
+            // 敌人子弹（包括新增三角形尖刺）
+            enemyBullets.forEach(bullet => {
+                ctx.save();
+                if (bullet.laser) {
+                    ctx.strokeStyle = '#9c27b0'; ctx.lineWidth = bullet.radius;
+                    ctx.shadowColor = '#9c27b0'; ctx.shadowBlur = 20;
+                    ctx.beginPath(); ctx.moveTo(bullet.startX, bullet.startY); ctx.lineTo(bullet.x, bullet.y); ctx.stroke();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath(); ctx.arc(bullet.x, bullet.y, bullet.radius * 1.5, 0, Math.PI * 2); ctx.fill();
+                }
+                else if (bullet.rainbow) {
+                    const gradient = ctx.createRadialGradient(bullet.x, bullet.y, 0, bullet.x, bullet.y, bullet.radius);
+                    gradient.addColorStop(0, '#ff0000'); gradient.addColorStop(0.25, '#ffff00'); gradient.addColorStop(0.5, '#00ff00');
+                    gradient.addColorStop(0.75, '#0088ff'); gradient.addColorStop(1, '#8800ff');
+                    ctx.fillStyle = gradient; ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 15;
+                    ctx.beginPath(); ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2); ctx.fill();
+                }
+                else if (bullet.heart) {
+                    ctx.fillStyle = '#ff69b4'; ctx.shadowColor = '#ff69b4'; ctx.shadowBlur = 15;
+                    ctx.beginPath(); const size = bullet.radius * 1.5;
+                    ctx.moveTo(bullet.x, bullet.y - size/2);
+                    ctx.bezierCurveTo(bullet.x + size/2, bullet.y - size, bullet.x + size, bullet.y - size/2, bullet.x, bullet.y + size/2);
+                    ctx.bezierCurveTo(bullet.x - size, bullet.y - size/2, bullet.x - size/2, bullet.y - size, bullet.x, bullet.y - size/2);
+                    ctx.fill();
+                }
+                // ===== 新增：Wild flower的三角形尖刺 =====
+                else if (bullet.shape === 'spike') {
+                    ctx.translate(bullet.x, bullet.y);
+                    const angle = Math.atan2(bullet.vy, bullet.vx);
+                    ctx.rotate(angle);
+                    ctx.fillStyle = '#ff69b4';
+                    ctx.shadowColor = '#ff69b4';
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath();
+                    ctx.moveTo(bullet.radius * 1.5, 0);
+                    ctx.lineTo(-bullet.radius, -bullet.radius);
+                    ctx.lineTo(-bullet.radius, bullet.radius);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                else {
+                    ctx.fillStyle = bullet.color || '#9c27b0';
+                    ctx.shadowColor = bullet.color || '#9c27b0';
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath(); ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.restore();
+            });
+        }
+        
+        // ==================== 绘制粒子 ====================
+        function drawParticles() {
+            particles.forEach((particle, index) => {
+                ctx.save();
+                ctx.globalAlpha = particle.life / particle.maxLife;
+                ctx.fillStyle = particle.color;
+                if (particle.type === 'circle') {
+                    ctx.beginPath(); ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2); ctx.fill();
+                } else if (particle.type === 'square') {
+                    ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+                } else if (particle.type === 'star') {
+                    ctx.beginPath();
+                    for (let i = 0; i < 5; i++) {
+                        const angle = (i * Math.PI * 2) / 5;
+                        const radius = particle.size;
+                        ctx.lineTo(particle.x + Math.cos(angle) * radius, particle.y + Math.sin(angle) * radius);
+                    }
+                    ctx.closePath(); ctx.fill();
+                } else if (particle.type === 'rainbow') {
+                    const gradient = ctx.createRadialGradient(particle.x, particle.y, 0, particle.x, particle.y, particle.size);
+                    gradient.addColorStop(0, '#ff0000'); gradient.addColorStop(0.25, '#ffff00'); gradient.addColorStop(0.5, '#00ff00');
+                    gradient.addColorStop(0.75, '#0088ff'); gradient.addColorStop(1, '#8800ff');
+                    ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2); ctx.fill();
+                } else if (particle.type === 'electric') {
+                    ctx.fillStyle = '#0288d1'; ctx.beginPath(); ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2); ctx.fill();
+                    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(particle.x, particle.y, particle.size * 1.5, 0, Math.PI * 2); ctx.stroke();
+                } else if (particle.type === 'heart') {
+                    ctx.fillStyle = '#ff69b4';
+                    ctx.beginPath(); const size = particle.size;
+                    ctx.moveTo(particle.x, particle.y - size/2);
+                    ctx.bezierCurveTo(particle.x + size/2, particle.y - size, particle.x + size, particle.y - size/2, particle.x, particle.y + size/2);
+                    ctx.bezierCurveTo(particle.x - size, particle.y - size/2, particle.x - size/2, particle.y - size, particle.x, particle.y - size/2);
+                    ctx.fill();
+                }
+                ctx.restore();
+                particle.x += particle.vx; particle.y += particle.vy; particle.life--;
+                if (particle.life <= 0) particles.splice(index, 1);
+            });
+        }
+        
+        // ==================== 绘制无人机 ====================
+        function drawDrones() {
+            if (!abilities.drone.active) return;
+            abilities.drone.drones.forEach(drone => {
+                ctx.save();
+                ctx.fillStyle = '#ff9800'; ctx.shadowColor = '#ff9800'; ctx.shadowBlur = 20;
+                ctx.beginPath(); ctx.arc(drone.x, drone.y, 15, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#0288d1'; ctx.beginPath(); ctx.arc(drone.x, drone.y, 8, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#9c27b0'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(drone.x, drone.y, 12, 0, Math.PI * 2); ctx.stroke();
+                ctx.restore();
+            });
+        }
+        
+        // ==================== 移动玩家 ====================
+        function movePlayer() {
+            let moveX = 0, moveY = 0;
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) moveX -= player.speed;
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) moveX += player.speed;
+            if (keys['ArrowUp'] || keys['w'] || keys['W']) moveY -= player.speed;
+            if (keys['ArrowDown'] || keys['s'] || keys['S']) moveY += player.speed;
+            if (moveX !== 0 && moveY !== 0) { moveX *= 0.7071; moveY *= 0.7071; }
+            player.x += moveX; player.y += moveY;
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+            if (player.y < 0) player.y = 0;
+            if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
+            if (player.regenHealth && health < maxHealth) {
+                health += player.regenRate; if (health > maxHealth) health = maxHealth; updateUI();
+            }
+        }
+        
+        // ==================== 移动敌人（保留原逻辑，略作适配）====================
+        function moveEnemies() {
+            enemies.forEach((enemy, enemyIndex) => {
+                if (enemy.type === 'fast') {
+                    enemy.trail.push({x: enemy.x, y: enemy.y});
+                    if (enemy.trail.length > 5) enemy.trail.shift();
+                }
+                const dx = (player.x + player.width/2) - (enemy.x + enemy.width/2);
+                const dy = (player.y + player.height/2) - (enemy.y + enemy.height/2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance > 0 && !timeStopActive) {
+                    enemy.x += (dx / distance) * enemy.speed;
+                    enemy.y += (dy / distance) * enemy.speed;
+                }
+                if (enemy.type === 'shooter' || enemy.type === 'gay0' || enemy.type === 'sigma' || enemy.type === 'gqh') {
+                    const now = Date.now();
+                    if (now - enemy.lastShot > enemy.shotDelay && distance < enemy.range && !timeStopActive) {
+                        if (enemy.type === 'gay0') shootGay0(enemy);
+                        else if (enemy.type === 'sigma') shootSigma(enemy);
+                        else if (enemy.type === 'gqh') shootGqh(enemy);
+                        else shootEnemy(enemy);
+                        enemy.lastShot = now;
+                    }
+                }
+                if (enemy.type === 'summoner') {
+                    const now = Date.now();
+                    if (now - enemy.lastSummon > enemy.summonDelay && !timeStopActive) {
+                        for (let i = 0; i < 2; i++) {
+                            enemies.push({
+                                x: enemy.x + enemy.width/2, y: enemy.y + enemy.height/2,
+                                width: 30, height: 30, health: 200, maxHealth: 200, speed: 2.5,
+                                color: '#f44336', type: 'normal'
+                            }); enemiesRemaining++;
+                        }
+                        enemy.lastSummon = now;
+                    }
+                }
+                if (!abilities.shield.active && !godMode &&
+                    enemy.x < player.x + player.width && enemy.x + enemy.width > player.x &&
+                    enemy.y < player.y + player.height && enemy.y + enemy.height > player.y) {
+                    if (Math.random() * 100 > player.dodgeChance) {
+                        const damage = enemy.type === 'gqh' ? 25 : enemy.type === 'tank' ? 20 : 10;
+                        health -= damage; updateUI();
+                        createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 15, '#f44336');
+                        if (health <= 0) { health = 0; endGame(); }
+                    }
+                    enemies.splice(enemyIndex, 1); enemiesRemaining--; resetCombo();
+                }
+            });
+            if (boss && !timeStopActive) moveBoss();
+        }
+        
+        // ==================== 移动Boss（新增Wild flower阶段变化）====================
+        function moveBoss() {
+            boss.x += boss.speed * boss.moveDirection;
+            if (boss.x <= 0 || boss.x + boss.width >= canvas.width) {
+                boss.moveDirection *= -1;
+                boss.x = Math.max(0, Math.min(canvas.width - boss.width, boss.x));
+            }
+            boss.y = 100 + Math.sin(Date.now() / 1800) * 50;
+            
+            const now = Date.now();
+            if (now - boss.lastPhaseChange > boss.phaseChangeDelay) {
+                boss.phase++;
+                boss.lastPhaseChange = now;
+                if (boss.phase > 3) boss.phase = 1;
+                
+                if (boss.type === 'wildflower') {
+                    // Wild flower阶段强化
+                    if (boss.phase === 2) {
+                        boss.shotDelay = 200; boss.spikeCount = 8; boss.spikeDamage = 35; boss.speed = 2.5;
+                    } else if (boss.phase === 3) {
+                        boss.shotDelay = 120; boss.spikeCount = 10; boss.spikeDamage = 40; boss.speed = 3.0;
+                    } else {
+                        boss.shotDelay = 300; boss.spikeCount = 6; boss.spikeDamage = 30; boss.speed = 2.0;
+                    }
+                } else {
+                    // 普通Boss阶段
+                    if (boss.phase === 2) { boss.shotDelay = 500; boss.speed = 2.5; }
+                    else if (boss.phase === 3) { boss.shotDelay = 300; boss.speed = 3.5; }
+                    else { boss.shotDelay = 800; boss.speed = 1.5; }
+                }
+            }
+            
+            // 攻击模式切换（仅普通Boss）
+            if (boss.type !== 'wildflower') {
+                if (now - boss.lastPatternChange > boss.patternChangeDelay) {
+                    boss.pattern = (boss.pattern + 1) % 4;
+                    boss.lastPatternChange = now;
+                }
+            }
+            
+            if (now - boss.lastShot > boss.shotDelay) {
+                shootBoss();
+                boss.lastShot = now;
+            }
+        }
+        
+        // ==================== 敌人射击（原有）====================
+        function shootEnemy(enemy) {
+            const dx = (player.x + player.width/2) - (enemy.x + enemy.width/2);
+            const dy = (player.y + player.height/2) - (enemy.y + enemy.height/2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance === 0) return;
+            enemyBullets.push({
+                x: enemy.x + enemy.width/2, y: enemy.y + enemy.height/2, radius: 8, speed: 6,
+                vx: dx / distance, vy: dy / distance, damage: 15, color: '#9c27b0'
+            });
+        }
+        function shootGay0(enemy) {
+            for (let i = 0; i < 3; i++) {
+                const angleOffset = (i - 1) * 0.2;
+                const dx = (player.x + player.width/2) - (enemy.x + enemy.width/2);
+                const dy = (player.y + player.height/2) - (enemy.y + enemy.height/2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance === 0) return;
+                const baseAngle = Math.atan2(dy, dx);
+                const angle = baseAngle + angleOffset;
+                enemyBullets.push({
+                    x: enemy.x + enemy.width/2, y: enemy.y + enemy.height/2, radius: 7, speed: 5,
+                    vx: Math.cos(angle), vy: Math.sin(angle), damage: 12, rainbow: true, color: '#ffffff',
+                    homing: true, homingStrength: 0.05
+                });
+            }
+        }
+        function shootSigma(enemy) {
+            const dx = (player.x + player.width/2) - (enemy.x + enemy.width/2);
+            const dy = (player.y + player.height/2) - (enemy.y + enemy.height/2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance === 0) return;
+            enemyBullets.push({
+                x: enemy.x + enemy.width/2, y: enemy.y + enemy.height/2,
+                startX: enemy.x + enemy.width/2, startY: enemy.y + enemy.height/2,
+                radius: 10, speed: 8, vx: dx / distance, vy: dy / distance, damage: 25,
+                laser: true, color: '#9c27b0', split: true, splitCount: 3
+            });
+        }
+        function shootGqh(enemy) {
+            for (let i = 0; i < 2; i++) {
+                const angleOffset = (i - 0.5) * 0.3;
+                const dx = (player.x + player.width/2) - (enemy.x + enemy.width/2);
+                const dy = (player.y + player.height/2) - (enemy.y + enemy.height/2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance === 0) return;
+                const baseAngle = Math.atan2(dy, dx);
+                const angle = baseAngle + angleOffset;
+                enemyBullets.push({
+                    x: enemy.x + enemy.width/2, y: enemy.y + enemy.height/2, radius: 6, speed: 4.5,
+                    vx: Math.cos(angle), vy: Math.sin(angle), damage: 18, heart: true, color: '#ff69b4'
+                });
+            }
+        }
+        
+        // ==================== Boss射击（核心修改：Wild flower发射三角形尖刺）====================
+        function shootBoss() {
+            if (!boss) return;
+            
+            if (boss.type === 'wildflower') {
+                const centerX = boss.x + boss.width/2;
+                const centerY = boss.y + boss.height/2;
+                // 发射多方向尖刺
+                for (let i = 0; i < boss.spikeCount; i++) {
+                    const angle = (Math.PI * 2 * i / boss.spikeCount) + (Date.now() / 500);
+                    enemyBullets.push({
+                        x: centerX, y: centerY,
+                        startX: centerX, startY: centerY,
+                        radius: 8, speed: boss.spikeSpeed,
+                        vx: Math.cos(angle), vy: Math.sin(angle),
+                        damage: boss.spikeDamage, shape: 'spike', color: '#ff69b4', homing: false
+                    });
+                }
+                // 阶段2/3随机散射
+                if (boss.phase >= 2 && Math.random() < 0.5) {
+                    for (let i = 0; i < boss.spikeCount * 0.5; i++) {
+                        const angle = Math.PI * 2 * Math.random();
+                        enemyBullets.push({
+                            x: centerX, y: centerY,
+                            startX: centerX, startY: centerY,
+                            radius: 6, speed: boss.spikeSpeed + 2,
+                            vx: Math.cos(angle), vy: Math.sin(angle),
+                            damage: boss.spikeDamage * 0.8, shape: 'spike', color: '#ffb6c1'
+                        });
+                    }
+                }
+            } else {
+                // 普通Boss射击模式（原样保留）
+                const centerX = boss.x + boss.width/2;
+                const centerY = boss.y + boss.height/2;
+                if (boss.pattern === 0) {
+                    const dx = (player.x + player.width/2) - centerX;
+                    const dy = (player.y + player.height/2) - centerY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance === 0) return;
+                    enemyBullets.push({ x: centerX, y: centerY, radius: 15, speed: 7, vx: dx / distance, vy: dy / distance, damage: 25, color: '#9c27b0' });
+                } else if (boss.pattern === 1) {
+                    for (let i = -1; i <= 1; i++) {
+                        const angle = Math.atan2(player.y + player.height/2 - centerY, player.x + player.width/2 - centerX) + i * 0.3;
+                        enemyBullets.push({ x: centerX, y: centerY, radius: 12, speed: 8, vx: Math.cos(angle), vy: Math.sin(angle), damage: 20, color: '#8e24aa' });
+                    }
+                } else if (boss.pattern === 2) {
+                    for (let i = 0; i < 12; i++) {
+                        const angle = (Math.PI * 2 * i / 12) + Date.now() / 1000;
+                        enemyBullets.push({ x: centerX, y: centerY, radius: 10, speed: 9, vx: Math.cos(angle), vy: Math.sin(angle), damage: 15, color: '#7b1fa2' });
+                    }
+                } else if (boss.pattern === 3) {
+                    for (let i = 0; i < 8; i++) {
+                        const angle = (Math.PI * 2 * i / 8) + Date.now() / 500;
+                        enemyBullets.push({ x: centerX, y: centerY, radius: 8, speed: 10, vx: Math.cos(angle), vy: Math.sin(angle), damage: 12, color: '#6a1b9a' });
+                    }
+                }
+            }
+        }
+        
+        // ==================== 玩家射击 ====================
+        function shootPlayer() {
+            const now = Date.now();
+            if (now - player.lastShot < player.shotDelay) return;
+            player.lastShot = now;
+            const dx = mouse.x - (player.x + player.width/2);
+            const dy = mouse.y - (player.y + player.height/2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance === 0) return;
+            const baseVx = dx / distance;
+            const baseVy = dy / distance;
+            let baseDamage = player.damage * (1 + combo / 100);
+            for (let i = 0; i < player.bulletCount; i++) {
+                let angleOffset = 0;
+                if (player.tripleShot && i < 3) angleOffset = (i - 1) * 0.1;
+                let bulletVx, bulletVy;
+                if (angleOffset !== 0) {
+                    const angle = Math.atan2(baseVy, baseVx) + angleOffset;
+                    bulletVx = Math.cos(angle); bulletVy = Math.sin(angle);
+                } else { bulletVx = baseVx; bulletVy = baseVy; }
+                if (player.homing && frenzyMode) {
+                    let nearestEnemy = null, nearestDistance = Infinity;
+                    enemies.forEach(enemy => {
+                        const edx = (enemy.x + enemy.width/2) - (player.x + player.width/2);
+                        const edy = (enemy.y + enemy.height/2) - (player.y + player.height/2);
+                        const edistance = Math.sqrt(edx * edx + edy * edy);
+                        if (edistance < nearestDistance && edistance < 500) { nearestDistance = edistance; nearestEnemy = enemy; }
+                    });
+                    if (nearestEnemy) {
+                        const targetDx = (nearestEnemy.x + nearestEnemy.width/2) - (player.x + player.width/2);
+                        const targetDy = (nearestEnemy.y + nearestEnemy.height/2) - (player.y + player.height/2);
+                        const targetDistance = Math.sqrt(targetDx * targetDx + targetDy * targetDy);
+                        if (targetDistance > 0) {
+                            bulletVx = bulletVx * 0.7 + targetDx / targetDistance * 0.3;
+                            bulletVy = bulletVy * 0.7 + targetDy / targetDistance * 0.3;
+                            const bulletSpeed = Math.sqrt(bulletVx * bulletVx + bulletVy * bulletVy);
+                            bulletVx /= bulletSpeed; bulletVy /= bulletSpeed;
+                        }
+                    }
+                }
+                const bullet = {
+                    x: player.x + player.width/2, y: player.y + player.height/2,
+                    radius: 8 * player.attackRange, speed: 12, vx: bulletVx, vy: bulletVy,
+                    damage: baseDamage, pierce: player.pierce, piercedEnemies: 0,
+                    explosive: player.explosive, homing: player.homing,
+                    isCritical: false, criticalMultiplier: criticalMultiplier, vampiricRatio: vampiricRatio
+                };
+                if (Math.random() * 100 < criticalChance) {
+                    bullet.isCritical = true; bullet.damage *= criticalMultiplier;
+                }
+                player.bullets.push(bullet);
+            }
+            if (player.shotDelay < 50) {
+                setTimeout(() => { if (gameRunning && !gamePaused) shootPlayer(); }, player.shotDelay / 2);
+            }
+        }
+        
+        // ==================== 粒子效果 ====================
+        function createParticles(x, y, count, color, type = 'circle') {
+            for (let i = 0; i < count; i++) {
+                let particleColor = color, particleType = type;
+                if (color === 'rainbow') {
+                    const colors = ['#ff0000','#ff8800','#ffff00','#00ff00','#0088ff','#8800ff'];
+                    particleColor = colors[Math.floor(Math.random() * colors.length)]; particleType = 'rainbow';
+                } else if (color === 'electric') { particleColor = '#0288d1'; particleType = 'electric'; }
+                else if (color === 'gqh') { particleColor = '#ff69b4'; particleType = 'heart'; }
+                particles.push({
+                    x, y, vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8,
+                    size: Math.random() * 8 + 3, color: particleColor,
+                    life: Math.random() * 40 + 30, maxLife: 70, type: particleType
+                });
+            }
+        }
+        
+        // ==================== 连击系统 ====================
+        function addCombo() {
+            combo++; if (combo > maxCombo) maxCombo = combo;
+            if (combo % 10 === 0) showPowerupIndicator(`连击 ${combo}！`);
+            if (combo >= 50 && !frenzyMode) {
+                frenzyMode = true; showPowerupIndicator("狂热模式！");
+                player.attackRange = 1.5; player.homing = true;
+                setTimeout(() => { if (combo < 50) { frenzyMode = false; player.attackRange = 1.0; player.homing = false; } }, 10000);
+            }
+            clearTimeout(comboTimeout);
+            comboTimeout = setTimeout(() => {
+                if (combo > 0) { combo = 0; frenzyMode = false; player.attackRange = 1.0; player.homing = false; updateUI(); }
+            }, 3000);
+            updateUI();
+        }
+        function resetCombo() {
+            if (combo > 0) { combo = 0; frenzyMode = false; player.attackRange = 1.0; player.homing = false; updateUI(); }
+        }
+        function showPowerupIndicator(text) {
+            const indicator = document.getElementById('powerup-indicator');
+            indicator.textContent = text; indicator.style.display = 'block';
+            setTimeout(() => { indicator.style.display = 'none'; }, 2000);
+        }
+        // 显示天赋升级提示（修改后，无确认按钮，2秒自动消失）
+        function showUpgradeNotification(upgradeName, upgradeEffect) {
+            const notification = document.getElementById('upgrade-notification');
+            document.getElementById('upgrade-title').textContent = upgradeName;
+            document.getElementById('upgrade-effect').textContent = upgradeEffect;
+            notification.style.display = 'block';
+            
+            // 暂停游戏
+            gamePaused = true;
+            cancelAnimationFrame(gameLoop);
+            
+            // 2秒后自动关闭并恢复游戏
+            setTimeout(() => {
+                notification.style.display = 'none';
+                gamePaused = false;
+                if (gameRunning) {
+                    gameLoop = requestAnimationFrame(updateGame);
+                }
+            }, 2000);
+        }
+        
+        // ==================== 自动释放技能 ====================
+        function autoCastSkills() {
+            if (!autoSkills || !gameRunning || gamePaused) return;
+            const now = Date.now();
+            for (let abilityKey in abilities) {
+                const ability = abilities[abilityKey];
+                if (ability.auto && now - ability.lastUsed > ability.cooldown) {
+                    let shouldCast = false;
+                    if (abilityKey === 'chainLightning') shouldCast = enemies.length > 3 || (boss && enemies.length > 0);
+                    else if (abilityKey === 'shield') shouldCast = health < maxHealth * 0.5;
+                    else if (abilityKey === 'bomb') shouldCast = enemies.length > 5 || (boss && boss.health < boss.maxHealth * 0.3);
+                    else if (abilityKey === 'drone') shouldCast = !ability.active || ability.drones.length === 0;
+                    else if (abilityKey === 'timeStop') shouldCast = enemyBullets.length > 20;
+                    if (shouldCast) {
+                        if (abilityKey === 'chainLightning') useChainLightning();
+                        else if (abilityKey === 'shield') useShield();
+                        else if (abilityKey === 'bomb') useBomb();
+                        else if (abilityKey === 'drone') useDrone();
+                        else if (abilityKey === 'timeStop') useTimeStop();
+                    }
+                }
+            }
+        }
+        
+        // ==================== 技能实现（保留原样）====================
+        function useChainLightning() {
+            const now = Date.now();
+            if (now - abilities.chainLightning.lastUsed < abilities.chainLightning.cooldown) return;
+            abilities.chainLightning.lastUsed = now; abilities.chainLightning.active = true;
+            const targetEnemies = [...enemies]; if (boss) targetEnemies.push(boss);
+            if (targetEnemies.length === 0) return;
+            let currentTarget = targetEnemies[0]; let chainCount = 5 + playerLevel * 2;
+            for (let i = 0; i < chainCount && currentTarget; i++) {
+                const damage = 100 + playerLevel * 20;
+                const actualDamage = currentTarget.damageReduction ? damage * (1 - currentTarget.damageReduction) : damage;
+                currentTarget.health -= actualDamage;
+                createParticles(currentTarget.x + currentTarget.width/2, currentTarget.y + currentTarget.height/2, 25, '#0288d1', 'star');
+                if (i > 0) { /* drawLightning调用略 */ }
+                if (currentTarget.health <= 0) {
+                    const isGay0 = currentTarget.type === 'gay0'; const isSigma = currentTarget.type === 'sigma'; const isGqh = currentTarget.type === 'gqh';
+                    score += isGay0 ? 200 : isSigma ? 250 : isGqh ? 300 : 100;
+                    xp += isGay0 ? 100 : isSigma ? 120 : isGqh ? 150 : 50;
+                    enemiesRemaining--;
+                    if (isGay0) createParticles(currentTarget.x + currentTarget.width/2, currentTarget.y + currentTarget.height/2, 50, 'rainbow', 'rainbow');
+                    else if (isSigma) createParticles(currentTarget.x + currentTarget.width/2, currentTarget.y + currentTarget.height/2, 60, 'electric', 'electric');
+                    else if (isGqh) createParticles(currentTarget.x + currentTarget.width/2, currentTarget.y + currentTarget.height/2, 70, 'gqh', 'heart');
+                    if (currentTarget !== boss) { const idx = enemies.indexOf(currentTarget); if (idx > -1) enemies.splice(idx, 1); } else defeatBoss();
+                }
+                let nextTarget = null; let nextDistance = Infinity;
+                targetEnemies.forEach(enemy => {
+                    if (enemy === currentTarget || enemy.health <= 0) return;
+                    const dx = enemy.x - currentTarget.x; const dy = enemy.y - currentTarget.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < nextDistance && distance < 300) { nextDistance = distance; nextTarget = enemy; }
+                });
+                currentTarget = nextTarget;
+            }
+            addCombo(); updateUI(); checkLevelUp();
+        }
+        function useShield() {
+            const now = Date.now(); if (now - abilities.shield.lastUsed < abilities.shield.cooldown) return;
+            abilities.shield.lastUsed = now; abilities.shield.active = true;
+            setTimeout(() => { abilities.shield.active = false; }, abilities.shield.duration);
+        }
+        function useBomb() {
+            const now = Date.now(); if (now - abilities.bomb.lastUsed < abilities.bomb.cooldown) return;
+            abilities.bomb.lastUsed = now;
+            enemies.forEach(enemy => {
+                const dx = canvas.width/2 - (enemy.x + enemy.width/2); const dy = canvas.height/2 - (enemy.y + enemy.height/2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance > 0) { enemy.x += dx / distance * 10; enemy.y += dy / distance * 10; }
+                const damage = 200 + playerLevel * 50;
+                const actualDamage = enemy.damageReduction ? damage * (1 - enemy.damageReduction) : damage;
+                enemy.health -= actualDamage;
+                createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 30, '#000000', 'circle');
+                if (enemy.health <= 0) {
+                    const isGay0 = enemy.type === 'gay0'; const isSigma = enemy.type === 'sigma'; const isGqh = enemy.type === 'gqh';
+                    score += isGay0 ? 300 : isSigma ? 350 : isGqh ? 400 : 150;
+                    xp += isGay0 ? 150 : isSigma ? 180 : isGqh ? 200 : 75;
+                    enemiesRemaining--;
+                    if (isGay0) createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 80, 'rainbow', 'rainbow');
+                    else if (isSigma) createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 90, 'electric', 'electric');
+                    else if (isGqh) createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 100, 'gqh', 'heart');
+                    const idx = enemies.indexOf(enemy); if (idx > -1) enemies.splice(idx, 1);
+                }
+            });
+            if (boss) {
+                const damage = 500 + playerLevel * 100; boss.health -= damage; updateBossHealthBar();
+                createParticles(boss.x + boss.width/2, boss.y + boss.height/2, 80, '#000000', 'circle');
+                if (boss.health <= 0) defeatBoss();
+            }
+            addCombo(); updateUI(); checkLevelUp();
+        }
+        function useDrone() {
+            const now = Date.now(); if (now - abilities.drone.lastUsed < abilities.drone.cooldown) return;
+            abilities.drone.lastUsed = now; abilities.drone.active = true;
+            abilities.drone.drones = [];
+            for (let i = 0; i < 4; i++) {
+                abilities.drone.drones.push({ x: player.x + (i - 1.5) * 60, y: player.y - 50, angle: 0, lastShot: 0, shotDelay: 400 });
+            }
+            setTimeout(() => { abilities.drone.active = false; abilities.drone.drones = []; }, 25000);
+        }
+        function useTimeStop() {
+            const now = Date.now(); if (now - abilities.timeStop.lastUsed < abilities.timeStop.cooldown) return;
+            abilities.timeStop.lastUsed = now; timeStopActive = true; timeStopEnd = now + abilities.timeStop.duration;
+            setTimeout(() => { timeStopActive = false; }, abilities.timeStop.duration);
+        }
+        
+        // ==================== 更新无人机 ====================
+        function updateDrones() {
+            if (!abilities.drone.active) return;
+            const now = Date.now();
+            abilities.drone.drones.forEach((drone, index) => {
+                drone.angle += 0.03;
+                const radius = 100;
+                drone.x = player.x + player.width/2 + Math.cos(drone.angle + index * Math.PI * 2/4) * radius;
+                drone.y = player.y + player.height/2 + Math.sin(drone.angle + index * Math.PI * 2/4) * radius;
+                if (now - drone.lastShot > drone.shotDelay && !timeStopActive) {
+                    let nearestEnemy = null, nearestDistance = Infinity;
+                    enemies.forEach(enemy => {
+                        const dx = enemy.x - drone.x; const dy = enemy.y - drone.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance < nearestDistance && distance < 400) { nearestDistance = distance; nearestEnemy = enemy; }
+                    });
+                    if (nearestEnemy) {
+                        const dx = nearestEnemy.x + nearestEnemy.width/2 - drone.x;
+                        const dy = nearestEnemy.y + nearestEnemy.height/2 - drone.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance > 0) {
+                            player.bullets.push({
+                                x: drone.x, y: drone.y, radius: 6, speed: 12,
+                                vx: dx / distance, vy: dy / distance,
+                                damage: player.damage * 0.8, pierce: 1, piercedEnemies: 0, explosive: false
+                            });
+                            drone.lastShot = now;
+                        }
+                    }
+                }
+            });
+        }
+        
+        // ==================== 更新子弹（保留原逻辑）====================
+        function updateBullets() {
+            // 玩家子弹更新（略，完整保留原代码）
+            for (let i = player.bullets.length - 1; i >= 0; i--) {
+                const bullet = player.bullets[i];
+                if (!timeStopActive) { bullet.x += bullet.vx * bullet.speed; bullet.y += bullet.vy * bullet.speed; }
+                if (bullet.x < -bullet.radius || bullet.x > canvas.width + bullet.radius || bullet.y < -bullet.radius || bullet.y > canvas.height + bullet.radius) {
+                    player.bullets.splice(i, 1); continue;
+                }
+                let hitEnemy = false;
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    const enemy = enemies[j];
+                    if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width && bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
+                        let actualDamage = enemy.damageReduction ? bullet.damage * (1 - enemy.damageReduction) : bullet.damage;
+                        if (bullet.isCritical) createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 20, '#ff9800', 'star');
+                        enemy.health -= actualDamage;
+                        if (bullet.vampiricRatio > 0) {
+                            const healAmount = actualDamage * bullet.vampiricRatio;
+                            health = Math.min(maxHealth, health + healAmount);
+                            createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 5, '#f44336', 'circle');
+                        }
+                        if (bullet.explosive) {
+                            createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 25, '#ff9800', 'star');
+                            enemies.forEach(otherEnemy => {
+                                if (otherEnemy === enemy) return;
+                                const dx = otherEnemy.x - enemy.x; const dy = otherEnemy.y - enemy.y;
+                                const distance = Math.sqrt(dx * dx + dy * dy);
+                                if (distance < 100) {
+                                    const splashDamage = bullet.damage * 0.7;
+                                    const actualSplashDamage = otherEnemy.damageReduction ? splashDamage * (1 - otherEnemy.damageReduction) : splashDamage;
+                                    otherEnemy.health -= actualSplashDamage;
+                                }
+                            });
+                        } else {
+                            if (enemy.type === 'gay0') createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 20, 'rainbow', 'rainbow');
+                            else if (enemy.type === 'sigma') createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 20, 'electric', 'electric');
+                            else if (enemy.type === 'gqh') createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 25, 'gqh', 'heart');
+                            else createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 10, '#0288d1', 'circle');
+                        }
+                        addCombo();
+                        if (enemy.health <= 0) {
+                            const isGay0 = enemy.type === 'gay0'; const isSigma = enemy.type === 'sigma'; const isGqh = enemy.type === 'gqh';
+                            score += 20 * (isGqh ? 15 : isSigma ? 10 : isGay0 ? 8 : (enemy.type === 'tank' ? 5 : enemy.type === 'shooter' ? 3 : 1));
+                            xp += 10 * (isGqh ? 8 : isSigma ? 6 : isGay0 ? 5 : (enemy.type === 'tank' ? 3 : 1));
+                            enemiesRemaining--;
+                            if (isGay0) createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 60, 'rainbow', 'rainbow');
+                            else if (isSigma) createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 70, 'electric', 'electric');
+                            else if (isGqh) createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 80, 'gqh', 'heart');
+                            if (enemy.type === 'splitter') {
+                                for (let k = 0; k < 3; k++) {
+                                    enemies.push({ x: enemy.x + enemy.width/2, y: enemy.y + enemy.height/2, width: 25, height: 25, health: 100, maxHealth: 100, speed: 3, color: '#4caf50', type: 'normal' });
+                                    enemiesRemaining++;
+                                }
+                            }
+                            enemies.splice(j, 1);
+                        }
+                        updateUI();
+                        bullet.piercedEnemies++;
+                        if (bullet.pierce > 0 && bullet.piercedEnemies > bullet.pierce) { player.bullets.splice(i, 1); hitEnemy = true; break; }
+                    }
+                }
+                if (hitEnemy) { checkLevelUp(); continue; }
+                if (boss && bullet.x > boss.x && bullet.x < boss.x + boss.width && bullet.y > boss.y && bullet.y < boss.y + boss.height) {
+                    let bossDamage = bullet.damage;
+                    if (bullet.isCritical) createParticles(bullet.x, bullet.y, 30, '#ff9800', 'star');
+                    boss.health -= bossDamage; updateBossHealthBar();
+                    createParticles(bullet.x, bullet.y, 15, '#9c27b0', 'circle');
+                    if (bullet.explosive) { boss.health -= bossDamage * 0.5; createParticles(bullet.x, bullet.y, 30, '#ff9800', 'star'); }
+                    if (bullet.vampiricRatio > 0) { const healAmount = bossDamage * bullet.vampiricRatio; health = Math.min(maxHealth, health + healAmount); }
+                    addCombo();
+                    if (boss.health <= 0) defeatBoss();
+                    player.bullets.splice(i, 1);
+                    checkLevelUp();
+                }
+            }
+            // 敌人子弹更新（完整保留）
+            for (let i = enemyBullets.length - 1; i >= 0; i--) {
+                const bullet = enemyBullets[i];
+                if (bullet.homing && !timeStopActive) {
+                    const dx = (player.x + player.width/2) - bullet.x; const dy = (player.y + player.height/2) - bullet.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance > 0) {
+                        bullet.vx = bullet.vx * (1 - bullet.homingStrength) + (dx / distance) * bullet.homingStrength;
+                        bullet.vy = bullet.vy * (1 - bullet.homingStrength) + (dy / distance) * bullet.homingStrength;
+                        const speed = Math.sqrt(bullet.vx * bullet.vx + bullet.vy * bullet.vy);
+                        bullet.vx = (bullet.vx / speed) * (bullet.speed / 10); bullet.vy = (bullet.vy / speed) * (bullet.speed / 10);
+                    }
+                }
+                if (!timeStopActive) { bullet.x += bullet.vx * bullet.speed; bullet.y += bullet.vy * bullet.speed; }
+                if (bullet.laser && bullet.split && Math.random() < 0.02 && !timeStopActive) {
+                    for (let s = 0; s < bullet.splitCount; s++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        enemyBullets.push({ x: bullet.x, y: bullet.y, radius: 5, speed: 4, vx: Math.cos(angle), vy: Math.sin(angle), damage: 8, color: '#8e24aa' });
+                    }
+                    bullet.split = false;
+                }
+                if (bullet.x < -bullet.radius || bullet.x > canvas.width + bullet.radius || bullet.y < -bullet.radius || bullet.y > canvas.height + bullet.radius) {
+                    enemyBullets.splice(i, 1); continue;
+                }
+                if (!abilities.shield.active && !godMode &&
+                    bullet.x > player.x && bullet.x < player.x + player.width &&
+                    bullet.y > player.y && bullet.y < player.y + player.height) {
+                    if (Math.random() * 100 > player.dodgeChance) {
+                        health -= bullet.damage; enemyBullets.splice(i, 1);
+                        createParticles(bullet.x, bullet.y, 15, '#f44336', 'circle');
+                        updateUI(); resetCombo();
+                        if (health <= 0) { health = 0; endGame(); }
+                    }
+                }
+                if (abilities.shield.active &&
+                    bullet.x > player.x - 30 && bullet.x < player.x + player.width + 30 &&
+                    bullet.y > player.y - 30 && bullet.y < player.y + player.height + 30) {
+                    const dx = bullet.x - (player.x + player.width/2); const dy = bullet.y - (player.y + player.height/2);
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < 60) {
+                        bullet.vx = dx / distance; bullet.vy = dy / distance; bullet.color = '#0288d1';
+                        createParticles(bullet.x, bullet.y, 8, '#0288d1', 'circle');
+                    }
+                }
+            }
+        }
+        
+        // ==================== 击败Boss ====================
+        function defeatBoss() {
+            score += 1500 + wave * 300; xp += 800 + wave * 150; combo += 50;
+            createParticles(boss.x + boss.width/2, boss.y + boss.height/2, 150, '#ff9800', 'star');
+            document.getElementById('boss-health').style.display = 'none';
+            boss = null; bossActive = false;
+            updateUI(); checkLevelUp();
+        }
+        
+        // ==================== 升级系统 ====================
+        function checkLevelUp() {
+            if (xp >= xpToNextLevel) {
+                xp -= xpToNextLevel; playerLevel++; xpToNextLevel = Math.floor(xpToNextLevel * 1.3);
+                applyRandomUpgrade(); updateUI();
+            }
+        }
+        function applyRandomUpgrade() {
+            const availableUpgrades = [];
+            for (let upgradeType in upgrades) {
+                const upgrade = upgrades[upgradeType];
+                const maxLevel = 114514;
+                if (upgrade.level < maxLevel && score >= upgrade.cost) availableUpgrades.push(upgradeType);
+            }
+            if (availableUpgrades.length === 0) return;
+            const randomIndex = Math.floor(Math.random() * availableUpgrades.length);
+            const upgradeType = availableUpgrades[randomIndex];
+            const upgrade = upgrades[upgradeType];
+            let upgradeEffect = "";
+            switch(upgradeType) {
+                case 'damage': player.damage *= 1.5; player.attackRange *= 1.1; upgrade.level++; upgrade.cost = Math.floor(upgrade.cost * 1.5); upgradeEffect = `攻击力提升50%，攻击范围扩大10%`; break;
+                case 'fireRate': player.shotDelay *= 0.7; if (upgrade.level % 2 === 0) player.bulletCount++; upgrade.level++; upgrade.cost = Math.floor(upgrade.cost * 1.5); upgradeEffect = `射速提升30%${upgrade.level % 2 === 0 ? '，子弹数量+1' : ''}`; break;
+                case 'health': maxHealth *= 1.5; health = maxHealth; if (upgrade.level >= 2) { player.regenHealth = true; player.regenRate = maxHealth * 0.001; } upgrade.level++; upgrade.cost = Math.floor(upgrade.cost * 1.2); upgradeEffect = `最大生命值提升20%${upgrade.level >= 2 ? '，获得生命恢复效果' : ''}`; break;
+                case 'speed': player.speed *= 1.3; player.dodgeChance += 5; upgrade.level++; upgrade.cost = Math.floor(upgrade.cost * 1.5); upgradeEffect = `移动速度提升30%，闪避几率+5%`; break;
+                case 'pierce': player.pierce = Infinity; upgrade.level++; upgrade.cost = Math.floor(upgrade.cost * 3); upgradeEffect = `子弹获得无限穿透效果`; break;
+                case 'explosive': player.explosive = true; player.damage *= 1.3; upgrade.level++; upgrade.cost = Math.floor(upgrade.cost * 3); upgradeEffect = `子弹获得爆炸效果，伤害提升30%`; break;
+                case 'critical': criticalChance += 5; if (upgrade.level >= 3) criticalMultiplier = 3.0; upgrade.level++; upgrade.cost = Math.floor(upgrade.cost * 1.8); upgradeEffect = `暴击率+5%${upgrade.level >= 3 ? '，暴击伤害提升至300%' : ''}`; break;
+                case 'vampire': vampiricRatio += 0.002; upgrade.level++; upgrade.cost = Math.floor(upgrade.cost * 1.8); upgradeEffect = `吸血比例+0.2%，当前吸血: ${(vampiricRatio * 100).toFixed(1)}%`; break;
+            }
+            showUpgradeNotification(upgrade.name, upgradeEffect);
+        }
+        
+        // ==================== 绘制背景 ====================
+        function drawBackground() {
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#e0f7fa'); gradient.addColorStop(1, '#bbdefb');
+            ctx.fillStyle = gradient; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(156, 39, 176, 0.1)';
+            for (let i = 0; i < 80; i++) {
+                const x = (i * 29 + Date.now() / 80) % canvas.width;
+                const y = (i * 17 + Date.now() / 120) % canvas.height;
+                const size = Math.sin(Date.now() / 800 + i) * 2 + 2;
+                const alpha = Math.sin(Date.now() / 1000 + i) * 0.3 + 0.3;
+                ctx.globalAlpha = alpha; ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = 'rgba(156, 39, 176, 0.3)'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(`波次: ${wave}`, canvas.width / 2, 40);
+            if (!bossActive) { ctx.font = 'bold 25px Arial'; ctx.fillText(`剩余敌人: ${enemiesRemaining}`, canvas.width / 2, 80); }
+            if (timeStopActive) {
+                ctx.fillStyle = 'rgba(2, 136, 209, 0.2)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(156, 39, 176, 0.8)'; ctx.font = 'bold 60px Arial'; ctx.fillText('时间停滞！', canvas.width / 2, canvas.height / 2);
+            }
+        }
+        
+        // ==================== 游戏主循环 ====================
+        function updateGame() {
+            if (!gameRunning || gamePaused) return;
+            drawBackground();
+            movePlayer(); moveEnemies(); updateBullets(); updateDrones();
+            if (autoSkills) autoCastSkills();
+            drawEnemies(); drawPlayer(); drawBullets(); drawParticles(); drawDrones();
+            if (enemiesRemaining <= 0 && !bossActive) { wave++; spawnWave(); }
+            updateAbilityCooldowns();
+            gameLoop = requestAnimationFrame(updateGame);
+        }
+        
+        // ==================== 事件监听 ====================
+        document.addEventListener('keydown', function(e) {
+            keys[e.key] = true;
+            if ((e.key === ' ' || e.key === 'x') && gameRunning && !gamePaused) { shootPlayer(); e.preventDefault(); }
+            if (e.key === 'q' || e.key === 'Q') useChainLightning();
+            if (e.key === 'w' || e.key === 'W') useShield();
+            if (e.key === 'e' || e.key === 'E') useBomb();
+            if (e.key === 'r' || e.key === 'R') useDrone();
+            if (e.key === 't' || e.key === 'T') useTimeStop();
+            if (e.key === 'z' || e.key === 'Z') { if (gameRunning && !gamePaused) shootPlayer(); }
+        });
+        document.addEventListener('keyup', function(e) { keys[e.key] = false; });
+        canvas.addEventListener('mousemove', function(e) { const rect = canvas.getBoundingClientRect(); mouse.x = e.clientX - rect.left; mouse.y = e.clientY - rect.top; });
+        canvas.addEventListener('mousedown', function(e) { mouse.pressed = true; if (gameRunning && !gamePaused) shootPlayer(); });
+        canvas.addEventListener('mouseup', function() { mouse.pressed = false; });
+        canvas.addEventListener('click', function(e) { if (gameRunning && !gamePaused) shootPlayer(); });
+        setInterval(() => { if (mouse.pressed && gameRunning && !gamePaused) shootPlayer(); }, player.shotDelay);
+        
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('pause-btn').addEventListener('click', pauseGame);
+        document.getElementById('restart-btn').addEventListener('click', startGame);
+        
+        for (let i = 1; i <= 5; i++) {
+            const toggleElement = document.getElementById(`auto-toggle-${i}`);
+            if (toggleElement) {
+                toggleElement.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const abilityKey = Object.keys(abilities)[i-1];
+                    abilities[abilityKey].auto = !abilities[abilityKey].auto;
+                    updateAutoToggleDisplay();
+                });
+            }
+        }
+        document.getElementById('instructions-btn').addEventListener('click', function() {
+            const panel = document.getElementById('instructions-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        });
+        document.getElementById('godmode-btn').addEventListener('click', function() {
+            godMode = !godMode;
+            if (godMode) { 
+                this.style.background = 'linear-gradient(to bottom, #f44336, #d32f2f)'; 
+                this.textContent = '上帝模式(开启)'; 
+                health = Infinity; 
+            } else { 
+                this.style.background = 'linear-gradient(to bottom, #7b1fa2, #6a1b9a)'; 
+                this.textContent = '上帝模式'; 
+                health = maxHealth; 
+            }
+            updateUI();
+        });
+        
+        // 移动控制
+        document.getElementById('mobile-left').addEventListener('touchstart', function() { keys['ArrowLeft'] = true; });
+        document.getElementById('mobile-left').addEventListener('touchend', function() { keys['ArrowLeft'] = false; });
+        document.getElementById('mobile-right').addEventListener('touchstart', function() { keys['ArrowRight'] = true; });
+        document.getElementById('mobile-right').addEventListener('touchend', function() { keys['ArrowRight'] = false; });
+        document.getElementById('mobile-up').addEventListener('touchstart', function() { keys['ArrowUp'] = true; });
+        document.getElementById('mobile-up').addEventListener('touchend', function() { keys['ArrowUp'] = false; });
+        document.getElementById('mobile-down').addEventListener('touchstart', function() { keys['ArrowDown'] = true; });
+        document.getElementById('mobile-down').addEventListener('touchend', function() { keys['ArrowDown'] = false; });
+        document.getElementById('mobile-shoot').addEventListener('touchstart', function() { mouse.pressed = true; if (gameRunning && !gamePaused) shootPlayer(); });
+        document.getElementById('mobile-shoot').addEventListener('touchend', function() { mouse.pressed = false; });
+        document.getElementById('mobile-ability1').addEventListener('touchstart', function() { useChainLightning(); });
+        document.getElementById('mobile-ability2').addEventListener('touchstart', function() { useShield(); });
+        document.getElementById('mobile-ability3').addEventListener('touchstart', function() { useBomb(); });
+        document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+        
+        // 初始绘制
+        drawBackground(); drawPlayer(); updateUI();
+    </script>
+</body>
+</html>
