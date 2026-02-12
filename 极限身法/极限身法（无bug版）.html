@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -112,21 +112,20 @@
       class Projectile {
         constructor(level) {
           this.size = Math.random() * 4 + 2;
-          // 随机从屏幕边缘生成
-          const side = Math.floor(Math.random() * 4);
+          // 只从上方、左侧、右侧生成，移除下方
+          const side = Math.floor(Math.random() * 3); // 0,1,2
           if (side === 0) {
             this.x = Math.random() * width;
             this.y = -20;
-          } else if (side === 1) {
-            this.x = Math.random() * width;
-            this.y = height + 20;
-          } else if (side === 2) {
+          } // 上
+          else if (side === 1) {
             this.x = -20;
             this.y = Math.random() * height;
-          } else {
+          } // 左
+          else {
             this.x = width + 20;
             this.y = Math.random() * height;
-          }
+          } // 右
 
           const angle = Math.atan2(player.y - this.y, player.x - this.x);
           const speed = (Math.random() * 3 + 2) * (1 + level * 0.1);
@@ -184,7 +183,7 @@
         player.x += player.vx;
         player.y += player.vy;
 
-        // 墙壁碰撞与蹬墙跳重置
+        // 地面碰撞 —— 唯一重置二段跳的方式
         if (player.y > height - player.h) {
           player.y = height - player.h;
           player.vy = 0;
@@ -194,15 +193,14 @@
           player.isGrounded = false;
         }
 
+        // 左右墙壁碰撞 —— 仅物理反弹，不再恢复跳跃次数（蹬墙跳已删除）
         if (player.x < 0) {
           player.x = 0;
           player.vx *= -0.5;
-          player.jumps = 1;
         }
         if (player.x > width - player.w) {
           player.x = width - player.w;
           player.vx *= -0.5;
-          player.jumps = 1;
         }
 
         // 记录拖影
