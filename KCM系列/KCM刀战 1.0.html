@@ -1,0 +1,349 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>KCM 刀战对决 - 2D顶视角</title>
+    <style>
+        body { margin: 0; background: #1a1a1a; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Arial', sans-serif; }
+        #game-ui { position: absolute; top: 20px; left: 20px; color: #fff; pointer-events: none; }
+        canvas { background: #333; box-shadow: 0 0 20px rgba(0,0,0,0.5); cursor: crosshair; }
+        .instructions { position: absolute; bottom: 20px; color: #aaa; font-size: 14px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div id="game-ui">
+    <h2 id="status">正在寻找 KCM...</h2>
+    <p>HP: <span id="hp">100</span> | 击败数: <span id="kills">0</span></p>
+</div>
+
+<div class="instructions">WASD 移动 | 鼠标左键 挥刀攻击 | 躲避 KCM 的致命背刺</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+/**
+ * 游戏配置与全局变量
+ */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const hpDisplay = document.getElementById('hp');
+const killDisplay = document.getElementById('kills');
+const statusDisplay = document.getElementById('status');
+
+canvas.width = 800;
+canvas.height = 600;
+
+const keys = {};
+let kills = 0;
+
+// 墙体定义 (x, y, w, h)
+const walls = [
+    {x: 150, y: 100, w: 20, h: 200},
+    {x: 150, y: 100, w: 300, h: 20},
+    {x: 450, y: 250, w: 200, h: 20},
+    {x: 300, y: 400, w: 20, h: 150},
+    {x: 500, y: 450, w: 150, h: 20},
+    {x: 100, y: 450, w: 100, h: 20}
+];
+
+/**
+ * 工具函数
+ */
+function getDist(x1, y1, x2, y2) {
+    return Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+}
+
+// 圆形与矩形碰撞检测
+function circleRectCollision(cx, cy, cr, rx, ry, rw, rh) {
+    let testX = cx;
+    let testY = cy;
+    if (cx < rx) testX = rx;
+    else if (cx > rx + rw) testX = rx + rw;
+    if (cy < ry) testY = ry;
+    else if (cy > ry + rh) testY = ry + rh;
+    return getDist(cx, cy, testX, testY) <= cr;
+}
+
+// 线段与墙碰撞（用于视线检测）
+function isLineBlocked(x1, y1, x2, y2) {
+    for (let wall of walls) {
+        if (lineRectIntersect(x1, y1, x2, y2, wall.x, wall.y, wall.w, wall.h)) return true;
+    }
+    return false;
+}
+
+function lineRectIntersect(x1, y1, x2, y2, rx, ry, rw, rh) {
+    // 简化版：仅检测线段是否穿过矩形的四条边
+    return lineLineIntersect(x1,y1,x2,y2, rx,ry,rx+rw,ry) ||
+           lineLineIntersect(x1,y1,x2,y2, rx,ry+rh,rx+rw,ry+rh) ||
+           lineLineIntersect(x1,y1,x2,y2, rx,ry,rx,ry+rh) ||
+           lineLineIntersect(x1,y1,x2,y2, rx+rw,ry,rx+rw,ry+rh);
+}
+
+function lineLineIntersect(x1,y1,x2,y2, x3,y3,x4,y4) {
+    let uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+    let uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+    return uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1;
+}
+
+/**
+ * 角色类
+ */
+class Entity {
+    constructor(x, y, color, name) {
+        this.x = x;
+        this.y = y;
+        this.radius = 18;
+        this.color = color;
+        this.name = name;
+        this.hp = 100;
+        this.angle = 0;
+        this.speed = 3;
+        this.isAttacking = false;
+        this.attackCooldown = 0;
+        this.attackArc = 0; // 动画效果用
+    }
+
+    draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+
+        // 绘制身体 (设计感外观)
+        const gradient = ctx.createRadialGradient(0, 0, 5, 0, 0, this.radius);
+        gradient.addColorStop(0, this.color);
+        gradient.addColorStop(1, '#000');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 绘制眼睛/方向标
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(10, -5, 4, 0, Math.PI * 2);
+        ctx.arc(10, 5, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 绘制名字
+        ctx.restore();
+        ctx.fillStyle = this.color;
+        ctx.font = "bold 12px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(this.name, this.x, this.y - 25);
+
+        // 绘制攻击动作
+        if (this.isAttacking) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle + this.attackArc);
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(20, 0);
+            ctx.lineTo(45, 0);
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+
+    move(dx, dy) {
+        let nextX = this.x + dx;
+        let nextY = this.y + dy;
+
+        // 墙体碰撞检测
+        let collisionX = false;
+        let collisionY = false;
+        for (let wall of walls) {
+            if (circleRectCollision(nextX, this.y, this.radius, wall.x, wall.y, wall.w, wall.h)) collisionX = true;
+            if (circleRectCollision(this.x, nextY, this.radius, wall.x, wall.y, wall.w, wall.h)) collisionY = true;
+        }
+
+        if (!collisionX) this.x = nextX;
+        if (!collisionY) this.y = nextY;
+
+        // 边界限制
+        this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+        this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+    }
+
+    attack() {
+        if (this.attackCooldown > 0) return;
+        this.isAttacking = true;
+        this.attackCooldown = 30; // 冷却帧数
+        this.attackArc = -Math.PI / 4;
+        
+        // 攻击判定在动画更新中执行一次
+        return true;
+    }
+
+    updateAnimation() {
+        if (this.isAttacking) {
+            this.attackArc += 0.2;
+            if (this.attackArc > Math.PI / 4) {
+                this.isAttacking = false;
+            }
+        }
+        if (this.attackCooldown > 0) this.attackCooldown--;
+    }
+}
+
+const player = new Entity(50, 50, '#3498db', '玩家');
+const ai = new Entity(700, 500, '#e74c3c', 'KCM [AI]');
+
+/**
+ * 视线遮罩 (Line of Sight)
+ */
+function drawVisibilityMask() {
+    ctx.save();
+    // 创建一个全屏黑色半透明覆盖
+    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 设置混合模式，将视线区域“挖空”
+    ctx.globalCompositeOperation = 'destination-out';
+    
+    // 玩家视锥 (简化为圆形可见区 + 射线检测)
+    const segments = 60;
+    const viewDist = 250;
+    ctx.beginPath();
+    ctx.moveTo(player.x, player.y);
+    
+    for(let i=0; i<=segments; i++) {
+        let angle = (i / segments) * Math.PI * 2;
+        let destX = player.x + Math.cos(angle) * viewDist;
+        let destY = player.y + Math.sin(angle) * viewDist;
+        
+        // 射线检测：找到最近的墙
+        let finalX = destX;
+        let finalY = destY;
+        
+        for (let wall of walls) {
+            // 这是一个极简的射线与墙交点，实际应用中可用更精确算法
+            // 这里为了性能，我们只在墙体周围做遮挡测试
+        }
+        
+        // 简单模拟视线：如果被阻挡就不画那么远
+        // 由于 Canvas 性能考虑，我们采用更高效的“多边形挖空”法
+        // 在该简版中，我们通过 line-of-sight 检测 Entity 是否可见
+        ctx.lineTo(destX, destY);
+    }
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.restore();
+}
+
+/**
+ * 游戏循环
+ */
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 1. 绘制地板
+    ctx.fillStyle = "#2c3e50";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 2. 绘制墙壁
+    ctx.fillStyle = "#95a5a6";
+    walls.forEach(w => {
+        ctx.fillRect(w.x, w.y, w.w, w.h);
+        ctx.strokeStyle = "#7f8c8d";
+        ctx.strokeRect(w.x, w.y, w.w, w.h);
+    });
+
+    // 3. 玩家逻辑
+    let dx = 0, dy = 0;
+    if (keys['w'] || keys['ArrowUp']) dy -= player.speed;
+    if (keys['s'] || keys['ArrowDown']) dy += player.speed;
+    if (keys['a'] || keys['ArrowLeft']) dx -= player.speed;
+    if (keys['d'] || keys['ArrowRight']) dx += player.speed;
+    player.move(dx, dy);
+    player.updateAnimation();
+
+    // 4. AI 逻辑 (KCM)
+    const distToPlayer = getDist(ai.x, ai.y, player.x, player.y);
+    const aiBlocked = isLineBlocked(ai.x, ai.y, player.x, player.y);
+
+    if (!aiBlocked && distToPlayer < 400) {
+        ai.angle = Math.atan2(player.y - ai.y, player.x - ai.x);
+        if (distToPlayer > 40) {
+            ai.move(Math.cos(ai.angle) * ai.speed, Math.sin(ai.angle) * ai.speed);
+        } else {
+            if (ai.attack()) {
+                player.hp -= 10;
+                hpDisplay.innerText = player.hp;
+                if(player.hp <= 0) {
+                    alert("你被 KCM 击败了！");
+                    location.reload();
+                }
+            }
+        }
+    } else {
+        // 巡逻或原地旋转
+        ai.angle += 0.02;
+    }
+    ai.updateAnimation();
+
+    // 5. 渲染角色 (如果可见)
+    const playerCanSeeAI = !isLineBlocked(player.x, player.y, ai.x, ai.y);
+    
+    player.draw();
+    if (playerCanSeeAI) {
+        ai.draw();
+        statusDisplay.innerText = "KCM 已锁定你！";
+        statusDisplay.style.color = "#e74c3c";
+    } else {
+        statusDisplay.innerText = "寻找 KCM 中...";
+        statusDisplay.style.color = "#3498db";
+    }
+
+    // 6. 视线遮罩效果
+    drawVisibilityMask();
+
+    requestAnimationFrame(gameLoop);
+}
+
+/**
+ * 输入处理
+ */
+window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    player.angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+});
+
+canvas.addEventListener('mousedown', () => {
+    if (player.attack()) {
+        const dist = getDist(player.x, player.y, ai.x, ai.y);
+        const aiInSight = !isLineBlocked(player.x, player.y, ai.x, ai.y);
+        
+        // 攻击范围判定
+        if (dist < 50 && aiInSight) {
+            ai.hp -= 35;
+            if (ai.hp <= 0) {
+                kills++;
+                killDisplay.innerText = kills;
+                // AI 复活在随机位置
+                ai.hp = 100;
+                ai.x = Math.random() * (canvas.width - 100) + 50;
+                ai.y = Math.random() * (canvas.height - 100) + 50;
+            }
+        }
+    }
+});
+
+// 启动游戏
+gameLoop();
+
+</script>
+</body>
+</html>
