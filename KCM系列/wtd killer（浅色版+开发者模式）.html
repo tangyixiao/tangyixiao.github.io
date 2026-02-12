@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>击败WTD - 超强进化</title>
+    <title>击败WTD - 超强进化（浅色主题）</title>
     <style>
-        /* ----- 所有原有样式完整保留，并新增Wild flower相关动态效果已在Canvas中实现 ----- */
+        /* 浅色主题样式 */
         * {
             margin: 0;
             padding: 0;
@@ -14,8 +14,8 @@
         }
         
         body {
-            background: linear-gradient(135deg, #000000, #200050, #4000a0);
-            color: #fff;
+            background: linear-gradient(135deg, #f5f7fa, #e4e8f0, #d8e1e8);
+            color: #333;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -29,22 +29,22 @@
             text-align: center;
             margin-bottom: 20px;
             padding: 20px;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
-            box-shadow: 0 0 40px rgba(150, 0, 255, 0.8);
-            border: 4px solid #ff00ff;
+            box-shadow: 0 0 40px rgba(100, 100, 255, 0.3);
+            border: 4px solid #6a5acd;
             max-width: 1100px;
             width: 100%;
             backdrop-filter: blur(10px);
         }
         
         .game-title {
-            color: #ff00ff;
+            color: #6a5acd;
             font-size: 4rem;
             margin-bottom: 10px;
-            text-shadow: 0 0 20px rgba(255, 0, 255, 1);
+            text-shadow: 0 0 10px rgba(106, 90, 205, 0.5);
             letter-spacing: 4px;
-            background: linear-gradient(to right, #ff00ff, #00ffff, #ffff00);
+            background: linear-gradient(to right, #6a5acd, #00bcd4, #ff9800);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -52,13 +52,13 @@
         }
         
         @keyframes titleGlow {
-            0% { text-shadow: 0 0 10px rgba(255, 0, 255, 0.8), 0 0 20px rgba(255, 0, 255, 0.6); }
-            100% { text-shadow: 0 0 20px rgba(255, 0, 255, 1), 0 0 30px rgba(255, 0, 255, 0.8), 0 0 40px rgba(255, 0, 255, 0.6); }
+            0% { text-shadow: 0 0 10px rgba(106, 90, 205, 0.5), 0 0 20px rgba(106, 90, 205, 0.3); }
+            100% { text-shadow: 0 0 20px rgba(106, 90, 205, 0.7), 0 0 30px rgba(106, 90, 205, 0.5), 0 0 40px rgba(106, 90, 205, 0.3); }
         }
         
         .subtitle {
             font-size: 1.5rem;
-            color: #a0a0ff;
+            color: #5a6c7d;
             margin-bottom: 15px;
         }
         
@@ -66,11 +66,11 @@
             position: relative;
             width: 1100px;
             height: 700px;
-            background-color: rgba(0, 0, 0, 0.95);
+            background-color: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 0 50px rgba(150, 0, 255, 0.8);
-            border: 4px solid #ff00ff;
+            box-shadow: 0 0 50px rgba(100, 100, 255, 0.3);
+            border: 4px solid #6a5acd;
             margin-bottom: 20px;
         }
         
@@ -86,25 +86,25 @@
             width: 1100px;
             margin-bottom: 20px;
             padding: 15px;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
-            box-shadow: 0 0 25px rgba(150, 0, 255, 0.6);
-            border: 3px solid #ff00ff;
+            box-shadow: 0 0 25px rgba(100, 100, 255, 0.2);
+            border: 3px solid #6a5acd;
         }
         
         .hud-item {
             text-align: center;
             padding: 10px;
-            background: rgba(30, 0, 60, 0.9);
+            background: rgba(230, 230, 250, 0.9);
             border-radius: 10px;
-            border: 2px solid #7a2fff;
+            border: 2px solid #9370db;
         }
         
         .hud-value {
             font-size: 2.5rem;
             font-weight: bold;
-            color: #00ffff;
-            text-shadow: 0 0 15px rgba(0, 255, 255, 0.9);
+            color: #00bcd4;
+            text-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
             margin-bottom: 5px;
             animation: valuePulse 2s infinite;
         }
@@ -117,7 +117,7 @@
         
         .hud-label {
             font-size: 1.1rem;
-            color: #a0a0ff;
+            color: #5a6c7d;
         }
         
         .ability-bar {
@@ -131,8 +131,8 @@
             width: 70px;
             height: 70px;
             border-radius: 15px;
-            background: rgba(50, 20, 80, 0.9);
-            border: 3px solid #ff00ff;
+            background: rgba(230, 230, 250, 0.9);
+            border: 3px solid #6a5acd;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -145,7 +145,7 @@
         
         .ability:hover {
             transform: scale(1.1);
-            box-shadow: 0 0 20px rgba(255, 0, 255, 0.9);
+            box-shadow: 0 0 20px rgba(106, 90, 205, 0.5);
         }
         
         .ability:active {
@@ -159,8 +159,8 @@
         
         .ability-key {
             font-size: 0.9rem;
-            color: #ffff00;
-            background: rgba(0, 0, 0, 0.7);
+            color: #ff9800;
+            background: rgba(255, 255, 255, 0.7);
             padding: 3px 6px;
             border-radius: 5px;
         }
@@ -170,7 +170,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            background: rgba(255, 0, 0, 0.8);
+            background: rgba(255, 0, 0, 0.6);
             transition: height 0.3s;
         }
         
@@ -181,14 +181,14 @@
             width: 15px;
             height: 15px;
             border-radius: 50%;
-            background: #555;
+            background: #aaa;
             border: 2px solid #fff;
             cursor: pointer;
         }
         
         .auto-toggle.active {
-            background: #00ff00;
-            box-shadow: 0 0 10px #00ff00;
+            background: #4caf50;
+            box-shadow: 0 0 10px #4caf50;
         }
         
         .controls {
@@ -202,26 +202,26 @@
         .btn {
             padding: 16px 32px;
             font-size: 1.3rem;
-            background: linear-gradient(to bottom, #ff00ff, #aa00ff);
+            background: linear-gradient(to bottom, #6a5acd, #9370db);
             color: white;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             margin: 5px;
             transition: all 0.3s;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            border: 3px solid rgba(255, 255, 255, 0.5);
             flex: 1;
             min-width: 160px;
             font-weight: bold;
             letter-spacing: 1px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
         .btn:hover {
-            background: linear-gradient(to bottom, #ff33ff, #cc33ff);
+            background: linear-gradient(to bottom, #7b68ee, #a78bfa);
             transform: translateY(-4px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
         }
         
         .btn:active {
@@ -229,36 +229,44 @@
         }
         
         #start-btn {
-            background: linear-gradient(to bottom, #00ff88, #00cc66);
+            background: linear-gradient(to bottom, #4caf50, #45a049);
         }
         
         #start-btn:hover {
-            background: linear-gradient(to bottom, #33ffaa, #33ff88);
+            background: linear-gradient(to bottom, #66bb6a, #5cb85c);
         }
         
         #upgrade-btn {
-            background: linear-gradient(to bottom, #ffff00, #ffaa00);
+            background: linear-gradient(to bottom, #ff9800, #f57c00);
         }
         
         #upgrade-btn:hover {
-            background: linear-gradient(to bottom, #ffff33, #ffcc33);
+            background: linear-gradient(to bottom, #ffa726, #ff9800);
+        }
+        
+        #dev-mode-btn {
+            background: linear-gradient(to bottom, #9c27b0, #8e24aa);
+        }
+        
+        #dev-mode-btn:hover {
+            background: linear-gradient(to bottom, #ab47bc, #9c27b0);
         }
         
         .instructions {
             width: 1100px;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
             padding: 20px;
             margin-top: 10px;
-            border: 3px solid #ff00ff;
-            box-shadow: 0 0 25px rgba(150, 0, 255, 0.6);
+            border: 3px solid #6a5acd;
+            box-shadow: 0 0 25px rgba(100, 100, 255, 0.2);
         }
         
         .instructions h2 {
-            color: #ff00ff;
+            color: #6a5acd;
             margin-bottom: 15px;
             font-size: 2rem;
-            text-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
+            text-shadow: 0 0 10px rgba(106, 90, 205, 0.3);
         }
         
         .instructions-content {
@@ -268,14 +276,14 @@
         }
         
         .instructions-section {
-            background: rgba(30, 0, 60, 0.9);
+            background: rgba(230, 230, 250, 0.9);
             padding: 15px;
             border-radius: 10px;
-            border: 2px solid #7a2fff;
+            border: 2px solid #9370db;
         }
         
         .instructions-section h3 {
-            color: #00ffff;
+            color: #00bcd4;
             margin-bottom: 10px;
             font-size: 1.5rem;
         }
@@ -287,14 +295,14 @@
         
         .instructions-section li {
             margin-bottom: 8px;
-            color: #a0a0ff;
+            color: #5a6c7d;
             padding-left: 20px;
             position: relative;
         }
         
         .instructions-section li:before {
             content: "⚡";
-            color: #ff00ff;
+            color: #6a5acd;
             font-size: 1rem;
             position: absolute;
             left: 0;
@@ -307,7 +315,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(255, 255, 255, 0.95);
             display: none;
             flex-direction: column;
             justify-content: center;
@@ -319,9 +327,9 @@
         
         .game-over h2 {
             font-size: 5rem;
-            color: #ff5555;
+            color: #f44336;
             margin-bottom: 20px;
-            text-shadow: 0 0 30px rgba(255, 85, 85, 1);
+            text-shadow: 0 0 20px rgba(244, 67, 54, 0.5);
             animation: gameOverPulse 1.5s infinite;
         }
         
@@ -334,8 +342,8 @@
         .game-over p {
             font-size: 2.5rem;
             margin-bottom: 30px;
-            color: #00ffaa;
-            text-shadow: 0 0 15px rgba(0, 255, 170, 0.9);
+            color: #4caf50;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
         }
         
         .mobile-controls {
@@ -350,25 +358,25 @@
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: rgba(255, 0, 255, 0.8);
+            background: rgba(106, 90, 205, 0.8);
             color: white;
             font-size: 28px;
-            border: 4px solid rgba(255, 255, 255, 0.4);
+            border: 4px solid rgba(255, 255, 255, 0.6);
             display: flex;
             align-items: center;
             justify-content: center;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
             margin: 5px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
         
         .mobile-shoot {
-            background: rgba(0, 255, 255, 0.8);
+            background: rgba(0, 188, 212, 0.8);
         }
         
         .mobile-ability {
-            background: rgba(255, 255, 0, 0.8);
+            background: rgba(255, 152, 0, 0.8);
             font-size: 22px;
         }
         
@@ -379,8 +387,8 @@
             transform: translateX(-50%);
             width: 90%;
             height: 35px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 3px solid #ff5555;
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid #f44336;
             border-radius: 20px;
             overflow: hidden;
             z-index: 10;
@@ -389,7 +397,7 @@
         
         .boss-health-bar {
             height: 100%;
-            background: linear-gradient(to right, #ff0000, #ff5555, #ff8888);
+            background: linear-gradient(to right, #f44336, #ff7961, #ffab91);
             width: 100%;
             transition: width 0.5s;
         }
@@ -403,9 +411,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            color: white;
+            color: #333;
             font-weight: bold;
-            text-shadow: 2px 2px 4px black;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
             font-size: 1.2rem;
         }
         
@@ -414,15 +422,15 @@
             top: 60px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #00ffff;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #00bcd4;
             border-radius: 10px;
             padding: 10px 20px;
             display: none;
             z-index: 10;
-            color: #00ffff;
+            color: #00bcd4;
             font-weight: bold;
-            text-shadow: 0 0 10px #00ffff;
+            text-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
         }
         
         @media (max-width: 1150px) {
@@ -474,7 +482,7 @@
             align-items: center;
             justify-content: center;
             margin-top: 15px;
-            color: #a0a0ff;
+            color: #5a6c7d;
             font-size: 0.9rem;
         }
         
@@ -499,7 +507,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #555;
+            background-color: #ccc;
             transition: .4s;
             border-radius: 24px;
         }
@@ -517,7 +525,7 @@
         }
         
         input:checked + .toggle-slider {
-            background-color: #00ff00;
+            background-color: #4caf50;
         }
         
         input:checked + .toggle-slider:before {
@@ -530,42 +538,131 @@
             top: 200px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.9);
-            border: 3px solid #ffff00;
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #ff9800;
             border-radius: 15px;
             padding: 25px;
             z-index: 80;
-            color: #ffff00;
+            color: #ff9800;
             text-align: center;
             min-width: 400px;
             display: none;
-            box-shadow: 0 0 30px rgba(255, 255, 0, 0.7);
+            box-shadow: 0 0 30px rgba(255, 152, 0, 0.3);
             backdrop-filter: blur(10px);
         }
         
         .upgrade-notification h3 {
             font-size: 2.5rem;
             margin-bottom: 15px;
-            text-shadow: 0 0 15px rgba(255, 255, 0, 0.9);
+            text-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
         }
         
         .upgrade-notification p {
             font-size: 1.5rem;
             margin-bottom: 20px;
-            color: #00ffff;
+            color: #00bcd4;
         }
         
         .upgrade-notification .upgrade-effect {
             font-size: 1.2rem;
-            color: #a0a0ff;
+            color: #5a6c7d;
             margin-bottom: 25px;
+        }
+        
+        /* 开发者模式面板 */
+        .dev-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.98);
+            border: 3px solid #9c27b0;
+            border-radius: 15px;
+            padding: 30px;
+            z-index: 200;
+            width: 500px;
+            display: none;
+            box-shadow: 0 0 40px rgba(156, 39, 176, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .dev-panel h3 {
+            color: #9c27b0;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            text-align: center;
+        }
+        
+        .dev-control {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dev-control label {
+            font-weight: bold;
+            color: #5a6c7d;
+        }
+        
+        .dev-control input, .dev-control select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 150px;
+        }
+        
+        .dev-control button {
+            padding: 8px 15px;
+            background: #9c27b0;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .dev-control button:hover {
+            background: #ab47bc;
+        }
+        
+        .dev-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .dev-section h4 {
+            color: #9c27b0;
+            margin-bottom: 10px;
+        }
+        
+        .password-input {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .password-input input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 200px;
+            margin-right: 10px;
+        }
+        
+        .password-input button {
+            padding: 10px 15px;
+            background: #9c27b0;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
     <div class="game-header">
         <h1 class="game-title">击败WTD - 超强进化</h1>
-        <p class="subtitle">极致弹幕体验！新增第5Boss：Wild flower🌸 三角形尖刺！</p>
+        <p class="subtitle">极致弹幕体验！浅色主题 + 开发者模式</p>
     </div>
     
     <div class="hud">
@@ -592,19 +689,19 @@
         
         <div class="ability-bar">
             <div class="ability" id="ability1" data-key="Q">
-                <div class="ability-icon">⚡</div>
+                <div class="ability-icon">⚡⚡</div>
                 <div class="ability-key">Q</div>
                 <div class="auto-toggle active" id="auto-toggle-1"></div>
                 <div class="ability-cooldown" id="cooldown1"></div>
             </div>
             <div class="ability" id="ability2" data-key="W">
-                <div class="ability-icon">🛡️</div>
+                <div class="ability-icon">🛡🛡🛡️</div>
                 <div class="ability-key">W</div>
                 <div class="auto-toggle active" id="auto-toggle-2"></div>
                 <div class="ability-cooldown" id="cooldown2"></div>
             </div>
             <div class="ability" id="ability3" data-key="E">
-                <div class="ability-icon">💣</div>
+                <div class="ability-icon">💣💣</div>
                 <div class="ability-key">E</div>
                 <div class="auto-toggle active" id="auto-toggle-3"></div>
                 <div class="ability-cooldown" id="cooldown3"></div>
@@ -635,13 +732,105 @@
         </div>
         
         <!-- 天赋升级提示 -->
-        <!-- 天赋升级提示 - 移除确认按钮 -->
-<div class="upgrade-notification" id="upgrade-notification">
-    <h3>🎉 等级提升！</h3>
-    <p id="upgrade-title">获得新天赋</p>
-    <div class="upgrade-effect" id="upgrade-effect">天赋效果描述</div>
-    <!-- 按钮已移除，2秒后自动消失 -->
-</div>
+        <div class="upgrade-notification" id="upgrade-notification">
+            <h3>🎉🎉 等级提升！</h3>
+            <p id="upgrade-title">获得新天赋</p>
+            <div class="upgrade-effect" id="upgrade-effect">天赋效果描述</div>
+        </div>
+        
+        <!-- 开发者模式面板 -->
+        <div class="dev-panel" id="dev-panel">
+            <h3>开发者模式</h3>
+            <div class="password-input" id="password-section">
+                <input type="password" id="dev-password" placeholder="输入密码">
+                <button id="dev-login">进入开发者模式</button>
+            </div>
+            <div id="dev-controls" style="display: none;">
+                <div class="dev-control">
+                    <label for="dev-health">生命值:</label>
+                    <input type="number" id="dev-health" value="200" min="1" max="9999">
+                    <button id="dev-set-health">设置</button>
+                </div>
+                <div class="dev-control">
+                    <label for="dev-damage">攻击力:</label>
+                    <input type="number" id="dev-damage" value="50" min="1" max="9999">
+                    <button id="dev-set-damage">设置</button>
+                </div>
+                <div class="dev-control">
+                    <label for="dev-speed">移动速度:</label>
+                    <input type="number" id="dev-speed" value="8" min="1" max="50">
+                    <button id="dev-set-speed">设置</button>
+                </div>
+                <div class="dev-control">
+                    <label for="dev-level">等级:</label>
+                    <input type="number" id="dev-level" value="1" min="1" max="100">
+                    <button id="dev-set-level">设置</button>
+                </div>
+                <div class="dev-control">
+                    <label for="dev-score">得分:</label>
+                    <input type="number" id="dev-score" value="0" min="0" max="999999">
+                    <button id="dev-set-score">设置</button>
+                </div>
+
+		<div class="dev-section">
+                    <h4>敌人控制</h4>
+                    <div class="dev-control">
+                        <label for="dev-enemy-count">敌人数量:</label>
+                        <input type="number" id="dev-enemy-count" value="0" min="0" max="50">
+                        <button id="dev-set-enemies">设置</button>
+                    </div>
+                    <div class="dev-control">
+                        <label for="dev-clear-enemies">清空敌人:</label>
+                        <button id="dev-clear-enemies">立即清空</button>
+                    </div>
+                    <div class="dev-control">
+                        <label for="dev-spawn-boss">生成Boss:</label>
+                        <select id="dev-boss-type">
+                            <option value="normal">普通Boss</option>
+                            <option value="wildflower">Wild flower</option>
+                        </select>
+                        <button id="dev-spawn-boss">生成</button>
+                    </div>
+                </div>
+                
+                <div class="dev-section">
+                    <h4>技能控制</h4>
+                    <div class="dev-control">
+                        <label for="dev-skill-cooldown">技能冷却:</label>
+                        <select id="dev-skill-cooldown">
+                            <option value="normal">正常冷却</option>
+                            <option value="zero">无冷却</option>
+                        </select>
+                        <button id="dev-set-cooldown">设置</button>
+                    </div>
+                    <div class="dev-control">
+                        <label for="dev-unlock-all">解锁所有天赋:</label>
+                        <button id="dev-unlock-all">立即解锁</button>
+                    </div>
+                </div>
+                
+                <div class="dev-section">
+                    <h4>游戏状态</h4>
+                    <div class="dev-control">
+                        <label for="dev-god-mode">上帝模式:</label>
+                        <select id="dev-god-mode">
+                            <option value="off">关闭</option>
+                            <option value="on">开启</option>
+                        </select>
+                        <button id="dev-set-godmode">设置</button>
+                    </div>
+                    <div class="dev-control">
+                        <label for="dev-game-speed">游戏速度:</label>
+                        <input type="range" id="dev-game-speed" min="0.1" max="3" step="0.1" value="1">
+                        <span id="dev-speed-value">1.0x</span>
+                    </div>
+                </div>
+                
+                <div class="dev-control" style="justify-content: center; margin-top: 20px;">
+                    <button id="dev-close" style="background: #f44336;">关闭面板</button>
+                </div>
+            </div>
+        </div>
         
         <canvas id="game-canvas" width="1100" height="700"></canvas>
         
@@ -659,6 +848,7 @@
         <button class="btn" id="pause-btn">暂停游戏</button>
         <button class="btn" id="instructions-btn">游戏说明</button>
         <button class="btn" id="godmode-btn">上帝模式</button>
+        <button class="btn" id="dev-mode-btn">开发者模式</button>
     </div>
     
     <div class="mobile-controls">
@@ -666,15 +856,26 @@
         <div class="mobile-btn" id="mobile-up">↑</div>
         <div class="mobile-btn" id="mobile-down">↓</div>
         <div class="mobile-btn" id="mobile-right">→</div>
-        <div class="mobile-btn mobile-shoot" id="mobile-shoot">⚡</div>
+        <div class="mobile-btn mobile-shoot" id="mobile-shoot">⚡⚡</div>
         <div class="mobile-btn mobile-ability" id="mobile-ability1">Q</div>
         <div class="mobile-btn mobile-ability" id="mobile-ability2">W</div>
         <div class="mobile-btn mobile-ability" id="mobile-ability3">E</div>
     </div>
     
     <div class="instructions" id="instructions-panel" style="display: none;">
-        <h2>游戏说明 - 超强进化版</h2>
+        <h2>游戏说明 - 浅色主题版</h2>
         <div class="instructions-content">
+            <div class="instructions-section">
+                <h3>新增功能</h3>
+                <ul>
+                    <li>浅色主题界面，护眼舒适</li>
+                    <li>开发者模式（密码：美女好委屈）</li>
+                    <li>自定义角色属性</li>
+                    <li>控制敌人数量和类型</li>
+                    <li>调整游戏速度和难度</li>
+                    <li>一键解锁所有天赋</li>
+                </ul>
+            </div>
             <div class="instructions-section">
                 <h3>超强初始属性</h3>
                 <ul>
@@ -687,38 +888,23 @@
                 </ul>
             </div>
             <div class="instructions-section">
-                <h3>技能系统（默认自动释放）</h3>
+                <h3>技能系统</h3>
                 <ul>
                     <li>Q键：超电磁炮 - 敌人≥3时释放，连锁攻击</li>
                     <li>W键：绝对防御 - 生命值<50%时释放，无敌4秒</li>
                     <li>E键：黑洞炸弹 - 敌人≥5时释放，吸聚敌人</li>
                     <li>R键：浮游炮 - 无无人机时释放，召唤4个浮游炮</li>
                     <li>T键：时间停滞 - 子弹≥20时释放，冻结3秒</li>
-                    <li>所有技能默认自动释放，可手动切换</li>
                 </ul>
             </div>
             <div class="instructions-section">
-                <h3>强化敌人系统</h3>
+                <h3>开发者模式功能</h3>
                 <ul>
-                    <li>普通WTD：生命值500，速度更快</li>
-                    <li>闪电WTD：超高速度，残影效果</li>
-                    <li>重甲WTD：生命值1500，减伤50%</li>
-                    <li>狙击WTD：超远距离精准射击</li>
-                    <li>召唤WTD：召唤更多WTD</li>
-                    <li>Gay0：彩虹追踪子弹，中等生命值</li>
-                    <li>Sigma：激光分裂攻击，高科技敌人</li>
-                    <li>gqh学姐：超高生命值，中等速度</li>
-                    <li>WTD BOSS：多重攻击模式，多种弹幕</li>
-                    <li style="color: #ff69b4; font-weight: bold;">✨ Wild flower🌸：第5个Boss，超强生命值，快速发射三角形尖刺！</li>
-                </ul>
-            </div>
-            <div class="instructions-section">
-                <h3>随机升级系统</h3>
-                <ul>
-                    <li>每次升级随机获得一个天赋</li>
-                    <li>天赋效果立即生效</li>
-                    <li>显示天赋加成提示</li>
-                    <li>升级效果大幅增强，性价比更高</li>
+                    <li>自定义角色属性（生命、攻击、速度等）</li>
+                    <li>控制敌人生成和Boss召唤</li>
+                    <li>调整游戏速度和难度</li>
+                    <li>一键解锁所有天赋能力</li>
+                    <li>技能无冷却时间测试</li>
                 </ul>
             </div>
         </div>
@@ -748,6 +934,8 @@
         let comboTimeout = null;
         let frenzyMode = false;
         let autoSkills = true;
+        let devMode = false;
+        let gameSpeed = 1.0;
 
         // ========== 新增：记录Boss生成次数，用于第5个Boss变为Wild flower🌸 ==========
         let bossSpawnCount = 0;
@@ -847,6 +1035,7 @@
             criticalChance = 0;
             criticalMultiplier = 2.0;
             vampiricRatio = 0;
+            gameSpeed = 1.0;
             
             // 重置Boss生成计数
             bossSpawnCount = 0;
@@ -937,7 +1126,7 @@
         // ==================== 更新UI ====================
         function updateUI() {
             document.getElementById('score').textContent = score;
-            document.getElementById('health').textContent = Math.round(health);
+            document.getElementById('health').textContent = health;
             document.getElementById('level').textContent = playerLevel;
             document.getElementById('combo').textContent = combo;
             let averageDamage = player.damage * (1 + criticalChance * (criticalMultiplier - 1));
@@ -958,9 +1147,9 @@
                 const cooldownPercent = Math.min(100, (timeSinceLastUse / ability.cooldown) * 100);
                 cooldownElement.style.height = `${100 - cooldownPercent}%`;
                 if (timeSinceLastUse < ability.cooldown) {
-                    cooldownElement.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+                    cooldownElement.style.backgroundColor = 'rgba(255, 0, 0, 0.6)';
                 } else {
-                    cooldownElement.style.backgroundColor = ability.auto ? 'rgba(0, 255, 0, 0.5)' : 'transparent';
+                    cooldownElement.style.backgroundColor = ability.auto ? 'rgba(76, 175, 80, 0.5)' : 'transparent';
                 }
             }
         }
@@ -1142,7 +1331,7 @@
                     color: '#ff69b4',
                     phase: 1,
                     lastShot: 0,
-                    shotDelay: Math.min(1000+wave*3,2000),                 // 初始射速更快
+                    shotDelay: 1000,                 // 初始射速更快
                     bullets: [],
                     lastPhaseChange: 0,
                     phaseChangeDelay: 12000,        // 阶段切换更快
@@ -1152,7 +1341,7 @@
                     patternChangeDelay: 4000,
                     type: 'wildflower',
                     spikeCount: 20,                  // 初始尖刺数量
-                    spikeDamage: 150+wave*10,                // 初始伤害
+                    spikeDamage: 150,                // 初始伤害
                     spikeSpeed: 10                  // 尖刺速度
                 };
             }
@@ -1161,12 +1350,12 @@
             updateBossHealthBar();
         }
         
-        // 更新Boss血条（根据类型显示不同名称）
+	// 更新Boss血条（根据类型显示不同名称）
         function updateBossHealthBar() {
             if (!boss) return;
             const healthPercent = (boss.health / boss.maxHealth) * 100;
             document.getElementById('boss-health-bar').style.width = `${healthPercent}%`;
-            let bossName = (boss.type === 'wildflower') ? '🌸 Wild flower 🌸' : 'WTD BOSS';
+            let bossName = (boss.type === 'wildflower') ? '🌸 Wild flower 🌸🌸' : 'WTD BOSS';
             document.getElementById('boss-health-text').textContent = `${bossName}: ${Math.round(healthPercent)}%`;
         }
         
@@ -1178,12 +1367,12 @@
             ctx.shadowBlur = 20;
             ctx.fillRect(player.x, player.y, player.width, player.height);
             if (abilities.shield.active) {
-                ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 5;
-                ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 30;
+                ctx.strokeStyle = '#00bcd4'; ctx.lineWidth = 5;
+                ctx.shadowColor = '#00bcd4'; ctx.shadowBlur = 30;
                 ctx.beginPath(); ctx.arc(player.x + player.width/2, player.y + player.height/2, player.width/2 + 15, 0, Math.PI * 2); ctx.stroke();
                 const pulse = Math.sin(Date.now() / 150) * 0.3 + 0.7;
                 ctx.globalAlpha = pulse * 0.6;
-                ctx.fillStyle = '#00ffff';
+                ctx.fillStyle = '#00bcd4';
                 ctx.beginPath(); ctx.arc(player.x + player.width/2, player.y + player.height/2, player.width/2 + 10, 0, Math.PI * 2); ctx.fill();
                 ctx.globalAlpha = 1;
             }
@@ -1191,13 +1380,13 @@
             ctx.fillRect(player.x + 8, player.y + 8, 15, 15);
             ctx.fillRect(player.x + player.width - 23, player.y + 8, 15, 15);
             if (frenzyMode) {
-                ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 4;
-                ctx.shadowColor = '#ffff00'; ctx.shadowBlur = 40;
+                ctx.strokeStyle = '#ff9800'; ctx.lineWidth = 4;
+                ctx.shadowColor = '#ff9800'; ctx.shadowBlur = 40;
                 ctx.beginPath(); ctx.arc(player.x + player.width/2, player.y + player.height/2, player.width/2 + 25, 0, Math.PI * 2); ctx.stroke();
                 for (let i = 0; i < 8; i++) {
                     const angle = (Date.now() / 200 + i * Math.PI / 4) % (Math.PI * 2);
                     const pulseSize = Math.sin(Date.now() / 100 + i) * 10 + 20;
-                    ctx.fillStyle = '#ffff00';
+                    ctx.fillStyle = '#ff9800';
                     ctx.beginPath(); ctx.arc(player.x + player.width/2 + Math.cos(angle) * 40, player.y + player.height/2 + Math.sin(angle) * 40, pulseSize * 0.3, 0, Math.PI * 2); ctx.fill();
                 }
             }
@@ -1249,9 +1438,9 @@
                     ctx.fillStyle = enemy.color; ctx.shadowColor = enemy.color; ctx.shadowBlur = 15; ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
                     ctx.fillStyle = 'white'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.shadowBlur = 0;
                     let enemyText = 'WTD';
-                    if (enemy.type === 'fast') enemyText = '😈';
+                    if (enemy.type === 'fast') enemyText = '😈😈';
                     if (enemy.type === 'tank') enemyText = '奶龙';
-                    if (enemy.type === 'shooter') enemyText = '😡';
+                    if (enemy.type === 'shooter') enemyText = '😡😡';
                     if (enemy.type === 'splitter') enemyText = 'yyy';
                     if (enemy.type === 'summoner') enemyText = 'Null';
                     ctx.fillText(enemyText, enemy.x + enemy.width/2, enemy.y + enemy.height/2);
@@ -1263,7 +1452,7 @@
                     const barX = enemy.x + (enemy.width - barWidth) / 2;
                     const barY = enemy.y - 10;
                     ctx.fillStyle = '#ff0000'; ctx.fillRect(barX, barY, barWidth, barHeight);
-                    ctx.fillStyle = enemy.type === 'tank' ? '#00aa00' : enemy.type === 'sigma' ? '#00ffff' : enemy.type === 'gqh' ? '#ff69b4' : '#00ff00';
+                    ctx.fillStyle = enemy.type === 'tank' ? '#00aa00' : enemy.type === 'sigma' ? '#00bcd4' : enemy.type === 'gqh' ? '#ff69b4' : '#00ff00';
                     ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
                     ctx.strokeStyle = '#000000'; ctx.lineWidth = 1; ctx.strokeRect(barX, barY, barWidth, barHeight);
                 }
@@ -1294,12 +1483,12 @@
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText('🌸', boss.x + boss.width/2, boss.y + boss.height/2);
                 // 名称
-                ctx.fillStyle = 'white';
+                ctx.fillStyle = '#333';
                 ctx.font = 'bold 28px Arial';
                 ctx.shadowBlur = 10;
                 ctx.fillText('Wild flower', boss.x + boss.width/2, boss.y - 40);
             } else {
-                // 普通Boss绘制（原样）
+                // 普通Boss绘制（原样保留）
                 ctx.fillStyle = boss.color;
                 ctx.shadowColor = boss.color;
                 ctx.shadowBlur = 30;
@@ -1320,7 +1509,7 @@
                     ctx.save();
                     ctx.translate(boss.x + boss.width/2, boss.y + boss.height/2);
                     ctx.rotate(Date.now() / 500);
-                    ctx.fillStyle = '#ffff00'; ctx.shadowColor = '#ffff00'; ctx.shadowBlur = 20;
+                    ctx.fillStyle = '#ff9800'; ctx.shadowColor = '#ff9800'; ctx.shadowBlur = 20;
                     for (let i = 0; i < 6; i++) {
                         ctx.save(); ctx.rotate(i * Math.PI / 3); ctx.fillRect(-20, -20, 40, 40); ctx.restore();
                     }
@@ -1335,9 +1524,9 @@
             // 玩家子弹
             player.bullets.forEach(bullet => {
                 ctx.save();
-                if (frenzyMode) { ctx.fillStyle = '#ffff00'; ctx.shadowColor = '#ffff00'; }
-                else if (bullet.explosive) { ctx.fillStyle = '#ffaa00'; ctx.shadowColor = '#ffaa00'; }
-                else { ctx.fillStyle = '#00ffaa'; ctx.shadowColor = '#00ffaa'; }
+                if (frenzyMode) { ctx.fillStyle = '#ff9800'; ctx.shadowColor = '#ff9800'; }
+                else if (bullet.explosive) { ctx.fillStyle = '#ff9800'; ctx.shadowColor = '#ff9800'; }
+                else { ctx.fillStyle = '#00bcd4'; ctx.shadowColor = '#00bcd4'; }
                 ctx.shadowBlur = 20;
                 ctx.beginPath(); ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2); ctx.fill();
                 if (player.tripleShot) {
@@ -1352,8 +1541,8 @@
             enemyBullets.forEach(bullet => {
                 ctx.save();
                 if (bullet.laser) {
-                    ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = bullet.radius;
-                    ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 20;
+                    ctx.strokeStyle = '#6a5acd'; ctx.lineWidth = bullet.radius;
+                    ctx.shadowColor = '#6a5acd'; ctx.shadowBlur = 20;
                     ctx.beginPath(); ctx.moveTo(bullet.startX, bullet.startY); ctx.lineTo(bullet.x, bullet.y); ctx.stroke();
                     ctx.fillStyle = '#ffffff';
                     ctx.beginPath(); ctx.arc(bullet.x, bullet.y, bullet.radius * 1.5, 0, Math.PI * 2); ctx.fill();
@@ -1422,7 +1611,7 @@
                     gradient.addColorStop(0.75, '#0088ff'); gradient.addColorStop(1, '#8800ff');
                     ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2); ctx.fill();
                 } else if (particle.type === 'electric') {
-                    ctx.fillStyle = '#00ffff'; ctx.beginPath(); ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#00bcd4'; ctx.beginPath(); ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2); ctx.fill();
                     ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(particle.x, particle.y, particle.size * 1.5, 0, Math.PI * 2); ctx.stroke();
                 } else if (particle.type === 'heart') {
                     ctx.fillStyle = '#ff69b4';
@@ -1443,10 +1632,10 @@
             if (!abilities.drone.active) return;
             abilities.drone.drones.forEach(drone => {
                 ctx.save();
-                ctx.fillStyle = '#ffff00'; ctx.shadowColor = '#ffff00'; ctx.shadowBlur = 20;
+                ctx.fillStyle = '#ff9800'; ctx.shadowColor = '#ff9800'; ctx.shadowBlur = 20;
                 ctx.beginPath(); ctx.arc(drone.x, drone.y, 15, 0, Math.PI * 2); ctx.fill();
-                ctx.fillStyle = '#00ffff'; ctx.beginPath(); ctx.arc(drone.x, drone.y, 8, 0, Math.PI * 2); ctx.fill();
-                ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 2;
+                ctx.fillStyle = '#00bcd4'; ctx.beginPath(); ctx.arc(drone.x, drone.y, 8, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#6a5acd'; ctx.lineWidth = 2;
                 ctx.beginPath(); ctx.arc(drone.x, drone.y, 12, 0, Math.PI * 2); ctx.stroke();
                 ctx.restore();
             });
@@ -1455,10 +1644,10 @@
         // ==================== 移动玩家 ====================
         function movePlayer() {
             let moveX = 0, moveY = 0;
-            if (keys['ArrowLeft'] || keys['a'] || keys['A']) moveX -= player.speed;
-            if (keys['ArrowRight'] || keys['d'] || keys['D']) moveX += player.speed;
-            if (keys['ArrowUp'] || keys['w'] || keys['W']) moveY -= player.speed;
-            if (keys['ArrowDown'] || keys['s'] || keys['S']) moveY += player.speed;
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) moveX -= player.speed * gameSpeed;
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) moveX += player.speed * gameSpeed;
+            if (keys['ArrowUp'] || keys['w'] || keys['W']) moveY -= player.speed * gameSpeed;
+            if (keys['ArrowDown'] || keys['s'] || keys['S']) moveY += player.speed * gameSpeed;
             if (moveX !== 0 && moveY !== 0) { moveX *= 0.7071; moveY *= 0.7071; }
             player.x += moveX; player.y += moveY;
             if (player.x < 0) player.x = 0;
@@ -1466,7 +1655,7 @@
             if (player.y < 0) player.y = 0;
             if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
             if (player.regenHealth && health < maxHealth) {
-                health += player.regenRate; if (health > maxHealth) health = maxHealth; updateUI();
+                health += player.regenRate * gameSpeed; if (health > maxHealth) health = maxHealth; updateUI();
             }
         }
         
@@ -1481,8 +1670,8 @@
                 const dy = (player.y + player.height/2) - (enemy.y + enemy.height/2);
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 if (distance > 0 && !timeStopActive) {
-                    enemy.x += (dx / distance) * enemy.speed;
-                    enemy.y += (dy / distance) * enemy.speed;
+                    enemy.x += (dx / distance) * enemy.speed * gameSpeed;
+                    enemy.y += (dy / distance) * enemy.speed * gameSpeed;
                 }
                 if (enemy.type === 'shooter' || enemy.type === 'gay0' || enemy.type === 'sigma' || enemy.type === 'gqh') {
                     const now = Date.now();
@@ -1524,7 +1713,7 @@
         
         // ==================== 移动Boss（新增Wild flower阶段变化）====================
         function moveBoss() {
-            boss.x += boss.speed * boss.moveDirection;
+            boss.x += boss.speed * boss.moveDirection * gameSpeed;
             if (boss.x <= 0 || boss.x + boss.width >= canvas.width) {
                 boss.moveDirection *= -1;
                 boss.x = Math.max(0, Math.min(canvas.width - boss.width, boss.x));
@@ -1537,7 +1726,7 @@
                 boss.lastPhaseChange = now;
                 if (boss.phase > 3) boss.phase = 1;
                 
-                if (boss.type === 'wildflower') {
+		if (boss.type === 'wildflower') {
                     // Wild flower阶段强化
                     if (boss.phase === 2) {
                         boss.shotDelay = 200; boss.spikeCount = 8; boss.spikeDamage = 35; boss.speed = 2.5;
@@ -1579,6 +1768,7 @@
                 vx: dx / distance, vy: dy / distance, damage: 15, color: '#aa55ff'
             });
         }
+        
         function shootGay0(enemy) {
             for (let i = 0; i < 3; i++) {
                 const angleOffset = (i - 1) * 0.2;
@@ -1595,6 +1785,7 @@
                 });
             }
         }
+        
         function shootSigma(enemy) {
             const dx = (player.x + player.width/2) - (enemy.x + enemy.width/2);
             const dy = (player.y + player.height/2) - (enemy.y + enemy.height/2);
@@ -1604,9 +1795,10 @@
                 x: enemy.x + enemy.width/2, y: enemy.y + enemy.height/2,
                 startX: enemy.x + enemy.width/2, startY: enemy.y + enemy.height/2,
                 radius: 10, speed: 8, vx: dx / distance, vy: dy / distance, damage: 25,
-                laser: true, color: '#ff00ff', split: true, splitCount: 3
+                laser: true, color: '#6a5acd', split: true, splitCount: 3
             });
         }
+        
         function shootGqh(enemy) {
             for (let i = 0; i < 2; i++) {
                 const angleOffset = (i - 0.5) * 0.3;
@@ -1663,21 +1855,21 @@
                     const dy = (player.y + player.height/2) - centerY;
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     if (distance === 0) return;
-                    enemyBullets.push({ x: centerX, y: centerY, radius: 15, speed: 7, vx: dx / distance, vy: dy / distance, damage: 25, color: '#ff00ff' });
+                    enemyBullets.push({ x: centerX, y: centerY, radius: 15, speed: 7, vx: dx / distance, vy: dy / distance, damage: 25, color: '#6a5acd' });
                 } else if (boss.pattern === 1) {
                     for (let i = -1; i <= 1; i++) {
                         const angle = Math.atan2(player.y + player.height/2 - centerY, player.x + player.width/2 - centerX) + i * 0.3;
-                        enemyBullets.push({ x: centerX, y: centerY, radius: 12, speed: 8, vx: Math.cos(angle), vy: Math.sin(angle), damage: 20, color: '#ff55ff' });
+                        enemyBullets.push({ x: centerX, y: centerY, radius: 12, speed: 8, vx: Math.cos(angle), vy: Math.sin(angle), damage: 20, color: '#9370db' });
                     }
                 } else if (boss.pattern === 2) {
                     for (let i = 0; i < 12; i++) {
                         const angle = (Math.PI * 2 * i / 12) + Date.now() / 1000;
-                        enemyBullets.push({ x: centerX, y: centerY, radius: 10, speed: 9, vx: Math.cos(angle), vy: Math.sin(angle), damage: 15, color: '#ff88ff' });
+                        enemyBullets.push({ x: centerX, y: centerY, radius: 10, speed: 9, vx: Math.cos(angle), vy: Math.sin(angle), damage: 15, color: '#a78bfa' });
                     }
                 } else if (boss.pattern === 3) {
                     for (let i = 0; i < 8; i++) {
                         const angle = (Math.PI * 2 * i / 8) + Date.now() / 500;
-                        enemyBullets.push({ x: centerX, y: centerY, radius: 8, speed: 10, vx: Math.cos(angle), vy: Math.sin(angle), damage: 12, color: '#ffaaff' });
+                        enemyBullets.push({ x: centerX, y: centerY, radius: 8, speed: 10, vx: Math.cos(angle), vy: Math.sin(angle), damage: 12, color: '#c4b5fd' });
                     }
                 }
             }
@@ -1747,7 +1939,7 @@
                 if (color === 'rainbow') {
                     const colors = ['#ff0000','#ff8800','#ffff00','#00ff00','#0088ff','#8800ff'];
                     particleColor = colors[Math.floor(Math.random() * colors.length)]; particleType = 'rainbow';
-                } else if (color === 'electric') { particleColor = '#00ffff'; particleType = 'electric'; }
+                } else if (color === 'electric') { particleColor = '#00bcd4'; particleType = 'electric'; }
                 else if (color === 'gqh') { particleColor = '#ff69b4'; particleType = 'heart'; }
                 particles.push({
                     x, y, vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8,
@@ -1772,34 +1964,37 @@
             }, 3000);
             updateUI();
         }
+        
         function resetCombo() {
             if (combo > 0) { combo = 0; frenzyMode = false; player.attackRange = 1.0; player.homing = false; updateUI(); }
         }
+        
         function showPowerupIndicator(text) {
             const indicator = document.getElementById('powerup-indicator');
             indicator.textContent = text; indicator.style.display = 'block';
             setTimeout(() => { indicator.style.display = 'none'; }, 2000);
         }
-        // 显示天赋升级提示（修改后，无确认按钮，2秒自动消失）
-function showUpgradeNotification(upgradeName, upgradeEffect) {
-    const notification = document.getElementById('upgrade-notification');
-    document.getElementById('upgrade-title').textContent = upgradeName;
-    document.getElementById('upgrade-effect').textContent = upgradeEffect;
-    notification.style.display = 'block';
-    
-    // 暂停游戏
-    gamePaused = true;
-    cancelAnimationFrame(gameLoop);
-    
-    // 2秒后自动关闭并恢复游戏
-    setTimeout(() => {
-        notification.style.display = 'none';
-        gamePaused = false;
-        if (gameRunning) {
-            gameLoop = requestAnimationFrame(updateGame);
+        
+        // 显示天赋升级提示
+        function showUpgradeNotification(upgradeName, upgradeEffect) {
+            const notification = document.getElementById('upgrade-notification');
+            document.getElementById('upgrade-title').textContent = upgradeName;
+            document.getElementById('upgrade-effect').textContent = upgradeEffect;
+            notification.style.display = 'block';
+            
+            // 暂停游戏
+            gamePaused = true;
+            cancelAnimationFrame(gameLoop);
+            
+            // 2秒后自动关闭并恢复游戏
+            setTimeout(() => {
+                notification.style.display = 'none';
+                gamePaused = false;
+                if (gameRunning) {
+                    gameLoop = requestAnimationFrame(updateGame);
+                }
+            }, 2000);
         }
-    }, 2000);
-}
         
         // ==================== 自动释放技能 ====================
         function autoCastSkills() {
@@ -1825,8 +2020,8 @@ function showUpgradeNotification(upgradeName, upgradeEffect) {
             }
         }
         
-        // ==================== 技能实现（保留原样）====================
-        function useChainLightning() { /* 完整代码，篇幅所限略，原文件中完整保留 */ 
+        // ==================== 技能实现 ====================
+        function useChainLightning() {
             const now = Date.now();
             if (now - abilities.chainLightning.lastUsed < abilities.chainLightning.cooldown) return;
             abilities.chainLightning.lastUsed = now; abilities.chainLightning.active = true;
@@ -1837,8 +2032,7 @@ function showUpgradeNotification(upgradeName, upgradeEffect) {
                 const damage = 100 + playerLevel * 20;
                 const actualDamage = currentTarget.damageReduction ? damage * (1 - currentTarget.damageReduction) : damage;
                 currentTarget.health -= actualDamage;
-                createParticles(currentTarget.x + currentTarget.width/2, currentTarget.y + currentTarget.height/2, 25, '#00ffff', 'star');
-                if (i > 0) { /* drawLightning调用略 */ }
+                createParticles(currentTarget.x + currentTarget.width/2, currentTarget.y + currentTarget.height/2, 25, '#00bcd4', 'star');
                 if (currentTarget.health <= 0) {
                     const isGay0 = currentTarget.type === 'gay0'; const isSigma = currentTarget.type === 'sigma'; const isGqh = currentTarget.type === 'gqh';
                     score += isGay0 ? 200 : isSigma ? 250 : isGqh ? 300 : 100;
@@ -1860,12 +2054,14 @@ function showUpgradeNotification(upgradeName, upgradeEffect) {
             }
             addCombo(); updateUI(); checkLevelUp();
         }
+        
         function useShield() {
             const now = Date.now(); if (now - abilities.shield.lastUsed < abilities.shield.cooldown) return;
             abilities.shield.lastUsed = now; abilities.shield.active = true;
             setTimeout(() => { abilities.shield.active = false; }, abilities.shield.duration);
         }
-        function useBomb() { /* 完整代码略，原文件中完整保留 */ 
+        
+        function useBomb() {
             const now = Date.now(); if (now - abilities.bomb.lastUsed < abilities.bomb.cooldown) return;
             abilities.bomb.lastUsed = now;
             enemies.forEach(enemy => {
@@ -1894,6 +2090,7 @@ function showUpgradeNotification(upgradeName, upgradeEffect) {
             }
             addCombo(); updateUI(); checkLevelUp();
         }
+        
         function useDrone() {
             const now = Date.now(); if (now - abilities.drone.lastUsed < abilities.drone.cooldown) return;
             abilities.drone.lastUsed = now; abilities.drone.active = true;
@@ -1903,6 +2100,7 @@ function showUpgradeNotification(upgradeName, upgradeEffect) {
             }
             setTimeout(() => { abilities.drone.active = false; abilities.drone.drones = []; }, 25000);
         }
+        
         function useTimeStop() {
             const now = Date.now(); if (now - abilities.timeStop.lastUsed < abilities.timeStop.cooldown) return;
             abilities.timeStop.lastUsed = now; timeStopActive = true; timeStopEnd = now + abilities.timeStop.duration;
@@ -1942,12 +2140,12 @@ function showUpgradeNotification(upgradeName, upgradeEffect) {
             });
         }
         
-        // ==================== 更新子弹（保留原逻辑）====================
+        // ==================== 更新子弹 ====================
         function updateBullets() {
-            // 玩家子弹更新（略，完整保留原代码）
+            // 玩家子弹更新
             for (let i = player.bullets.length - 1; i >= 0; i--) {
                 const bullet = player.bullets[i];
-                if (!timeStopActive) { bullet.x += bullet.vx * bullet.speed; bullet.y += bullet.vy * bullet.speed; }
+                if (!timeStopActive) { bullet.x += bullet.vx * bullet.speed * gameSpeed; bullet.y += bullet.vy * bullet.speed * gameSpeed; }
                 if (bullet.x < -bullet.radius || bullet.x > canvas.width + bullet.radius || bullet.y < -bullet.radius || bullet.y > canvas.height + bullet.radius) {
                     player.bullets.splice(i, 1); continue;
                 }
@@ -1956,15 +2154,15 @@ function showUpgradeNotification(upgradeName, upgradeEffect) {
                     const enemy = enemies[j];
                     if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width && bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
                         let actualDamage = enemy.damageReduction ? bullet.damage * (1 - enemy.damageReduction) : bullet.damage;
-                        if (bullet.isCritical) createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 20, '#ffff00', 'star');
+                        if (bullet.isCritical) createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 20, '#ff9800', 'star');
                         enemy.health -= actualDamage;
-                        if (bullet.vampiricRatio > 0) {
+			if (bullet.vampiricRatio > 0) {
                             const healAmount = actualDamage * bullet.vampiricRatio;
                             health = Math.min(maxHealth, health + healAmount);
                             createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 5, '#ff0000', 'circle');
                         }
                         if (bullet.explosive) {
-                            createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 25, '#ffaa00', 'star');
+                            createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 25, '#ff9800', 'star');
                             enemies.forEach(otherEnemy => {
                                 if (otherEnemy === enemy) return;
                                 const dx = otherEnemy.x - enemy.x; const dy = otherEnemy.y - enemy.y;
@@ -1979,7 +2177,7 @@ function showUpgradeNotification(upgradeName, upgradeEffect) {
                             if (enemy.type === 'gay0') createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 20, 'rainbow', 'rainbow');
                             else if (enemy.type === 'sigma') createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 20, 'electric', 'electric');
                             else if (enemy.type === 'gqh') createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 25, 'gqh', 'heart');
-                            else createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 10, '#00ffaa', 'circle');
+                            else createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 10, '#00bcd4', 'circle');
                         }
                         addCombo();
                         if (enemy.health <= 0) {
@@ -2006,10 +2204,10 @@ function showUpgradeNotification(upgradeName, upgradeEffect) {
                 if (hitEnemy) { checkLevelUp(); continue; }
                 if (boss && bullet.x > boss.x && bullet.x < boss.x + boss.width && bullet.y > boss.y && bullet.y < boss.y + boss.height) {
                     let bossDamage = bullet.damage;
-                    if (bullet.isCritical) createParticles(bullet.x, bullet.y, 30, '#ffff00', 'star');
+                    if (bullet.isCritical) createParticles(bullet.x, bullet.y, 30, '#ff9800', 'star');
                     boss.health -= bossDamage; updateBossHealthBar();
-                    createParticles(bullet.x, bullet.y, 15, '#ff00ff', 'circle');
-                    if (bullet.explosive) { boss.health -= bossDamage * 0.5; createParticles(bullet.x, bullet.y, 30, '#ffaa00', 'star'); }
+                    createParticles(bullet.x, bullet.y, 15, '#6a5acd', 'circle');
+                    if (bullet.explosive) { boss.health -= bossDamage * 0.5; createParticles(bullet.x, bullet.y, 30, '#ff9800', 'star'); }
                     if (bullet.vampiricRatio > 0) { const healAmount = bossDamage * bullet.vampiricRatio; health = Math.min(maxHealth, health + healAmount); }
                     addCombo();
                     if (boss.health <= 0) defeatBoss();
@@ -2017,7 +2215,8 @@ function showUpgradeNotification(upgradeName, upgradeEffect) {
                     checkLevelUp();
                 }
             }
-            // 敌人子弹更新（完整保留）
+            
+            // 敌人子弹更新
             for (let i = enemyBullets.length - 1; i >= 0; i--) {
                 const bullet = enemyBullets[i];
                 if (bullet.homing && !timeStopActive) {
@@ -2030,11 +2229,11 @@ function showUpgradeNotification(upgradeName, upgradeEffect) {
                         bullet.vx = (bullet.vx / speed) * (bullet.speed / 10); bullet.vy = (bullet.vy / speed) * (bullet.speed / 10);
                     }
                 }
-                if (!timeStopActive) { bullet.x += bullet.vx * bullet.speed; bullet.y += bullet.vy * bullet.speed; }
+                if (!timeStopActive) { bullet.x += bullet.vx * bullet.speed * gameSpeed; bullet.y += bullet.vy * bullet.speed * gameSpeed; }
                 if (bullet.laser && bullet.split && Math.random() < 0.02 && !timeStopActive) {
                     for (let s = 0; s < bullet.splitCount; s++) {
                         const angle = Math.random() * Math.PI * 2;
-                        enemyBullets.push({ x: bullet.x, y: bullet.y, radius: 5, speed: 4, vx: Math.cos(angle), vy: Math.sin(angle), damage: 8, color: '#ff88ff' });
+                        enemyBullets.push({ x: bullet.x, y: bullet.y, radius: 5, speed: 4, vx: Math.cos(angle), vy: Math.sin(angle), damage: 8, color: '#a78bfa' });
                     }
                     bullet.split = false;
                 }
@@ -2057,8 +2256,8 @@ function showUpgradeNotification(upgradeName, upgradeEffect) {
                     const dx = bullet.x - (player.x + player.width/2); const dy = bullet.y - (player.y + player.height/2);
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     if (distance < 60) {
-                        bullet.vx = dx / distance; bullet.vy = dy / distance; bullet.color = '#00ffff';
-                        createParticles(bullet.x, bullet.y, 8, '#00ffff', 'circle');
+                        bullet.vx = dx / distance; bullet.vy = dy / distance; bullet.color = '#00bcd4';
+                        createParticles(bullet.x, bullet.y, 8, '#00bcd4', 'circle');
                     }
                 }
             }
@@ -2067,7 +2266,7 @@ function showUpgradeNotification(upgradeName, upgradeEffect) {
         // ==================== 击败Boss ====================
         function defeatBoss() {
             score += 1500 + wave * 300; xp += 800 + wave * 150; combo += 50;
-            createParticles(boss.x + boss.width/2, boss.y + boss.height/2, 150, '#ffff00', 'star');
+            createParticles(boss.x + boss.width/2, boss.y + boss.height/2, 150, '#ff9800', 'star');
             document.getElementById('boss-health').style.display = 'none';
             boss = null; bossActive = false;
             updateUI(); checkLevelUp();
@@ -2080,15 +2279,13 @@ function showUpgradeNotification(upgradeName, upgradeEffect) {
                 applyRandomUpgrade(); updateUI();
             }
         }
+        
         function applyRandomUpgrade() {
             const availableUpgrades = [];
             for (let upgradeType in upgrades) {
                 const upgrade = upgrades[upgradeType];
-/*
                 const maxLevel = (upgradeType === 'pierce' || upgradeType === 'explosive') ? 1 : 
                                  (upgradeType === 'critical' || upgradeType === 'vampire') ? 5 : 10;
-*/
-const maxLevel=114514;
                 if (upgrade.level < maxLevel && score >= upgrade.cost) availableUpgrades.push(upgradeType);
             }
             if (availableUpgrades.length === 0) return;
@@ -2112,23 +2309,23 @@ const maxLevel=114514;
         // ==================== 绘制背景 ====================
         function drawBackground() {
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            gradient.addColorStop(0, '#000000'); gradient.addColorStop(1, '#200050');
+            gradient.addColorStop(0, '#f5f7fa'); gradient.addColorStop(1, '#e4e8f0');
             ctx.fillStyle = gradient; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.fillStyle = 'rgba(106, 90, 205, 0.1)';
             for (let i = 0; i < 80; i++) {
                 const x = (i * 29 + Date.now() / 80) % canvas.width;
                 const y = (i * 17 + Date.now() / 120) % canvas.height;
                 const size = Math.sin(Date.now() / 800 + i) * 2 + 2;
-                const alpha = Math.sin(Date.now() / 1000 + i) * 0.5 + 0.5;
+                const alpha = Math.sin(Date.now() / 1000 + i) * 0.3 + 0.3;
                 ctx.globalAlpha = alpha; ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
             }
             ctx.globalAlpha = 1;
-            ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'rgba(106, 90, 205, 0.3)'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText(`波次: ${wave}`, canvas.width / 2, 40);
             if (!bossActive) { ctx.font = 'bold 25px Arial'; ctx.fillText(`剩余敌人: ${enemiesRemaining}`, canvas.width / 2, 80); }
             if (timeStopActive) {
-                ctx.fillStyle = 'rgba(0,255,255,0.2)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = 'bold 60px Arial'; ctx.fillText('时间停滞！', canvas.width / 2, canvas.height / 2);
+                ctx.fillStyle = 'rgba(0, 188, 212, 0.2)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(106, 90, 205, 0.8)'; ctx.font = 'bold 60px Arial'; ctx.fillText('时间停滞！', canvas.width / 2, canvas.height / 2);
             }
         }
         
@@ -2144,6 +2341,208 @@ const maxLevel=114514;
             gameLoop = requestAnimationFrame(updateGame);
         }
         
+        // ==================== 开发者模式功能 ====================
+        function openDevMode() {
+            document.getElementById('dev-panel').style.display = 'block';
+            gamePaused = true;
+            cancelAnimationFrame(gameLoop);
+        }
+        
+        function closeDevMode() {
+            document.getElementById('dev-panel').style.display = 'none';
+            gamePaused = false;
+            if (gameRunning) {
+                gameLoop = requestAnimationFrame(updateGame);
+            }
+        }
+        
+        function loginDevMode() {
+            const password = document.getElementById('dev-password').value;
+            if (password === 'yyy不让我玩florr，QWQ') {
+                document.getElementById('password-section').style.display = 'none';
+                document.getElementById('dev-controls').style.display = 'block';
+                devMode = true;
+                showPowerupIndicator('开发者模式已激活！');
+            } else {
+                alert('密码错误！');
+            }
+        }
+        
+        // 开发者模式控制函数
+        function setPlayerHealth() {
+            const newHealth = parseInt(document.getElementById('dev-health').value);
+            health = newHealth;
+            maxHealth = newHealth;
+            updateUI();
+            showPowerupIndicator(`生命值设置为: ${newHealth}`);
+        }
+        
+        function setPlayerDamage() {
+            const newDamage = parseInt(document.getElementById('dev-damage').value);
+            player.damage = newDamage;
+            updateUI();
+            showPowerupIndicator(`攻击力设置为: ${newDamage}`);
+        }
+        
+        function setPlayerSpeed() {
+            const newSpeed = parseInt(document.getElementById('dev-speed').value);
+            player.speed = newSpeed;
+            showPowerupIndicator(`移动速度设置为: ${newSpeed}`);
+        }
+        
+        function setPlayerLevel() {
+            const newLevel = parseInt(document.getElementById('dev-level').value);
+            playerLevel = newLevel;
+            updateUI();
+            showPowerupIndicator(`等级设置为: ${newLevel}`);
+        }
+        
+        function setPlayerScore() {
+            const newScore = parseInt(document.getElementById('dev-score').value);
+            score = newScore;
+            updateUI();
+            showPowerupIndicator(`得分设置为: ${newScore}`);
+        }
+        
+        function setEnemyCount() {
+            const count = parseInt(document.getElementById('dev-enemy-count').value);
+            enemiesRemaining = count;
+            // 清空现有敌人
+            enemies = [];
+            // 生成新敌人
+            for (let i = 0; i < count; i++) {
+                spawnEnemy('normal');
+            }
+            showPowerupIndicator(`敌人数量设置为: ${count}`);
+        }
+        
+        function clearEnemies() {
+            enemies = [];
+            enemiesRemaining = 0;
+            showPowerupIndicator('所有敌人已清空！');
+        }
+        
+        function spawnBossDev() {
+            const bossType = document.getElementById('dev-boss-type').value;
+            bossActive = true;
+            bossSpawnCount++;
+            
+            if (bossType === 'wildflower') {
+                boss = {
+                    x: canvas.width / 2 - 100,
+                    y: -150,
+                    width: 200,
+                    height: 200,
+                    health: 60000,
+                    maxHealth: 60000,
+                    speed: 2.0,
+                    color: '#ff69b4',
+                    phase: 1,
+                    lastShot: 0,
+                    shotDelay: 1000,
+                    bullets: [],
+                    lastPhaseChange: 0,
+                    phaseChangeDelay: 12000,
+                    moveDirection: 1,
+                    pattern: 0,
+                    lastPatternChange: 0,
+                    patternChangeDelay: 4000,
+                    type: 'wildflower',
+                    spikeCount: 20,
+                    spikeDamage: 150,
+                    spikeSpeed: 10
+                };
+            } else {
+                boss = {
+                    x: canvas.width / 2 - 100,
+                    y: -150,
+                    width: 200,
+                    height: 200,
+                    health: 3000,
+                    maxHealth: 3000,
+                    speed: 1.5,
+                    color: '#6a5acd',
+                    phase: 1,
+                    lastShot: 0,
+                    shotDelay: 800,
+                    bullets: [],
+                    lastPhaseChange: 0,
+                    phaseChangeDelay: 15000,
+                    moveDirection: 1,
+                    pattern: 0,
+                    lastPatternChange: 0,
+                    patternChangeDelay: 3000,
+                    type: 'normal'
+                };
+            }
+            
+            document.getElementById('boss-health').style.display = 'block';
+            updateBossHealthBar();
+            showPowerupIndicator(`已生成${bossType === 'wildflower' ? 'Wild flower' : '普通'}Boss`);
+        }
+        
+        function setSkillCooldown() {
+            const mode = document.getElementById('dev-skill-cooldown').value;
+            if (mode === 'zero') {
+                for (let ability in abilities) {
+                    abilities[ability].cooldown = 0;
+                }
+                showPowerupIndicator('技能冷却已取消！');
+            } else {
+                // 恢复默认冷却
+                abilities.chainLightning.cooldown = 8000;
+                abilities.shield.cooldown = 12000;
+                abilities.bomb.cooldown = 15000;
+                abilities.drone.cooldown = 20000;
+                abilities.timeStop.cooldown = 25000;
+                showPowerupIndicator('技能冷却已恢复默认');
+            }
+        }
+        
+        function unlockAllUpgrades() {
+            player.damage = 500;
+            player.shotDelay = 50;
+            player.bulletCount = 5;
+            maxHealth = 5000;
+            health = maxHealth;
+            player.speed = 15;
+            player.pierce = Infinity;
+            player.explosive = true;
+            criticalChance = 50;
+            criticalMultiplier = 5.0;
+            vampiricRatio = 0.1;
+            player.regenHealth = true;
+            player.regenRate = 10;
+            player.dodgeChance = 50;
+            
+            updateUI();
+            showPowerupIndicator('所有天赋已解锁！');
+        }
+        
+        function setGodMode() {
+            const mode = document.getElementById('dev-god-mode').value;
+            if (mode === 'on') {
+                godMode = true;
+                health = Infinity;
+                document.getElementById('godmode-btn').style.background = 'linear-gradient(to bottom, #ff0000, #cc0000)';
+                document.getElementById('godmode-btn').textContent = '上帝模式(开启)';
+                showPowerupIndicator('上帝模式已开启！');
+            } else {
+                godMode = false;
+                health = maxHealth;
+                document.getElementById('godmode-btn').style.background = 'linear-gradient(to bottom, #6a5acd, #9370db)';
+                document.getElementById('godmode-btn').textContent = '上帝模式';
+                showPowerupIndicator('上帝模式已关闭');
+            }
+            updateUI();
+        }
+        
+        function updateGameSpeed() {
+            const speed = parseFloat(document.getElementById('dev-game-speed').value);
+            gameSpeed = speed;
+            document.getElementById('dev-speed-value').textContent = speed.toFixed(1) + 'x';
+        }
+        
         // ==================== 事件监听 ====================
         document.addEventListener('keydown', function(e) {
             keys[e.key] = true;
@@ -2155,23 +2554,64 @@ const maxLevel=114514;
             if (e.key === 't' || e.key === 'T') useTimeStop();
             if (e.key === 'z' || e.key === 'Z') { if (gameRunning && !gamePaused) shootPlayer(); }
         });
+        
         document.addEventListener('keyup', function(e) { keys[e.key] = false; });
-        canvas.addEventListener('mousemove', function(e) { const rect = canvas.getBoundingClientRect(); mouse.x = e.clientX - rect.left; mouse.y = e.clientY - rect.top; });
+        
+        canvas.addEventListener('mousemove', function(e) { 
+            const rect = canvas.getBoundingClientRect(); 
+            mouse.x = e.clientX - rect.left; 
+            mouse.y = e.clientY - rect.top; 
+        });
+        
         canvas.addEventListener('mousedown', function(e) { mouse.pressed = true; if (gameRunning && !gamePaused) shootPlayer(); });
         canvas.addEventListener('mouseup', function() { mouse.pressed = false; });
         canvas.addEventListener('click', function(e) { if (gameRunning && !gamePaused) shootPlayer(); });
+        
         setInterval(() => { if (mouse.pressed && gameRunning && !gamePaused) shootPlayer(); }, player.shotDelay);
         
+        // 按钮事件监听
         document.getElementById('start-btn').addEventListener('click', startGame);
         document.getElementById('pause-btn').addEventListener('click', pauseGame);
         document.getElementById('restart-btn').addEventListener('click', startGame);
-        /*
-        document.getElementById('upgrade-close-btn').addEventListener('click', function() {
-            document.getElementById('upgrade-notification').style.display = 'none';
-            gamePaused = false;
-            if (gameRunning) gameLoop = requestAnimationFrame(updateGame);
+        document.getElementById('dev-mode-btn').addEventListener('click', openDevMode);
+        
+        // 开发者模式事件监听
+        document.getElementById('dev-login').addEventListener('click', loginDevMode);
+        document.getElementById('dev-close').addEventListener('click', closeDevMode);
+        document.getElementById('dev-set-health').addEventListener('click', setPlayerHealth);
+        document.getElementById('dev-set-damage').addEventListener('click', setPlayerDamage);
+        document.getElementById('dev-set-speed').addEventListener('click', setPlayerSpeed);
+        document.getElementById('dev-set-level').addEventListener('click', setPlayerLevel);
+        document.getElementById('dev-set-score').addEventListener('click', setPlayerScore);
+        document.getElementById('dev-set-enemies').addEventListener('click', setEnemyCount);
+        document.getElementById('dev-clear-enemies').addEventListener('click', clearEnemies);
+        document.getElementById('dev-spawn-boss').addEventListener('click', spawnBossDev);
+        document.getElementById('dev-set-cooldown').addEventListener('click', setSkillCooldown);
+        document.getElementById('dev-unlock-all').addEventListener('click', unlockAllUpgrades);
+        document.getElementById('dev-set-godmode').addEventListener('click', setGodMode);
+        document.getElementById('dev-game-speed').addEventListener('input', updateGameSpeed);
+        
+        // 其他按钮事件
+        document.getElementById('instructions-btn').addEventListener('click', function() {
+            const panel = document.getElementById('instructions-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
         });
-        */
+        
+        document.getElementById('godmode-btn').addEventListener('click', function() {
+            godMode = !godMode;
+            if (godMode) { 
+                this.style.background = 'linear-gradient(to bottom, #ff0000, #cc0000)'; 
+                this.textContent = '上帝模式(开启)'; 
+                health = Infinity; 
+            } else { 
+                this.style.background = 'linear-gradient(to bottom, #6a5acd, #9370db)'; 
+                this.textContent = '上帝模式'; 
+                health = maxHealth; 
+            }
+            updateUI();
+        });
+        
+        // 技能自动释放切换
         for (let i = 1; i <= 5; i++) {
             const toggleElement = document.getElementById(`auto-toggle-${i}`);
             if (toggleElement) {
@@ -2183,16 +2623,6 @@ const maxLevel=114514;
                 });
             }
         }
-        document.getElementById('instructions-btn').addEventListener('click', function() {
-            const panel = document.getElementById('instructions-panel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        });
-        document.getElementById('godmode-btn').addEventListener('click', function() {
-            godMode = !godMode;
-            if (godMode) { this.style.background = 'linear-gradient(to bottom, #ff0000, #cc0000)'; this.textContent = '上帝模式(开启)'; health = Infinity; }
-            else { this.style.background = 'linear-gradient(to bottom, #ff00ff, #aa00ff)'; this.textContent = '上帝模式'; health = maxHealth; }
-            updateUI();
-        });
         
         // 移动控制
         document.getElementById('mobile-left').addEventListener('touchstart', function() { keys['ArrowLeft'] = true; });
@@ -2200,18 +2630,58 @@ const maxLevel=114514;
         document.getElementById('mobile-right').addEventListener('touchstart', function() { keys['ArrowRight'] = true; });
         document.getElementById('mobile-right').addEventListener('touchend', function() { keys['ArrowRight'] = false; });
         document.getElementById('mobile-up').addEventListener('touchstart', function() { keys['ArrowUp'] = true; });
-        document.getElementById('mobile-up').addEventListener('touchend', function() { keys['ArrowUp'] = false; });
+	document.getElementById('mobile-up').addEventListener('touchend', function() { keys['ArrowUp'] = false; });
         document.getElementById('mobile-down').addEventListener('touchstart', function() { keys['ArrowDown'] = true; });
         document.getElementById('mobile-down').addEventListener('touchend', function() { keys['ArrowDown'] = false; });
-        document.getElementById('mobile-shoot').addEventListener('touchstart', function() { mouse.pressed = true; if (gameRunning && !gamePaused) shootPlayer(); });
+        document.getElementById('mobile-shoot').addEventListener('touchstart', function() { 
+            mouse.pressed = true; 
+            if (gameRunning && !gamePaused) shootPlayer(); 
+        });
         document.getElementById('mobile-shoot').addEventListener('touchend', function() { mouse.pressed = false; });
         document.getElementById('mobile-ability1').addEventListener('touchstart', function() { useChainLightning(); });
         document.getElementById('mobile-ability2').addEventListener('touchstart', function() { useShield(); });
         document.getElementById('mobile-ability3').addEventListener('touchstart', function() { useBomb(); });
+        
         document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
         
         // 初始绘制
-        drawBackground(); drawPlayer(); updateUI();
+        drawBackground(); 
+        drawPlayer(); 
+        updateUI();
+        
+        // 游戏说明面板关闭功能
+        document.addEventListener('click', function(e) {
+            if (!document.getElementById('instructions-panel').contains(e.target) && 
+                e.target.id !== 'instructions-btn') {
+                document.getElementById('instructions-panel').style.display = 'none';
+            }
+        });
+        
+        // 开发者模式面板关闭功能
+        document.addEventListener('click', function(e) {
+            const devPanel = document.getElementById('dev-panel');
+            if (!devPanel.contains(e.target) && e.target.id !== 'dev-mode-btn') {
+                closeDevMode();
+            }
+        });
+        
+        // 密码输入框回车键支持
+        document.getElementById('dev-password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loginDevMode();
+            }
+        });
+        
+        // 游戏速度滑块初始值显示
+        document.getElementById('dev-game-speed').addEventListener('input', function() {
+            document.getElementById('dev-speed-value').textContent = this.value + 'x';
+        });
+        
+        // 初始显示游戏速度
+        document.getElementById('dev-speed-value').textContent = '1.0x';
+        
+        console.log('游戏初始化完成！');
+        console.log('开发者模式密码：yyy不让我玩florr，QWQ');
     </script>
 </body>
 </html>

@@ -2,348 +2,1928 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>KCM 刀战对决 - 2D顶视角</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D刀战游戏 - 玩家 vs KCM (多地图选择)</title>
     <style>
-        body { margin: 0; background: #1a1a1a; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Arial', sans-serif; }
-        #game-ui { position: absolute; top: 20px; left: 20px; color: #fff; pointer-events: none; }
-        canvas { background: #333; box-shadow: 0 0 20px rgba(0,0,0,0.5); cursor: crosshair; }
-        .instructions { position: absolute; bottom: 20px; color: #aaa; font-size: 14px; text-align: center; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            overflow: hidden;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+            padding: 10px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .game-title h1 {
+            color: #f8f9fa;
+            font-size: 1.8rem;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+        }
+        
+        .game-title .subtitle {
+            color: #adb5bd;
+            font-size: 0.9rem;
+        }
+        
+        .game-info {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .player-info, .ai-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .player-info h3 {
+            color: #4dff91;
+        }
+        
+        .ai-info h3 {
+            color: #ff4d4d;
+        }
+        
+        .health-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .health-bar {
+            width: 150px;
+            height: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #555;
+        }
+        
+        .health-fill {
+            height: 100%;
+            width: 100%;
+            transition: width 0.3s;
+        }
+        
+        #playerHealth {
+            background: linear-gradient(90deg, #00b74a, #4dff91);
+        }
+        
+        #aiHealth {
+            background: linear-gradient(90deg, #f93154, #ff4d4d);
+        }
+        
+        .health-value {
+            font-weight: bold;
+            min-width: 30px;
+        }
+        
+        .main-game-area {
+            display: flex;
+            flex: 1;
+            gap: 10px;
+        }
+        
+        .game-view {
+            flex: 3;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+        }
+        
+        #gameCanvas3D {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .mini-map-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 250px;
+        }
+        
+        .mini-map-title {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #4dff91;
+            font-size: 1.2rem;
+        }
+        
+        .mini-map {
+            flex: 1;
+            background-color: #1a1a2e;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid #4a5568;
+        }
+        
+        #miniMapCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .mini-map-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #4a5568;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+        
+        .controls {
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+        
+        .controls h3 {
+            margin-bottom: 10px;
+            color: #4dff91;
+            text-align: center;
+        }
+        
+        .key-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .key-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .key-row {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .key {
+            display: inline-block;
+            padding: 8px 12px;
+            margin: 2px;
+            background-color: #4a5568;
+            border-radius: 5px;
+            font-weight: bold;
+            min-width: 40px;
+            text-align: center;
+            box-shadow: 0 3px 0 #2d3748;
+        }
+        
+        .key-active {
+            background-color: #4dff91;
+            color: #1a1a2e;
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #2d3748;
+        }
+        
+        .attack-key {
+            background-color: #f93154;
+            color: white;
+            box-shadow: 0 3px 0 #c2185b;
+        }
+        
+        .game-status {
+            text-align: center;
+            font-size: 1.2rem;
+            height: 30px;
+            margin-top: 10px;
+        }
+        
+        #restartBtn {
+            padding: 10px 20px;
+            background-color: #4dff91;
+            color: #1a1a2e;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+            width: 100%;
+        }
+        
+        #restartBtn:hover {
+            background-color: #2ecc71;
+        }
+        
+        .fps-counter {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .view-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .view-btn {
+            padding: 8px 15px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .view-btn.active {
+            background-color: #4dff91;
+            color: #1a1a2e;
+        }
+        
+        .instructions {
+            margin-top: 10px;
+            color: #adb5bd;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .instructions-column {
+            flex: 1;
+            padding: 0 5px;
+        }
+        
+        /* 地图选择界面 */
+        .map-select-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .map-select-title {
+            font-size: 2.5rem;
+            color: #4dff91;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(77, 255, 145, 0.5);
+        }
+        
+        .map-select-subtitle {
+            font-size: 1.2rem;
+            color: #adb5bd;
+            margin-bottom: 40px;
+        }
+        
+        .maps-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 1200px;
+            padding: 20px;
+        }
+        
+        .map-option {
+            width: 220px;
+            height: 180px;
+            background-color: #1a1a2e;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+        
+        .map-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            border-color: #4dff91;
+        }
+        
+        .map-option.active {
+            border-color: #4dff91;
+            box-shadow: 0 0 20px rgba(77, 255, 145, 0.7);
+        }
+        
+        .map-preview {
+            width: 100%;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        .map-name {
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        
+        .map-description {
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #adb5bd;
+            padding: 0 5px;
+        }
+        
+        .start-game-btn {
+            padding: 15px 40px;
+            background-color: #4dff91;
+            color: #1a1a2e;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 40px;
+            transition: all 0.3s ease;
+        }
+        
+        .start-game-btn:hover {
+            background-color: #2ecc71;
+            transform: scale(1.05);
+        }
+        
+        .map-preview-canvas {
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body>
-
-<div id="game-ui">
-    <h2 id="status">正在寻找 KCM...</h2>
-    <p>HP: <span id="hp">100</span> | 击败数: <span id="kills">0</span></p>
-</div>
-
-<div class="instructions">WASD 移动 | 鼠标左键 挥刀攻击 | 躲避 KCM 的致命背刺</div>
-
-<canvas id="gameCanvas"></canvas>
-
-<script>
-/**
- * 游戏配置与全局变量
- */
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const hpDisplay = document.getElementById('hp');
-const killDisplay = document.getElementById('kills');
-const statusDisplay = document.getElementById('status');
-
-canvas.width = 800;
-canvas.height = 600;
-
-const keys = {};
-let kills = 0;
-
-// 墙体定义 (x, y, w, h)
-const walls = [
-    {x: 150, y: 100, w: 20, h: 200},
-    {x: 150, y: 100, w: 300, h: 20},
-    {x: 450, y: 250, w: 200, h: 20},
-    {x: 300, y: 400, w: 20, h: 150},
-    {x: 500, y: 450, w: 150, h: 20},
-    {x: 100, y: 450, w: 100, h: 20}
-];
-
-/**
- * 工具函数
- */
-function getDist(x1, y1, x2, y2) {
-    return Math.sqrt((x2-x1)**2 + (y2-y1)**2);
-}
-
-// 圆形与矩形碰撞检测
-function circleRectCollision(cx, cy, cr, rx, ry, rw, rh) {
-    let testX = cx;
-    let testY = cy;
-    if (cx < rx) testX = rx;
-    else if (cx > rx + rw) testX = rx + rw;
-    if (cy < ry) testY = ry;
-    else if (cy > ry + rh) testY = ry + rh;
-    return getDist(cx, cy, testX, testY) <= cr;
-}
-
-// 线段与墙碰撞（用于视线检测）
-function isLineBlocked(x1, y1, x2, y2) {
-    for (let wall of walls) {
-        if (lineRectIntersect(x1, y1, x2, y2, wall.x, wall.y, wall.w, wall.h)) return true;
-    }
-    return false;
-}
-
-function lineRectIntersect(x1, y1, x2, y2, rx, ry, rw, rh) {
-    // 简化版：仅检测线段是否穿过矩形的四条边
-    return lineLineIntersect(x1,y1,x2,y2, rx,ry,rx+rw,ry) ||
-           lineLineIntersect(x1,y1,x2,y2, rx,ry+rh,rx+rw,ry+rh) ||
-           lineLineIntersect(x1,y1,x2,y2, rx,ry,rx,ry+rh) ||
-           lineLineIntersect(x1,y1,x2,y2, rx+rw,ry,rx+rw,ry+rh);
-}
-
-function lineLineIntersect(x1,y1,x2,y2, x3,y3,x4,y4) {
-    let uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
-    let uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
-    return uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1;
-}
-
-/**
- * 角色类
- */
-class Entity {
-    constructor(x, y, color, name) {
-        this.x = x;
-        this.y = y;
-        this.radius = 18;
-        this.color = color;
-        this.name = name;
-        this.hp = 100;
-        this.angle = 0;
-        this.speed = 3;
-        this.isAttacking = false;
-        this.attackCooldown = 0;
-        this.attackArc = 0; // 动画效果用
-    }
-
-    draw() {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.angle);
-
-        // 绘制身体 (设计感外观)
-        const gradient = ctx.createRadialGradient(0, 0, 5, 0, 0, this.radius);
-        gradient.addColorStop(0, this.color);
-        gradient.addColorStop(1, '#000');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // 绘制眼睛/方向标
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(10, -5, 4, 0, Math.PI * 2);
-        ctx.arc(10, 5, 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 绘制名字
-        ctx.restore();
-        ctx.fillStyle = this.color;
-        ctx.font = "bold 12px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText(this.name, this.x, this.y - 25);
-
-        // 绘制攻击动作
-        if (this.isAttacking) {
-            ctx.save();
-            ctx.translate(this.x, this.y);
-            ctx.rotate(this.angle + this.attackArc);
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(20, 0);
-            ctx.lineTo(45, 0);
-            ctx.stroke();
-            ctx.restore();
-        }
-    }
-
-    move(dx, dy) {
-        let nextX = this.x + dx;
-        let nextY = this.y + dy;
-
-        // 墙体碰撞检测
-        let collisionX = false;
-        let collisionY = false;
-        for (let wall of walls) {
-            if (circleRectCollision(nextX, this.y, this.radius, wall.x, wall.y, wall.w, wall.h)) collisionX = true;
-            if (circleRectCollision(this.x, nextY, this.radius, wall.x, wall.y, wall.w, wall.h)) collisionY = true;
-        }
-
-        if (!collisionX) this.x = nextX;
-        if (!collisionY) this.y = nextY;
-
-        // 边界限制
-        this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
-        this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
-    }
-
-    attack() {
-        if (this.attackCooldown > 0) return;
-        this.isAttacking = true;
-        this.attackCooldown = 30; // 冷却帧数
-        this.attackArc = -Math.PI / 4;
+    <!-- 地图选择界面 -->
+    <div class="map-select-overlay" id="mapSelectOverlay">
+        <div class="map-select-title">选择战场地图</div>
+        <div class="map-select-subtitle">选择一张地图开始你的刀战对决</div>
         
-        // 攻击判定在动画更新中执行一次
-        return true;
-    }
+        <div class="maps-container">
+            <!-- 地图1: 简单迷宫 -->
+            <div class="map-option active" data-map="1">
+                <div class="map-preview" id="mapPreview1"></div>
+                <div class="map-name">简单迷宫</div>
+                <div class="map-description">适合新手的简单迷宫</div>
+            </div>
+            
+            <!-- 地图2: 竞技场 -->
+            <div class="map-option" data-map="2">
+                <div class="map-preview" id="mapPreview2"></div>
+                <div class="map-name">竞技场</div>
+                <div class="map-description">开阔的圆形竞技场</div>
+            </div>
+            
+            <!-- 地图3: 复杂迷宫 -->
+            <div class="map-option" data-map="3">
+                <div class="map-preview" id="mapPreview3"></div>
+                <div class="map-name">复杂迷宫</div>
+                <div class="map-description">充满陷阱的复杂迷宫</div>
+            </div>
+            
+            <!-- 地图4: 对称战场 -->
+            <div class="map-option" data-map="4">
+                <div class="map-preview" id="mapPreview4"></div>
+                <div class="map-name">对称战场</div>
+                <div class="map-description">完全对称的平衡战场</div>
+            </div>
+            
+            <!-- 地图5: 障碍训练场 -->
+            <div class="map-option" data-map="5">
+                <div class="map-preview" id="mapPreview5"></div>
+                <div class="map-name">障碍训练场</div>
+                <div class="map-description">充满障碍物的训练场</div>
+            </div>
+        </div>
+        
+        <button class="start-game-btn" id="startGameBtn">开始游戏</button>
+    </div>
+    
+    <!-- 主游戏界面 -->
+    <div class="game-container" id="gameContainer" style="display: none;">
+        <div class="header">
+            <div class="game-title">
+                <h1>3D刀战游戏</h1>
+                <div class="subtitle">玩家 vs 人机(KCM) - 当前地图: <span id="currentMapName">简单迷宫</span></div>
+            </div>
+            
+            <div class="game-info">
+                <div class="player-info">
+                    <h3>玩家</h3>
+                    <div class="health-container">
+                        <div class="health-bar">
+                            <div id="playerHealth" class="health-fill" style="width: 100%;"></div>
+                        </div>
+                        <div class="health-value" id="playerHealthValue">100</div>
+                    </div>
+                </div>
+                
+                <div class="ai-info">
+                    <h3>人机 (KCM)</h3>
+                    <div class="health-container">
+                        <div class="health-bar">
+                            <div id="aiHealth" class="health-fill" style="width: 100%;"></div>
+                        </div>
+                        <div class="health-value" id="aiHealthValue">100</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-game-area">
+            <div class="game-view">
+                <canvas id="gameCanvas3D"></canvas>
+                <div class="fps-counter">FPS: <span id="fpsCounter">0</span></div>
+                <div class="view-controls">
+                    <button class="view-btn active" id="firstPersonBtn">第一人称</button>
+                    <button class="view-btn" id="thirdPersonBtn">第三人称</button>
+                    <button class="view-btn" id="topViewBtn">俯视视角</button>
+                </div>
+            </div>
+            
+            <div class="mini-map-container">
+                <div class="mini-map-title">小地图</div>
+                <div class="mini-map">
+                    <canvas id="miniMapCanvas"></canvas>
+                </div>
+                <div class="mini-map-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #4dff91;"></div>
+                        <span>玩家</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #f93154;"></div>
+                        <span>人机KCM</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #4a5568;"></div>
+                        <span>墙壁</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #718096;"></div>
+                        <span>视野范围</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <h3>控制说明</h3>
+            <div class="key-container">
+                <div class="key-group">
+                    <div class="key-row">
+                        <div class="key" id="keyW">W</div>
+                    </div>
+                    <div class="key-row">
+                        <div class="key" id="keyA">A</div>
+                        <div class="key" id="keyS">S</div>
+                        <div class="key" id="keyD">D</div>
+                    </div>
+                    <div>移动</div>
+                </div>
+                
+                <div class="key-group">
+                    <div class="key-row">
+                        <div class="key" id="keyMouse">鼠标</div>
+                    </div>
+                    <div>视角转动</div>
+                </div>
+                
+                <div class="key-group">
+                    <div class="key-row">
+                        <div class="key attack-key" id="keySpace">空格</div>
+                    </div>
+                    <div>攻击</div>
+                </div>
+                
+                <div class="key-group">
+                    <div class="key-row">
+                        <div class="key" id="keyShift">Shift</div>
+                    </div>
+                    <div>加速</div>
+                </div>
+            </div>
+            
+            <div class="game-status" id="gameStatus">游戏进行中...</div>
+            <button id="restartBtn">重新开始游戏</button>
+            
+            <div class="instructions">
+                <div class="instructions-column">
+                    <p>• 玩家(绿色)通过WASD移动，鼠标控制视角</p>
+                    <p>• 人机KCM(红色)会自动追踪并攻击玩家</p>
+                </div>
+                <div class="instructions-column">
+                    <p>• 墙壁阻挡移动和视线，不能穿墙</p>
+                    <p>• 先使对方生命值降为0的一方获胜</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    updateAnimation() {
-        if (this.isAttacking) {
-            this.attackArc += 0.2;
-            if (this.attackArc > Math.PI / 4) {
-                this.isAttacking = false;
+    <script>
+        // 游戏状态
+        const gameState = {
+            player: {
+                x: 100,
+                y: 0,
+                z: 100,
+                rotationY: 0,
+                speed: 4,
+                health: 100,
+                maxHealth: 100,
+                attackRange: 50,
+                attackCooldown: 0,
+                attackDamage: 20,
+                height: 30,
+                isRunning: false
+            },
+            ai: {
+                x: 500,
+                y: 0,
+                z: 300,
+                rotationY: 0,
+                speed: 2.5,
+                health: 100,
+                maxHealth: 100,
+                attackRange: 50,
+                attackCooldown: 0,
+                attackDamage: 15,
+                height: 30,
+                aiState: "chase",
+                lastAttackTime: 0,
+                patrolTimer: 0
+            },
+            walls: [],
+            keys: {},
+            mouse: { x: 0, y: 0, isDragging: false },
+            gameOver: false,
+            winner: null,
+            lastTime: 0,
+            viewMode: "thirdPerson",
+            camera: {
+                x: 0,
+                y: 0,
+                z: 0,
+                rotationX: 0,
+                rotationY: 0,
+                distance: 200,
+                height: 50
+            },
+            currentMap: 1,
+            mapBoundary: { minX: 0, maxX: 800, minZ: 0, maxZ: 600 }
+        };
+
+        // 地图定义
+        const maps = {
+            1: { // 简单迷宫
+                name: "简单迷宫",
+                playerStart: { x: 100, y: 0, z: 100 },
+                aiStart: { x: 700, y: 0, z: 500 },
+                walls: [
+                    {x: 200, y: 0, z: 100, width: 200, height: 60, depth: 20},
+                    {x: 400, y: 0, z: 200, width: 20, height: 60, depth: 200},
+                    {x: 300, y: 0, z: 300, width: 300, height: 60, depth: 20},
+                    {x: 100, y: 0, z: 200, width: 20, height: 60, depth: 200},
+                    {x: 500, y: 0, z: 200, width: 150, height: 60, depth: 20},
+                    {x: 500, y: 0, z: 400, width: 150, height: 60, depth: 20},
+                    {x: 350, y: 0, z: 250, width: 20, height: 60, depth: 100},
+                    {x: 600, y: 0, z: 100, width: 20, height: 60, depth: 300},
+                    {x: 150, y: 0, z: 400, width: 300, height: 60, depth: 20}
+                ],
+                boundary: { minX: 0, maxX: 800, minZ: 0, maxZ: 600 }
+            },
+            2: { // 竞技场
+                name: "竞技场",
+                playerStart: { x: 200, y: 0, z: 300 },
+                aiStart: { x: 600, y: 0, z: 300 },
+                walls: [
+                    // 外圈墙壁
+                    {x: 400, y: 0, z: 50, width: 700, height: 60, depth: 20},
+                    {x: 400, y: 0, z: 550, width: 700, height: 60, depth: 20},
+                    {x: 50, y: 0, z: 300, width: 20, height: 60, depth: 500},
+                    {x: 750, y: 0, z: 300, width: 20, height: 60, depth: 500},
+                    
+                    // 中间障碍
+                    {x: 400, y: 0, z: 300, width: 100, height: 60, depth: 20},
+                    {x: 300, y: 0, z: 200, width: 20, height: 60, depth: 100},
+                    {x: 500, y: 0, z: 200, width: 20, height: 60, depth: 100},
+                    {x: 300, y: 0, z: 400, width: 20, height: 60, depth: 100},
+                    {x: 500, y: 0, z: 400, width: 20, height: 60, depth: 100}
+                ],
+                boundary: { minX: 0, maxX: 800, minZ: 0, maxZ: 600 }
+            },
+            3: { // 复杂迷宫
+                name: "复杂迷宫",
+                playerStart: { x: 50, y: 0, z: 50 },
+                aiStart: { x: 750, y: 0, z: 550 },
+                walls: [
+                    // 迷宫墙壁
+                    {x: 100, y: 0, z: 0, width: 20, height: 60, depth: 200},
+                    {x: 200, y: 0, z: 100, width: 200, height: 60, depth: 20},
+                    {x: 300, y: 0, z: 200, width: 20, height: 60, depth: 200},
+                    {x: 400, y: 0, z: 100, width: 200, height: 60, depth: 20},
+                    {x: 500, y: 0, z: 200, width: 20, height: 60, depth: 200},
+                    {x: 600, y: 0, z: 100, width: 200, height: 60, depth: 20},
+                    
+                    {x: 100, y: 0, z: 300, width: 20, height: 60, depth: 200},
+                    {x: 200, y: 0, z: 400, width: 200, height: 60, depth: 20},
+                    {x: 300, y: 0, z: 500, width: 20, height: 60, depth: 100},
+                    {x: 400, y: 0, z: 400, width: 200, height: 60, depth: 20},
+                    {x: 500, y: 0, z: 300, width: 20, height: 60, depth: 200},
+                    {x: 600, y: 0, z: 400, width: 200, height: 60, depth: 20},
+                    
+                    {x: 0, y: 0, z: 200, width: 100, height: 60, depth: 20},
+                    {x: 0, y: 0, z: 400, width: 100, height: 60, depth: 20},
+                    {x: 700, y: 0, z: 200, width: 100, height: 60, depth: 20},
+                    {x: 700, y: 0, z: 400, width: 100, height: 60, depth: 20},
+                    
+                    {x: 350, y: 0, z: 300, width: 100, height: 60, depth: 20}
+                ],
+                boundary: { minX: 0, maxX: 800, minZ: 0, maxZ: 600 }
+            },
+            4: { // 对称战场
+                name: "对称战场",
+                playerStart: { x: 150, y: 0, z: 300 },
+                aiStart: { x: 650, y: 0, z: 300 },
+                walls: [
+                    // 对称障碍
+                    {x: 200, y: 0, z: 200, width: 20, height: 60, depth: 200},
+                    {x: 600, y: 0, z: 200, width: 20, height: 60, depth: 200},
+                    
+                    {x: 300, y: 0, z: 150, width: 100, height: 60, depth: 20},
+                    {x: 500, y: 0, z: 150, width: 100, height: 60, depth: 20},
+                    
+                    {x: 300, y: 0, z: 450, width: 100, height: 60, depth: 20},
+                    {x: 500, y: 0, z: 450, width: 100, height: 60, depth: 20},
+                    
+                    {x: 400, y: 0, z: 250, width: 20, height: 60, depth: 100},
+                    {x: 400, y: 0, z: 350, width: 20, height: 60, depth: 100},
+                    
+                    {x: 250, y: 0, z: 300, width: 100, height: 60, depth: 20},
+                    {x: 550, y: 0, z: 300, width: 100, height: 60, depth: 20},
+                    
+                    {x: 400, y: 0, z: 100, width: 300, height: 60, depth: 20},
+                    {x: 400, y: 0, z: 500, width: 300, height: 60, depth: 20}
+                ],
+                boundary: { minX: 0, maxX: 800, minZ: 0, maxZ: 600 }
+            },
+            5: { // 障碍训练场
+                name: "障碍训练场",
+                playerStart: { x: 100, y: 0, z: 100 },
+                aiStart: { x: 700, y: 0, z: 500 },
+                walls: [
+                    // 随机障碍
+                    {x: 150, y: 0, z: 200, width: 30, height: 60, depth: 30},
+                    {x: 300, y: 0, z: 150, width: 30, height: 60, depth: 30},
+                    {x: 450, y: 0, z: 250, width: 30, height: 60, depth: 30},
+                    {x: 200, y: 0, z: 350, width: 30, height: 60, depth: 30},
+                    {x: 350, y: 0, z: 400, width: 30, height: 60, depth: 30},
+                    {x: 500, y: 0, z: 300, width: 30, height: 60, depth: 30},
+                    {x: 600, y: 0, z: 200, width: 30, height: 60, depth: 30},
+                    {x: 250, y: 0, z: 450, width: 30, height: 60, depth: 30},
+                    
+                    // 长障碍
+                    {x: 400, y: 0, z: 100, width: 20, height: 60, depth: 200},
+                    {x: 200, y: 0, z: 300, width: 200, height: 60, depth: 20},
+                    {x: 500, y: 0, z: 400, width: 20, height: 60, depth: 150},
+                    {x: 600, y: 0, z: 350, width: 150, height: 60, depth: 20},
+                    
+                    // 角落障碍
+                    {x: 100, y: 0, z: 500, width: 80, height: 60, depth: 20},
+                    {x: 700, y: 0, z: 100, width: 20, height: 60, depth: 80},
+                    
+                    // 中间障碍
+                    {x: 400, y: 0, z: 300, width: 50, height: 60, depth: 50}
+                ],
+                boundary: { minX: 0, maxX: 800, minZ: 0, maxZ: 600 }
+            }
+        };
+
+        // 攻击效果数组
+        let attackEffects = [];
+        let frameCount = 0;
+        let lastFpsUpdate = 0;
+        let fps = 0;
+
+        // DOM元素
+        const canvas3D = document.getElementById('gameCanvas3D');
+        const ctx3D = canvas3D.getContext('2d');
+        const miniMapCanvas = document.getElementById('miniMapCanvas');
+        const ctxMiniMap = miniMapCanvas.getContext('2d');
+        const playerHealthEl = document.getElementById('playerHealth');
+        const playerHealthValueEl = document.getElementById('playerHealthValue');
+        const aiHealthEl = document.getElementById('aiHealth');
+        const aiHealthValueEl = document.getElementById('aiHealthValue');
+        const gameStatusEl = document.getElementById('gameStatus');
+        const restartBtn = document.getElementById('restartBtn');
+        const fpsCounterEl = document.getElementById('fpsCounter');
+        const firstPersonBtn = document.getElementById('firstPersonBtn');
+        const thirdPersonBtn = document.getElementById('thirdPersonBtn');
+        const topViewBtn = document.getElementById('topViewBtn');
+        const currentMapNameEl = document.getElementById('currentMapName');
+        
+        // 地图选择元素
+        const mapSelectOverlay = document.getElementById('mapSelectOverlay');
+        const gameContainer = document.getElementById('gameContainer');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const mapOptions = document.querySelectorAll('.map-option');
+        
+        // 按键元素
+        const keyW = document.getElementById('keyW');
+        const keyA = document.getElementById('keyA');
+        const keyS = document.getElementById('keyS');
+        const keyD = document.getElementById('keyD');
+        const keySpace = document.getElementById('keySpace');
+        const keyShift = document.getElementById('keyShift');
+        const keyMouse = document.getElementById('keyMouse');
+
+        // 初始化画布大小
+        function initCanvasSize() {
+            const gameView = document.querySelector('.game-view');
+            canvas3D.width = gameView.clientWidth;
+            canvas3D.height = gameView.clientHeight;
+            
+            const miniMap = document.querySelector('.mini-map');
+            miniMapCanvas.width = miniMap.clientWidth;
+            miniMapCanvas.height = miniMap.clientHeight;
+        }
+
+        // 检查两个3D长方体是否碰撞
+        function boxCollision(box1, box2) {
+            return box1.x < box2.x + box2.width &&
+                   box1.x + box1.width > box2.x &&
+                   box1.y < box2.y + box2.height &&
+                   box1.y + box1.height > box2.y &&
+                   box1.z < box2.z + box2.depth &&
+                   box1.z + box1.depth > box2.z;
+        }
+
+        // 修复空气墙问题 - 改进的碰撞检测
+        function checkWallCollision(newX, newY, newZ, width, height, depth) {
+            const newBox = {
+                x: newX - width/2,
+                y: newY,
+                z: newZ - depth/2,
+                width: width,
+                height: height,
+                depth: depth
+            };
+            
+            // 检查与墙壁的碰撞
+            for (const wall of gameState.walls) {
+                if (boxCollision(newBox, wall)) {
+                    return true;
+                }
+            }
+            
+            // 检查地图边界 - 使用动态边界
+            const boundary = gameState.mapBoundary;
+            if (newX - width/2 < boundary.minX || newX + width/2 > boundary.maxX || 
+                newZ - depth/2 < boundary.minZ || newZ + depth/2 > boundary.maxZ) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        // 检查视线是否被墙阻挡
+        function isLineOfSightBlocked(x1, y1, z1, x2, y2, z2) {
+            // 简化版视线检查 - 只检查XZ平面
+            for (const wall of gameState.walls) {
+                // 检查线段是否与墙的XZ投影相交
+                if (lineIntersectsRect(x1, z1, x2, z2, 
+                    wall.x - wall.width/2, wall.z - wall.depth/2, 
+                    wall.width, wall.depth)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // 检查线段是否与矩形相交
+        function lineIntersectsRect(x1, z1, x2, z2, rx, rz, rw, rd) {
+            // 计算线段与矩形四条边的交点
+            const lines = [
+                {x1: rx, z1: rz, x2: rx + rw, z2: rz},
+                {x1: rx + rw, z1: rz, x2: rx + rw, z2: rz + rd},
+                {x1: rx, z1: rz + rd, x2: rx + rw, z2: rz + rd},
+                {x1: rx, z1: rz, x2: rx, z2: rz + rd}
+            ];
+            
+            for (const line of lines) {
+                if (lineIntersection(x1, z1, x2, z2, line.x1, line.z1, line.x2, line.z2)) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        // 检查两线段是否相交
+        function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+            const denominator = ((x2 - x1) * (y4 - y3)) - ((y2 - y1) * (x4 - x3));
+            if (denominator === 0) return false;
+            
+            const ua = (((x4 - x3) * (y1 - y3)) - ((y4 - y3) * (x1 - x3))) / denominator;
+            const ub = (((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3))) / denominator;
+            
+            return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
+        }
+
+        // 更新玩家位置
+        function updatePlayer() {
+            if (gameState.gameOver) return;
+            
+            // 计算移动方向
+            let moveX = 0;
+            let moveZ = 0;
+            const moveSpeed = gameState.player.isRunning ? gameState.player.speed * 1.5 : gameState.player.speed;
+            
+            // 基于玩家朝向计算移动向量
+            const angle = gameState.player.rotationY;
+            const sinA = Math.sin(angle);
+            const cosA = Math.cos(angle);
+            
+            if (gameState.keys['w'] || gameState.keys['W'] || gameState.keys['ArrowUp']) {
+                moveX -= sinA;
+                moveZ -= cosA;
+                keyW.classList.add('key-active');
+            } else {
+                keyW.classList.remove('key-active');
+            }
+            
+            if (gameState.keys['s'] || gameState.keys['S'] || gameState.keys['ArrowDown']) {
+                moveX += sinA;
+                moveZ += cosA;
+                keyS.classList.add('key-active');
+            } else {
+                keyS.classList.remove('key-active');
+            }
+            
+            if (gameState.keys['a'] || gameState.keys['A'] || gameState.keys['ArrowLeft']) {
+                moveX -= cosA;
+                moveZ += sinA;
+                keyA.classList.add('key-active');
+            } else {
+                keyA.classList.remove('key-active');
+            }
+            
+            if (gameState.keys['d'] || gameState.keys['D'] || gameState.keys['ArrowRight']) {
+                moveX += cosA;
+                moveZ -= sinA;
+                keyD.classList.add('key-active');
+            } else {
+                keyD.classList.remove('key-active');
+            }
+            
+            // 归一化移动向量
+            const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
+            if (length > 0) {
+                moveX = moveX / length * moveSpeed;
+                moveZ = moveZ / length * moveSpeed;
+            }
+            
+            // 冲刺
+            if (gameState.keys['Shift']) {
+                gameState.player.isRunning = true;
+                keyShift.classList.add('key-active');
+            } else {
+                gameState.player.isRunning = false;
+                keyShift.classList.remove('key-active');
+            }
+            
+            // 计算新位置
+            let newX = gameState.player.x + moveX;
+            let newZ = gameState.player.z + moveZ;
+            
+            // 检查碰撞 - 修复空气墙问题
+            if (!checkWallCollision(newX, gameState.player.y, newZ, 20, gameState.player.height, 20)) {
+                gameState.player.x = newX;
+                gameState.player.z = newZ;
+            } else {
+                // 尝试分别检查X和Z轴移动
+                if (!checkWallCollision(newX, gameState.player.y, gameState.player.z, 20, gameState.player.height, 20)) {
+                    gameState.player.x = newX;
+                }
+                if (!checkWallCollision(gameState.player.x, gameState.player.y, newZ, 20, gameState.player.height, 20)) {
+                    gameState.player.z = newZ;
+                }
+            }
+            
+            // 攻击冷却
+            if (gameState.player.attackCooldown > 0) {
+                gameState.player.attackCooldown--;
+            }
+            
+            // 玩家攻击
+            if ((gameState.keys[' '] || gameState.keys['Spacebar']) && gameState.player.attackCooldown === 0) {
+                playerAttack();
+                keySpace.classList.add('key-active');
+            } else {
+                keySpace.classList.remove('key-active');
             }
         }
-        if (this.attackCooldown > 0) this.attackCooldown--;
-    }
-}
 
-const player = new Entity(50, 50, '#3498db', '玩家');
-const ai = new Entity(700, 500, '#e74c3c', 'KCM [AI]');
-
-/**
- * 视线遮罩 (Line of Sight)
- */
-function drawVisibilityMask() {
-    ctx.save();
-    // 创建一个全屏黑色半透明覆盖
-    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // 设置混合模式，将视线区域“挖空”
-    ctx.globalCompositeOperation = 'destination-out';
-    
-    // 玩家视锥 (简化为圆形可见区 + 射线检测)
-    const segments = 60;
-    const viewDist = 250;
-    ctx.beginPath();
-    ctx.moveTo(player.x, player.y);
-    
-    for(let i=0; i<=segments; i++) {
-        let angle = (i / segments) * Math.PI * 2;
-        let destX = player.x + Math.cos(angle) * viewDist;
-        let destY = player.y + Math.sin(angle) * viewDist;
-        
-        // 射线检测：找到最近的墙
-        let finalX = destX;
-        let finalY = destY;
-        
-        for (let wall of walls) {
-            // 这是一个极简的射线与墙交点，实际应用中可用更精确算法
-            // 这里为了性能，我们只在墙体周围做遮挡测试
-        }
-        
-        // 简单模拟视线：如果被阻挡就不画那么远
-        // 由于 Canvas 性能考虑，我们采用更高效的“多边形挖空”法
-        // 在该简版中，我们通过 line-of-sight 检测 Entity 是否可见
-        ctx.lineTo(destX, destY);
-    }
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.restore();
-}
-
-/**
- * 游戏循环
- */
-function gameLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // 1. 绘制地板
-    ctx.fillStyle = "#2c3e50";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // 2. 绘制墙壁
-    ctx.fillStyle = "#95a5a6";
-    walls.forEach(w => {
-        ctx.fillRect(w.x, w.y, w.w, w.h);
-        ctx.strokeStyle = "#7f8c8d";
-        ctx.strokeRect(w.x, w.y, w.w, w.h);
-    });
-
-    // 3. 玩家逻辑
-    let dx = 0, dy = 0;
-    if (keys['w'] || keys['ArrowUp']) dy -= player.speed;
-    if (keys['s'] || keys['ArrowDown']) dy += player.speed;
-    if (keys['a'] || keys['ArrowLeft']) dx -= player.speed;
-    if (keys['d'] || keys['ArrowRight']) dx += player.speed;
-    player.move(dx, dy);
-    player.updateAnimation();
-
-    // 4. AI 逻辑 (KCM)
-    const distToPlayer = getDist(ai.x, ai.y, player.x, player.y);
-    const aiBlocked = isLineBlocked(ai.x, ai.y, player.x, player.y);
-
-    if (!aiBlocked && distToPlayer < 400) {
-        ai.angle = Math.atan2(player.y - ai.y, player.x - ai.x);
-        if (distToPlayer > 40) {
-            ai.move(Math.cos(ai.angle) * ai.speed, Math.sin(ai.angle) * ai.speed);
-        } else {
-            if (ai.attack()) {
-                player.hp -= 10;
-                hpDisplay.innerText = player.hp;
-                if(player.hp <= 0) {
-                    alert("你被 KCM 击败了！");
-                    location.reload();
+        // 玩家攻击
+        function playerAttack() {
+            if (gameState.gameOver) return;
+            
+            gameState.player.attackCooldown = 30;
+            
+            // 创建攻击效果
+            attackEffects.push({
+                x: gameState.player.x,
+                y: gameState.player.y + 15,
+                z: gameState.player.z,
+                radius: 20,
+                time: 0,
+                maxTime: 0.3,
+                isPlayer: true
+            });
+            
+            // 计算与AI的距离
+            const dx = gameState.ai.x - gameState.player.x;
+            const dz = gameState.ai.z - gameState.player.z;
+            const distance = Math.sqrt(dx * dx + dz * dz);
+            
+            // 计算攻击方向
+            const attackAngle = Math.atan2(dx, dz);
+            const playerAngle = gameState.player.rotationY;
+            const angleDiff = Math.abs(attackAngle - playerAngle);
+            const normalizedAngleDiff = Math.abs((angleDiff + Math.PI) % (Math.PI * 2) - Math.PI);
+            
+            // 如果AI在攻击范围内、角度内且不被墙阻挡，造成伤害
+            if (distance <= gameState.player.attackRange && 
+                normalizedAngleDiff < Math.PI/4 &&
+                !isLineOfSightBlocked(
+                    gameState.player.x, gameState.player.y + 15, gameState.player.z,
+                    gameState.ai.x, gameState.ai.y + 15, gameState.ai.z
+                )) {
+                gameState.ai.health -= gameState.player.attackDamage;
+                if (gameState.ai.health < 0) gameState.ai.health = 0;
+                
+                // 更新AI生命条
+                const healthPercent = (gameState.ai.health / gameState.ai.maxHealth) * 100;
+                aiHealthEl.style.width = `${healthPercent}%`;
+                aiHealthValueEl.textContent = gameState.ai.health;
+                
+                // 检查游戏是否结束
+                if (gameState.ai.health <= 0) {
+                    gameState.gameOver = true;
+                    gameState.winner = "player";
+                    gameStatusEl.textContent = "游戏结束！玩家获胜！";
+                    restartBtn.style.display = "inline-block";
                 }
             }
         }
-    } else {
-        // 巡逻或原地旋转
-        ai.angle += 0.02;
-    }
-    ai.updateAnimation();
 
-    // 5. 渲染角色 (如果可见)
-    const playerCanSeeAI = !isLineBlocked(player.x, player.y, ai.x, ai.y);
-    
-    player.draw();
-    if (playerCanSeeAI) {
-        ai.draw();
-        statusDisplay.innerText = "KCM 已锁定你！";
-        statusDisplay.style.color = "#e74c3c";
-    } else {
-        statusDisplay.innerText = "寻找 KCM 中...";
-        statusDisplay.style.color = "#3498db";
-    }
-
-    // 6. 视线遮罩效果
-    drawVisibilityMask();
-
-    requestAnimationFrame(gameLoop);
-}
-
-/**
- * 输入处理
- */
-window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
-window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-
-canvas.addEventListener('mousemove', e => {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    player.angle = Math.atan2(mouseY - player.y, mouseX - player.x);
-});
-
-canvas.addEventListener('mousedown', () => {
-    if (player.attack()) {
-        const dist = getDist(player.x, player.y, ai.x, ai.y);
-        const aiInSight = !isLineBlocked(player.x, player.y, ai.x, ai.y);
-        
-        // 攻击范围判定
-        if (dist < 50 && aiInSight) {
-            ai.hp -= 35;
-            if (ai.hp <= 0) {
-                kills++;
-                killDisplay.innerText = kills;
-                // AI 复活在随机位置
-                ai.hp = 100;
-                ai.x = Math.random() * (canvas.width - 100) + 50;
-                ai.y = Math.random() * (canvas.height - 100) + 50;
+        // 更新AI
+        function updateAI(deltaTime) {
+            if (gameState.gameOver) return;
+            
+            // 计算到玩家的距离
+            const dx = gameState.player.x - gameState.ai.x;
+            const dz = gameState.player.z - gameState.ai.z;
+            const distance = Math.sqrt(dx * dx + dz * dz);
+            
+            // 更新AI朝向
+            gameState.ai.rotationY = Math.atan2(dx, dz);
+            
+            // 检查AI是否能"看到"玩家
+            const canSeePlayer = !isLineOfSightBlocked(
+                gameState.ai.x, gameState.ai.y + 15, gameState.ai.z,
+                gameState.player.x, gameState.player.y + 15, gameState.player.z
+            );
+            
+            // AI攻击冷却
+            if (gameState.ai.attackCooldown > 0) {
+                gameState.ai.attackCooldown--;
+            }
+            
+            // 如果玩家在攻击范围内、可见且面向玩家，则攻击
+            if (distance <= gameState.ai.attackRange && canSeePlayer && gameState.ai.attackCooldown === 0) {
+                const toPlayerAngle = Math.atan2(dx, dz);
+                const angleDiff = Math.abs(toPlayerAngle - gameState.ai.rotationY);
+                const normalizedAngleDiff = Math.abs((angleDiff + Math.PI) % (Math.PI * 2) - Math.PI);
+                
+                if (normalizedAngleDiff < Math.PI/4) {
+                    aiAttack();
+                    gameState.ai.aiState = "attack";
+                    gameState.ai.patrolTimer = 0;
+                } else {
+                    gameState.ai.aiState = "chase";
+                }
+            } 
+            // 否则如果能看到玩家则追逐
+            else if (canSeePlayer && distance > gameState.ai.attackRange) {
+                gameState.ai.aiState = "chase";
+                gameState.ai.patrolTimer = 0;
+                
+                // 计算移动方向
+                const angle = Math.atan2(dx, dz);
+                const moveX = Math.sin(angle) * gameState.ai.speed;
+                const moveZ = Math.cos(angle) * gameState.ai.speed;
+                
+                let newX = gameState.ai.x + moveX;
+                let newZ = gameState.ai.z + moveZ;
+                
+                // 检查碰撞
+                if (!checkWallCollision(newX, gameState.ai.y, newZ, 20, gameState.ai.height, 20)) {
+                    gameState.ai.x = newX;
+                    gameState.ai.z = newZ;
+                } else {
+                    if (!checkWallCollision(newX, gameState.ai.y, gameState.ai.z, 20, gameState.ai.height, 20)) {
+                        gameState.ai.x = newX;
+                    }
+                    if (!checkWallCollision(gameState.ai.x, gameState.ai.y, newZ, 20, gameState.ai.height, 20)) {
+                        gameState.ai.z = newZ;
+                    }
+                }
+            }
+            // 如果看不到玩家，巡逻
+            else {
+                gameState.ai.aiState = "patrol";
+                gameState.ai.patrolTimer += deltaTime;
+                
+                if (gameState.ai.patrolTimer > 3) {
+                    gameState.ai.patrolTimer = 0;
+                    gameState.ai.patrolAngle = Math.random() * Math.PI * 2;
+                }
+                
+                const moveX = Math.sin(gameState.ai.patrolAngle || 0) * gameState.ai.speed * 0.5;
+                const moveZ = Math.cos(gameState.ai.patrolAngle || 0) * gameState.ai.speed * 0.5;
+                
+                let newX = gameState.ai.x + moveX;
+                let newZ = gameState.ai.z + moveZ;
+                
+                if (!checkWallCollision(newX, gameState.ai.y, newZ, 20, gameState.ai.height, 20)) {
+                    gameState.ai.x = newX;
+                    gameState.ai.z = newZ;
+                } else {
+                    gameState.ai.patrolAngle = Math.random() * Math.PI * 2;
+                }
             }
         }
-    }
-});
 
-// 启动游戏
-gameLoop();
+        // AI攻击
+        function aiAttack() {
+            if (gameState.gameOver) return;
+            
+            gameState.ai.attackCooldown = 40;
+            
+            // 创建攻击效果
+            attackEffects.push({
+                x: gameState.ai.x,
+                y: gameState.ai.y + 15,
+                z: gameState.ai.z,
+                radius: 20,
+                time: 0,
+                maxTime: 0.3,
+                isPlayer: false
+            });
+            
+            // 计算与玩家的距离
+            const dx = gameState.player.x - gameState.ai.x;
+            const dz = gameState.player.z - gameState.ai.z;
+            const distance = Math.sqrt(dx * dx + dz * dz);
+            
+            if (distance <= gameState.ai.attackRange) {
+                gameState.player.health -= gameState.ai.attackDamage;
+                if (gameState.player.health < 0) gameState.player.health = 0;
+                
+                const healthPercent = (gameState.player.health / gameState.player.maxHealth) * 100;
+                playerHealthEl.style.width = `${healthPercent}%`;
+                playerHealthValueEl.textContent = gameState.player.health;
+                
+                if (gameState.player.health <= 0) {
+                    gameState.gameOver = true;
+                    gameState.winner = "ai";
+                    gameStatusEl.textContent = "游戏结束！人机KCM获胜！";
+                    restartBtn.style.display = "inline-block";
+                }
+            }
+        }
 
-</script>
+        // 更新相机位置
+        function updateCamera() {
+            const player = gameState.player;
+            
+            switch (gameState.viewMode) {
+                case "firstPerson":
+                    gameState.camera.x = player.x;
+                    gameState.camera.y = player.y + 20;
+                    gameState.camera.z = player.z;
+                    gameState.camera.rotationY = player.rotationY;
+                    gameState.camera.rotationX = -0.3;
+                    break;
+                    
+                case "thirdPerson":
+                    const distance = gameState.camera.distance;
+                    const height = gameState.camera.height;
+                    const cameraOffsetX = Math.sin(player.rotationY) * distance;
+                    const cameraOffsetZ = Math.cos(player.rotationY) * distance;
+                    
+                    gameState.camera.x = player.x - cameraOffsetX;
+                    gameState.camera.y = player.y + height;
+                    gameState.camera.z = player.z - cameraOffsetZ;
+                    gameState.camera.rotationY = player.rotationY;
+                    gameState.camera.rotationX = -0.4;
+                    break;
+                    
+                case "topView":
+                    gameState.camera.x = player.x;
+                    gameState.camera.y = 300;
+                    gameState.camera.z = player.z;
+                    gameState.camera.rotationY = 0;
+                    gameState.camera.rotationX = -Math.PI/2;
+                    break;
+            }
+        }
+
+        // 更新攻击效果
+        function updateAttackEffects(deltaTime) {
+            for (let i = attackEffects.length - 1; i >= 0; i--) {
+                attackEffects[i].time += deltaTime;
+                if (attackEffects[i].time >= attackEffects[i].maxTime) {
+                    attackEffects.splice(i, 1);
+                }
+            }
+        }
+
+        // 3D渲染
+        function render3D() {
+            const ctx = ctx3D;
+            const width = canvas3D.width;
+            const height = canvas3D.height;
+            
+            // 清空画布
+            ctx.clearRect(0, 0, width, height);
+            
+            // 绘制天空和地面
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            gradient.addColorStop(0, "#1a1a2e");
+            gradient.addColorStop(0.5, "#16213e");
+            gradient.addColorStop(1, "#0f3460");
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+            
+            // 保存当前画布状态
+            ctx.save();
+            
+            // 设置相机变换
+            ctx.translate(width/2, height/2);
+            
+            // 根据视角模式应用变换
+            if (gameState.viewMode === "topView") {
+                // 俯视视角
+                const scale = 0.8;
+                ctx.scale(scale, scale);
+                
+                // 绘制地板网格
+                ctx.strokeStyle = "rgba(100, 100, 150, 0.3)";
+                ctx.lineWidth = 1;
+                const gridSize = 400;
+                const gridSpacing = 50;
+                
+                ctx.beginPath();
+                for (let x = -gridSize; x <= gridSize; x += gridSpacing) {
+                    ctx.moveTo(x, -gridSize);
+                    ctx.lineTo(x, gridSize);
+                }
+                for (let z = -gridSize; z <= gridSize; z += gridSpacing) {
+                    ctx.moveTo(-gridSize, z);
+                    ctx.lineTo(gridSize, z);
+                }
+                ctx.stroke();
+                
+                // 绘制墙壁
+                ctx.fillStyle = "rgba(74, 85, 104, 0.8)";
+                ctx.strokeStyle = "#4a5568";
+                ctx.lineWidth = 2;
+                
+                for (const wall of gameState.walls) {
+                    const screenX = wall.x - gameState.camera.x;
+                    const screenZ = wall.z - gameState.camera.z;
+                    
+                    ctx.fillRect(screenX - wall.width/2, screenZ - wall.depth/2, wall.width, wall.depth);
+                    ctx.strokeRect(screenX - wall.width/2, screenZ - wall.depth/2, wall.width, wall.depth);
+                }
+                
+                // 绘制玩家
+                const playerScreenX = gameState.player.x - gameState.camera.x;
+                const playerScreenZ = gameState.player.z - gameState.camera.z;
+                
+                ctx.fillStyle = "#4dff91";
+                ctx.beginPath();
+                ctx.arc(playerScreenX, playerScreenZ, 10, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 绘制玩家朝向
+                const directionLength = 20;
+                const directionX = playerScreenX + Math.sin(gameState.player.rotationY) * directionLength;
+                const directionZ = playerScreenZ + Math.cos(gameState.player.rotationY) * directionLength;
+                
+                ctx.strokeStyle = "#2ecc71";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(playerScreenX, playerScreenZ);
+                ctx.lineTo(directionX, directionZ);
+                ctx.stroke();
+                
+                // 绘制玩家攻击范围
+                ctx.strokeStyle = "rgba(77, 255, 145, 0.3)";
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(playerScreenX, playerScreenZ, gameState.player.attackRange, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // 绘制AI
+                const aiScreenX = gameState.ai.x - gameState.camera.x;
+                const aiScreenZ = gameState.ai.z - gameState.camera.z;
+                
+                const aiGradient = ctx.createRadialGradient(aiScreenX, aiScreenZ, 0, aiScreenX, aiScreenZ, 10);
+                aiGradient.addColorStop(0, "#ff9f43");
+                aiGradient.addColorStop(1, "#f93154");
+                
+                ctx.fillStyle = aiGradient;
+                ctx.beginPath();
+                ctx.arc(aiScreenX, aiScreenZ, 10, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 绘制AI标签
+                ctx.fillStyle = "white";
+                ctx.font = "bold 10px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("KCM", aiScreenX, aiScreenZ - 15);
+                
+                // 绘制AI攻击范围
+                ctx.strokeStyle = "rgba(249, 49, 84, 0.3)";
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(aiScreenX, aiScreenZ, gameState.ai.attackRange, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // 绘制攻击效果
+                for (const effect of attackEffects) {
+                    const effectScreenX = effect.x - gameState.camera.x;
+                    const effectScreenZ = effect.z - gameState.camera.z;
+                    const progress = effect.time / effect.maxTime;
+                    const radius = effect.radius * (1 - progress);
+                    const alpha = 1 - progress;
+                    
+                    ctx.fillStyle = effect.isPlayer ? 
+                        `rgba(77, 255, 145, ${alpha})` : 
+                        `rgba(249, 49, 84, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(effectScreenX, effectScreenZ, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+            } else {
+                // 第一人称/第三人称视角
+                const scale = 2.0;
+                ctx.scale(scale, scale);
+                
+                // 旋转视角
+                ctx.rotate(-gameState.camera.rotationY);
+                
+                // 绘制地板网格
+                ctx.strokeStyle = "rgba(100, 100, 150, 0.3)";
+                ctx.lineWidth = 1;
+                const gridSize = 200;
+                const gridSpacing = 20;
+                
+                ctx.beginPath();
+                for (let x = -gridSize; x <= gridSize; x += gridSpacing) {
+                    ctx.moveTo(x, -gridSize);
+                    ctx.lineTo(x, gridSize);
+                }
+                for (let z = -gridSize; z <= gridSize; z += gridSpacing) {
+                    ctx.moveTo(-gridSize, z);
+                    ctx.lineTo(gridSize, z);
+                }
+                ctx.stroke();
+                
+                // 绘制墙壁
+                ctx.fillStyle = "rgba(74, 85, 104, 0.8)";
+                ctx.strokeStyle = "#4a5568";
+                ctx.lineWidth = 2;
+                
+                for (const wall of gameState.walls) {
+                    const screenX = wall.x - gameState.camera.x;
+                    const screenZ = wall.z - gameState.camera.z;
+                    
+                    const distance = Math.sqrt(screenX*screenX + screenZ*screenZ);
+                    if (distance > 300) continue;
+                    
+                    const scaleFactor = 200 / (distance + 200);
+                    const wallHeight = wall.height * scaleFactor;
+                    
+                    ctx.fillRect(screenX - wall.width/2 * scaleFactor, screenZ - wall.depth/2 * scaleFactor, 
+                                wall.width * scaleFactor, wall.depth * scaleFactor);
+                    
+                    if (screenZ > 0) {
+                        ctx.fillStyle = "rgba(65, 75, 94, 0.8)";
+                        ctx.fillRect(screenX - wall.width/2 * scaleFactor, screenZ - wall.depth/2 * scaleFactor - wallHeight,
+                                    wall.width * scaleFactor, wallHeight);
+                    }
+                    
+                    ctx.fillStyle = "rgba(74, 85, 104, 0.8)";
+                }
+                
+                // 绘制玩家（第三人称视角下）
+                if (gameState.viewMode === "thirdPerson") {
+                    const playerScreenX = gameState.player.x - gameState.camera.x;
+                    const playerScreenZ = gameState.player.z - gameState.camera.z;
+                    
+                    const distance = Math.sqrt(playerScreenX*playerScreenX + playerScreenZ*playerScreenZ);
+                    const scaleFactor = 200 / (distance + 200);
+                    
+                    ctx.fillStyle = "#4dff91";
+                    ctx.fillRect(playerScreenX - 5 * scaleFactor, playerScreenZ - 5 * scaleFactor, 
+                                10 * scaleFactor, 10 * scaleFactor);
+                }
+                
+                // 绘制AI
+                const aiScreenX = gameState.ai.x - gameState.camera.x;
+                const aiScreenZ = gameState.ai.z - gameState.camera.z;
+                
+                const distance = Math.sqrt(aiScreenX*aiScreenX + aiScreenZ*aiScreenZ);
+                if (distance < 300) {
+                    const scaleFactor = 200 / (distance + 200);
+                    
+                    const aiGradient = ctx.createRadialGradient(aiScreenX, aiScreenZ, 0, aiScreenX, aiScreenZ, 10 * scaleFactor);
+                    aiGradient.addColorStop(0, "#ff9f43");
+                    aiGradient.addColorStop(1, "#f93154");
+                    
+                    ctx.fillStyle = aiGradient;
+                    ctx.beginPath();
+                    ctx.arc(aiScreenX, aiScreenZ, 10 * scaleFactor, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    if (distance < 100) {
+                        ctx.fillStyle = "white";
+                        ctx.font = "bold " + (8 * scaleFactor) + "px Arial";
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "bottom";
+                        ctx.fillText("KCM", aiScreenX, aiScreenZ - 12 * scaleFactor);
+                    }
+                }
+                
+                // 绘制攻击效果
+                for (const effect of attackEffects) {
+                    const effectScreenX = effect.x - gameState.camera.x;
+                    const effectScreenZ = effect.z - gameState.camera.z;
+                    const progress = effect.time / effect.maxTime;
+                    const radius = effect.radius * (1 - progress);
+                    const alpha = 1 - progress;
+                    
+                    const distance = Math.sqrt(effectScreenX*effectScreenX + effectScreenZ*effectScreenZ);
+                    if (distance < 300) {
+                        const scaleFactor = 200 / (distance + 200);
+                        
+                        ctx.fillStyle = effect.isPlayer ? 
+                            `rgba(77, 255, 145, ${alpha})` : 
+                            `rgba(249, 49, 84, ${alpha})`;
+                        ctx.beginPath();
+                        ctx.arc(effectScreenX, effectScreenZ, radius * scaleFactor, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+            
+            // 恢复画布状态
+            ctx.restore();
+            
+            // 如果游戏结束，绘制结束画面
+            if (gameState.gameOver) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+                ctx.fillRect(0, 0, width, height);
+                
+                ctx.fillStyle = gameState.winner === "player" ? "#4dff91" : "#f93154";
+                ctx.font = "bold 40px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(
+                    gameState.winner === "player" ? "玩家获胜！" : "KCM获胜！", 
+                    width/2, 
+                    height/2 - 30
+                );
+                
+                ctx.fillStyle = "white";
+                ctx.font = "20px Arial";
+                ctx.fillText("点击重新开始按钮再来一局", width/2, height/2 + 20);
+            }
+            
+            // 绘制准星（第一人称视角）
+            if (gameState.viewMode === "firstPerson") {
+                ctx.strokeStyle = "#4dff91";
+                ctx.lineWidth = 2;
+                
+                const crosshairSize = 10;
+                const centerX = width/2;
+                const centerY = height/2;
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX - crosshairSize, centerY);
+                ctx.lineTo(centerX + crosshairSize, centerY);
+                ctx.moveTo(centerX, centerY - crosshairSize);
+                ctx.lineTo(centerX, centerY + crosshairSize);
+                ctx.stroke();
+            }
+        }
+
+        // 绘制小地图
+        function renderMiniMap() {
+            const ctx = ctxMiniMap;
+            const width = miniMapCanvas.width;
+            const height = miniMapCanvas.height;
+            
+            // 清空画布
+            ctx.clearRect(0, 0, width, height);
+            
+            // 绘制背景
+            ctx.fillStyle = "#1a1a2e";
+            ctx.fillRect(0, 0, width, height);
+            
+            // 计算地图缩放和偏移
+            const mapScale = 0.2;
+            const offsetX = width/2 - gameState.player.x * mapScale;
+            const offsetY = height/2 - gameState.player.z * mapScale;
+            
+            // 绘制网格
+            ctx.strokeStyle = "#2d3748";
+            ctx.lineWidth = 1;
+            const gridSize = 800 * mapScale;
+            const gridSpacing = 100 * mapScale;
+            
+            ctx.beginPath();
+            for (let x = 0; x <= gridSize; x += gridSpacing) {
+                ctx.moveTo(x + offsetX, offsetY);
+                ctx.lineTo(x + offsetX, gridSize + offsetY);
+            }
+            for (let y = 0; y <= gridSize; y += gridSpacing) {
+                ctx.moveTo(offsetX, y + offsetY);
+                ctx.lineTo(gridSize + offsetX, y + offsetY);
+            }
+            ctx.stroke();
+            
+            // 绘制墙壁
+            ctx.fillStyle = "#4a5568";
+            for (const wall of gameState.walls) {
+                const x = wall.x * mapScale + offsetX;
+                const y = wall.z * mapScale + offsetY;
+                const w = wall.width * mapScale;
+                const h = wall.depth * mapScale;
+                
+                ctx.fillRect(x - w/2, y - h/2, w, h);
+                ctx.strokeStyle = "#718096";
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x - w/2, y - h/2, w, h);
+            }
+            
+            // 绘制玩家视野范围
+            ctx.fillStyle = "rgba(77, 255, 145, 0.1)";
+            ctx.strokeStyle = "rgba(77, 255, 145, 0.3)";
+            ctx.lineWidth = 1;
+            
+            const fov = Math.PI/2;
+            const range = 200 * mapScale;
+            
+            ctx.beginPath();
+            ctx.moveTo(gameState.player.x * mapScale + offsetX, gameState.player.z * mapScale + offsetY);
+            ctx.arc(
+                gameState.player.x * mapScale + offsetX, 
+                gameState.player.z * mapScale + offsetY,
+                range,
+                gameState.player.rotationY - fov/2,
+                gameState.player.rotationY + fov/2
+            );
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // 绘制玩家
+            ctx.fillStyle = "#4dff91";
+            ctx.beginPath();
+            ctx.arc(
+                gameState.player.x * mapScale + offsetX,
+                gameState.player.z * mapScale + offsetY,
+                5, 0, Math.PI * 2
+            );
+            ctx.fill();
+            
+            // 绘制玩家朝向
+            const directionLength = 15;
+            const directionX = gameState.player.x * mapScale + offsetX + Math.sin(gameState.player.rotationY) * directionLength;
+            const directionY = gameState.player.z * mapScale + offsetY + Math.cos(gameState.player.rotationY) * directionLength;
+            
+            ctx.strokeStyle = "#2ecc71";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(gameState.player.x * mapScale + offsetX, gameState.player.z * mapScale + offsetY);
+            ctx.lineTo(directionX, directionY);
+            ctx.stroke();
+            
+            // 绘制AI
+            const aiGradient = ctx.createRadialGradient(
+                gameState.ai.x * mapScale + offsetX,
+                gameState.ai.z * mapScale + offsetY,
+                0,
+                gameState.ai.x * mapScale + offsetX,
+                gameState.ai.z * mapScale + offsetY,
+                6
+            );
+            aiGradient.addColorStop(0, "#ff9f43");
+            aiGradient.addColorStop(1, "#f93154");
+            
+            ctx.fillStyle = aiGradient;
+            ctx.beginPath();
+            ctx.arc(
+                gameState.ai.x * mapScale + offsetX,
+                gameState.ai.z * mapScale + offsetY,
+                6, 0, Math.PI * 2
+            );
+            ctx.fill();
+            
+            // 绘制AI标签
+            ctx.fillStyle = "white";
+            ctx.font = "bold 8px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "bottom";
+            ctx.fillText("KCM", 
+                gameState.ai.x * mapScale + offsetX,
+                gameState.ai.z * mapScale + offsetY - 8
+            );
+            
+            // 绘制AI视野范围
+            ctx.fillStyle = "rgba(249, 49, 84, 0.1)";
+            ctx.strokeStyle = "rgba(249, 49, 84, 0.3)";
+            ctx.lineWidth = 1;
+            
+            ctx.beginPath();
+            ctx.moveTo(gameState.ai.x * mapScale + offsetX, gameState.ai.z * mapScale + offsetY);
+            ctx.arc(
+                gameState.ai.x * mapScale + offsetX, 
+                gameState.ai.z * mapScale + offsetY,
+                range,
+                gameState.ai.rotationY - fov/2,
+                gameState.ai.rotationY + fov/2
+            );
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // 绘制小地图边框
+            ctx.strokeStyle = "#4dff91";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, 0, width, height);
+            
+            // 绘制小地图标题
+            ctx.fillStyle = "#4dff91";
+            ctx.font = "bold 10px Arial";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "top";
+            ctx.fillText(`小地图 - ${maps[gameState.currentMap].name}`, 5, 5);
+        }
+
+        // 绘制地图预览
+        function renderMapPreviews() {
+            for (let i = 1; i <= 5; i++) {
+                const canvas = document.createElement('canvas');
+                canvas.className = 'map-preview-canvas';
+                canvas.width = 220;
+                canvas.height = 120;
+                const ctx = canvas.getContext('2d');
+                
+                const map = maps[i];
+                const preview = document.getElementById(`mapPreview${i}`);
+                preview.innerHTML = '';
+                preview.appendChild(canvas);
+                
+                // 绘制预览背景
+                ctx.fillStyle = "#1a1a2e";
+                ctx.fillRect(0, 0, 220, 120);
+                
+                // 绘制网格
+                ctx.strokeStyle = "#2d3748";
+                ctx.lineWidth = 1;
+                
+                ctx.beginPath();
+                for (let x = 0; x <= 220; x += 20) {
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, 120);
+                }
+                for (let y = 0; y <= 120; y += 20) {
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(220, y);
+                }
+                ctx.stroke();
+                
+                // 绘制墙壁
+                ctx.fillStyle = "#4a5568";
+                for (const wall of map.walls) {
+                    const x = wall.x * 0.275;
+                    const y = wall.z * 0.2;
+                    const w = wall.width * 0.275;
+                    const h = wall.depth * 0.2;
+                    
+                    ctx.fillRect(x, y, w, h);
+                }
+                
+                // 绘制玩家起始位置
+                ctx.fillStyle = "#4dff91";
+                ctx.beginPath();
+                ctx.arc(map.playerStart.x * 0.275, map.playerStart.z * 0.2, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 绘制AI起始位置
+                const aiGradient = ctx.createRadialGradient(
+                    map.aiStart.x * 0.275, 
+                    map.aiStart.z * 0.2, 
+                    0,
+                    map.aiStart.x * 0.275, 
+                    map.aiStart.z * 0.2, 
+                    5
+                );
+                aiGradient.addColorStop(0, "#ff9f43");
+                aiGradient.addColorStop(1, "#f93154");
+                
+                ctx.fillStyle = aiGradient;
+                ctx.beginPath();
+                ctx.arc(map.aiStart.x * 0.275, map.aiStart.z * 0.2, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 绘制边框
+                ctx.strokeStyle = "#4dff91";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(0, 0, 220, 120);
+            }
+        }
+
+        // 加载地图
+        function loadMap(mapId) {
+            const map = maps[mapId];
+            if (!map) return;
+            
+            gameState.currentMap = mapId;
+            gameState.walls = map.walls;
+            gameState.mapBoundary = map.boundary;
+            
+            // 设置玩家和AI起始位置
+            gameState.player.x = map.playerStart.x;
+            gameState.player.y = map.playerStart.y;
+            gameState.player.z = map.playerStart.z;
+            gameState.player.rotationY = 0;
+            gameState.player.health = 100;
+            gameState.player.attackCooldown = 0;
+            
+            gameState.ai.x = map.aiStart.x;
+            gameState.ai.y = map.aiStart.y;
+            gameState.ai.z = map.aiStart.z;
+            gameState.ai.rotationY = 0;
+            gameState.ai.health = 100;
+            gameState.ai.attackCooldown = 0;
+            gameState.ai.aiState = "chase";
+            
+            currentMapNameEl.textContent = map.name;
+            
+            // 重置游戏状态
+            gameState.gameOver = false;
+            gameState.winner = null;
+            gameState.keys = {};
+            gameState.mouse = { x: 0, y: 0, isDragging: false };
+            
+            // 重置UI
+            playerHealthEl.style.width = "100%";
+            playerHealthValueEl.textContent = "100";
+            aiHealthEl.style.width = "100%";
+            aiHealthValueEl.textContent = "100";
+            gameStatusEl.textContent = "游戏进行中...";
+            restartBtn.style.display = "none";
+            
+            // 清除攻击效果
+            attackEffects = [];
+            
+            // 清除按键高亮
+            keyW.classList.remove('key-active');
+            keyA.classList.remove('key-active');
+            keyS.classList.remove('key-active');
+            keyD.classList.remove('key-active');
+            keySpace.classList.remove('key-active');
+            keyShift.classList.remove('key-active');
+            keyMouse.classList.remove('key-active');
+            
+            console.log(`已加载地图: ${map.name}`);
+        }
+
+        // 游戏主循环
+        function gameLoop(timestamp) {
+            if (!gameState.lastTime) gameState.lastTime = timestamp;
+            const deltaTime = (timestamp - gameState.lastTime) / 1000; // 转换为秒
+            gameState.lastTime = timestamp;
+            
+            // 更新FPS计数器
+            frameCount++;
+            if (timestamp - lastFpsUpdate >= 1000) {
+                fps = Math.round(frameCount * 1000 / (timestamp - lastFpsUpdate));
+                fpsCounterEl.textContent = fps;
+                frameCount = 0;
+                lastFpsUpdate = timestamp;
+            }
+            
+            updatePlayer();
+            updateAI(deltaTime);
+            updateCamera();
+            updateAttackEffects(deltaTime);
+            render3D();
+            renderMiniMap();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 事件监听
+        window.addEventListener('keydown', (e) => {
+            gameState.keys[e.key] = true;
+            
+            // 防止空格键滚动页面
+            if (e.key === ' ') {
+                e.preventDefault();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            gameState.keys[e.key] = false;
+        });
+
+        // 鼠标控制视角
+        canvas3D.addEventListener('mousedown', (e) => {
+            gameState.mouse.isDragging = true;
+            gameState.mouse.x = e.clientX;
+            gameState.mouse.y = e.clientY;
+            keyMouse.classList.add('key-active');
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (gameState.mouse.isDragging && !gameState.gameOver) {
+                const deltaX = e.clientX - gameState.mouse.x;
+                gameState.player.rotationY -= deltaX * 0.01;
+                gameState.mouse.x = e.clientX;
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            gameState.mouse.isDragging = false;
+            keyMouse.classList.remove('key-active');
+        });
+
+        // 视角切换
+        firstPersonBtn.addEventListener('click', () => {
+            gameState.viewMode = "firstPerson";
+            firstPersonBtn.classList.add('active');
+            thirdPersonBtn.classList.remove('active');
+            topViewBtn.classList.remove('active');
+        });
+
+        thirdPersonBtn.addEventListener('click', () => {
+            gameState.viewMode = "thirdPerson";
+            firstPersonBtn.classList.remove('active');
+            thirdPersonBtn.classList.add('active');
+            topViewBtn.classList.remove('active');
+        });
+
+        topViewBtn.addEventListener('click', () => {
+            gameState.viewMode = "topView";
+            firstPersonBtn.classList.remove('active');
+            thirdPersonBtn.classList.remove('active');
+            topViewBtn.classList.add('active');
+        });
+
+        // 地图选择
+        let selectedMap = 1;
+        
+        mapOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // 移除所有激活状态
+                mapOptions.forEach(opt => opt.classList.remove('active'));
+                // 添加当前激活状态
+                option.classList.add('active');
+                // 更新选中地图
+                selectedMap = parseInt(option.dataset.map);
+            });
+        });
+
+        // 开始游戏按钮
+        startGameBtn.addEventListener('click', () => {
+            // 加载选中的地图
+            loadMap(selectedMap);
+            
+            // 隐藏地图选择界面，显示游戏界面
+            mapSelectOverlay.style.display = 'none';
+            gameContainer.style.display = 'flex';
+            
+            // 初始化画布大小
+            initCanvasSize();
+            
+            // 开始游戏循环
+            gameState.lastTime = 0;
+            requestAnimationFrame(gameLoop);
+            
+            console.log(`游戏开始！加载地图: ${maps[selectedMap].name}`);
+        });
+
+        // 重新开始游戏
+        restartBtn.addEventListener('click', () => {
+            // 重新加载当前地图
+            loadMap(gameState.currentMap);
+            
+            // 重新开始游戏循环
+            gameState.lastTime = 0;
+        });
+
+        // 窗口大小调整
+        window.addEventListener('resize', initCanvasSize);
+
+        // 初始化和启动
+        function init() {
+            // 渲染地图预览
+            renderMapPreviews();
+            
+            // 默认选中第一个地图
+            loadMap(1);
+            
+            console.log("游戏初始化完成！");
+        }
+
+        // 页面加载完成后初始化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
 </body>
 </html>
