@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCM-挖土豆 3.0 - 粒子优化版</title>
+    <style>
+        :root {
+            --primary: #ff00ff;
+            --secondary: #00ffff;
+            --accent: #ffff00;
+            --bg: #050010;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+        
+        body {
+            background: radial-gradient(circle at center, #1a0033 0%, #050010 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* 霓虹 UI 系统 */
+        .game-header {
+            width: 100%; max-width: 1100px; margin: 15px 0; padding: 15px;
+            background: var(--glass); backdrop-filter: blur(20px);
+            border-radius: 20px; border: 2px solid var(--primary);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.3); text-align: center;
+        }
+
+        .game-title {
+            font-size: 3rem; font-weight: 900;
+            background: linear-gradient(90deg, #ff00ff, #00ffff, #ffff00, #ff00ff);
+            background-size: 200% auto; -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; animation: shine 4s linear infinite;
+        }
+
+        @keyframes shine { to { background-position: 200% center; } }
+
+        /* HUD 仪表盘 - 毛玻璃增强 */
+        .hud {
+            display: grid; grid-template-columns: repeat(5, 1fr) 300px;
+            gap: 10px; width: 1100px; margin-bottom: 15px;
+        }
+
+        .hud-item {
+            background: rgba(0, 0, 0, 0.4) !important; padding: 10px; border-radius: 12px;
+            border: 1px solid rgba(0, 255, 255, 0.3); text-align: center;
+            backdrop-filter: blur(10px); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .hud-value { font-size: 1.8rem; font-weight: bold; color: var(--secondary); text-shadow: 0 0 10px var(--secondary); }
+        .hud-label { font-size: 0.8rem; color: #aaa; text-transform: uppercase; }
+
+        /* 技能栏 */
+        .ability-bar { display: flex; gap: 8px; justify-content: center; }
+        .ability {
+            width: 50px; height: 50px; background: rgba(0, 0, 0, 0.5) !important;
+            border: 2px solid var(--primary); border-radius: 10px;
+            position: relative; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; font-size: 1.2rem;
+            backdrop-filter: blur(8px); box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+            transition: all 0.2s ease;
+        }
+        .ability:hover {
+            background: rgba(0, 0, 0, 0.7) !important;
+            border-color: var(--secondary);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+        .ability-cd { position: absolute; bottom: 0; width: 100%; background: rgba(255, 0, 0, 0.5); height: 0%; border-radius: 0 0 8px 8px; transition: height 0.1s; }
+        .auto-tag { position: absolute; top: -3px; right: -3px; width: 12px; height: 12px; border-radius: 50%; background: #0f0; border: 1px solid #fff; }
+
+        /* 游戏主容器 */
+        .game-container {
+            position: relative; width: 1100px; height: 650px;
+            background: rgba(5, 0, 16, 0.7) !important; border-radius: 20px;
+            border: 3px solid var(--primary); box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(255, 0, 255, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(15px) saturate(180%);
+        }
+
+        #game-canvas { width: 100%; height: 100%; }
+
+        /* Boss 状态栏 */
+        .boss-ui {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            width: 80%; height: 25px; background: rgba(0,0,0,0.6);
+            border-radius: 15px; border: 2px solid #f00; display: none; overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+        .boss-bar { height: 100%; width: 100%; background: linear-gradient(90deg, #f00, #ff8888, #f00); }
+
+        /* 操作按钮 */
+        .controls { width: 1100px; display: flex; gap: 10px; margin-top: 15px; }
+        .btn-main {
+            flex: 1; padding: 15px; font-size: 1.2rem; border-radius: 50px;
+            border: none; cursor: pointer; font-weight: bold; transition: 0.3s;
+            background: linear-gradient(45deg, var(--primary), #aa00ff); color: #fff;
+            position: relative; overflow: hidden;
+        }
+        .btn-main::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px);
+            border-radius: 50px; z-index: 1; opacity: 0.7;
+        }
+        .btn-main:hover::before { background: rgba(255, 255, 255, 0.15); }
+        .btn-main:hover { transform: scale(1.02); box-shadow: 0 0 20px var(--primary); }
+
+        /* 全局背景增强 */
+        body::after {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(120, 0, 200, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 150, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(255, 50, 50, 0.05) 0%, transparent 50%);
+            pointer-events: none; z-index: -1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-header">
+        <h1 class="game-title">KCM-挖土豆 3.0</h1>
+        <p style="color: #666; font-size: 0.9rem;">粒子优化版 | 当前波次: <span id="wave-val" style="color:var(--secondary)">1</span></p>
+    </div>
+
+    <div class="hud">
+        <div class="hud-item"><div class="hud-label">得分</div><div id="score" class="hud-value">0</div></div>
+        <div class="hud-item"><div class="hud-label">生命值</div><div id="health" class="hud-value">200</div></div>
+        <div class="hud-item"><div class="hud-label">等级</div><div id="level" class="hud-value">1</div></div>
+        <div class="hud-item"><div class="hud-label">连击</div><div id="combo" class="hud-value">0</div></div>
+        <div class="hud-item"><div class="hud-label">攻击力</div><div id="damage" class="hud-value">50</div></div>
+        <div class="ability-bar">
+            <div class="ability" title="Q - 电磁炮"><div class="auto-tag" id="at-1"></div><div id="cd-1" class="ability-cd"></div>⚡</div>
+            <div class="ability" title="W - 绝对防御"><div class="auto-tag" id="at-2"></div><div id="cd-2" class="ability-cd"></div>🛡️</div>
+            <div class="ability" title="E - 黑洞"><div class="auto-tag" id="at-3"></div><div id="cd-3" class="ability-cd"></div>🌀</div>
+            <div class="ability" title="R - 浮游炮"><div class="auto-tag" id="at-4"></div><div id="cd-4" class="ability-cd"></div>🌟</div>
+            <div class="ability" title="T - 时间停滞"><div class="auto-tag" id="at-5"></div><div id="cd-5" class="ability-cooldown"></div>⏳</div>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="boss-ui" id="boss-ui">
+            <div class="boss-bar" id="boss-bar"></div>
+        </div>
+        <canvas id="game-canvas" width="1100" height="650"></canvas>
+    </div>
+
+    <div class="controls">
+        <button class="btn-main" id="start-btn">开始战斗</button>
+        <button class="btn-main" id="reset-btn">重置游戏</button>
+    </div>
+
+    <script>
+        // ==================== 引擎配置 ====================
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const bossImg = new Image();
+        bossImg.src = "https://pub-141831e61e69445289222976a15b6fb3.r2.dev/Image_to_url_V2/474492734b053576d92067d8a8939b4e-imagetourl.cloud-1770938930310-8c4ahh.png";
+
+        let active = false, score = 0, health = 200, level = 1, xp = 0, wave = 1;
+        let combo = 0, god = false, bossActive = false, muzzleFlash = 0;
+        
+        const player = { 
+            x: 525, y: 300, w: 45, h: 45, speed: 8, dmg: 50, 
+            bullets: [], lastShot: 0, shotDelay: 100 
+        };
+        let enemies = [], particles = [], enemyBullets = [], boss = null;
+        const keys = {};
+        const mouse = { x: 0, y: 0, pressed: false };
+
+        // ==================== 高级粒子系统（基于文档优化）====================
+        class Particle {
+            constructor(x, y, options = {}) {
+                this.x = x;
+                this.y = y;
+                this.vx = (options.vx !== undefined) ? options.vx : (Math.random() - 0.5) * 8;
+                this.vy = (options.vy !== undefined) ? options.vy : (Math.random() - 0.5) * 8;
+                this.life = 1.0;
+                this.lifeDecay = options.lifeDecay || Math.random() * 0.02 + 0.01;
+                this.size = options.size || Math.random() * 4 + 2;
+                this.maxSize = this.size;
+                this.color = options.color || '#ffffff';
+                this.type = options.type || 'circle';
+                this.gravity = options.gravity || 0.1;
+                this.drag = options.drag || 0.98;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.1;
+                this.scaleDecay = 0.95;
+
+                if (this.type === 'rainbow') {
+                    this.hue = Math.random() * 360;
+                    this.hueSpeed = Math.random() * 5 + 2;
+                }
+                if (this.type === 'electric') {
+                    this.arcCount = Math.floor(Math.random() * 3) + 2;
+                }
+                if (this.type === 'shockwave') {
+                    this.lifeDecay = 0.02;
+                    this.gravity = 0;
+                    this.drag = 1;
+                    this.expansionRate = 15;
+                }
+                if (this.type === 'smoke') {
+                    this.color = `rgba(150, 150, 150, ${this.life})`;
+                    this.gravity = -0.05;
+                }
+                if (this.type === 'heart_bezier') {
+                    this.t = 0;
+                    this.cp1x = (Math.random() - 0.5) * 100;
+                    this.cp1y = (Math.random() - 0.5) * 100;
+                    this.cp2x = (Math.random() - 0.5) * 100;
+                    this.cp2y = (Math.random() - 0.5) * 100;
+                    this.vx = 0;
+                    this.vy = 0;
+                }
+                if (this.type === 'star_spark') {
+                    this.color = '#ffff00';
+                    this.lifeDecay = 0.04;
+                    this.gravity = 0.2;
+                }
+                if (this.type === 'neon') {
+                    this.color = `hsla(${Math.random() * 60 + 300}, 100%, 50%, 0.8)`;
+                    this.lifeDecay = 0.02;
+                    this.gravity = 0.08;
+                }
+            }
+
+            update() {
+                this.vx *= this.drag;
+                this.vy *= this.drag;
+                this.vy += this.gravity;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.rotation += this.rotationSpeed;
+                this.size *= this.scaleDecay;
+                this.life -= this.lifeDecay;
+
+                if (this.type === 'rainbow') {
+                    this.hue = (this.hue + this.hueSpeed) % 360;
+                }
+                if (this.type === 'shockwave') {
+                    this.size += this.expansionRate;
+                }
+                if (this.type === 'heart_bezier') {
+                    this.t += 0.02;
+                    if (this.t <= 1) {
+                        const mt = 1 - this.t;
+                        const x = Math.pow(mt, 2) * 0 + 2 * mt * this.t * this.cp1x + Math.pow(this.t, 2) * 0;
+                        const y = Math.pow(mt, 2) * 0 + 2 * mt * this.t * this.cp1y + Math.pow(this.t, 2) * 0;
+                        this.x = x + this.x;
+                        this.y = y + this.y;
+                    }
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                switch(this.type) {
+                    case 'square':
+                        ctx.fillStyle = this.color;
+                        ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                        break;
+                        
+                    case 'star':
+                    case 'star_spark':
+                        ctx.fillStyle = this.type === 'star_spark' ? '#ffff00' : this.color;
+                        const spikes = 5;
+                        const outerRadius = this.size;
+                        const innerRadius = this.size * 0.4;
+                        ctx.beginPath();
+                        for (let i = 0; i < spikes * 2; i++) {
+                            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                            const angle = (Math.PI * i) / spikes;
+                            ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                        
+                    case 'rainbow':
+                        ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                        
+                    case 'electric':
+                        ctx.strokeStyle = '#00ffff';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        for (let i = 0; i < this.arcCount; i++) {
+                            const angle = (Math.PI * 2 * i) / this.arcCount;
+                            const radius = this.size * (0.5 + Math.random() * 0.5);
+                            ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+                        }
+                        ctx.closePath();
+                        ctx.stroke();
+                        break;
+                        
+                    case 'heart':
+                        ctx.fillStyle = this.color;
+                        ctx.beginPath();
+                        const size = this.size;
+                        ctx.moveTo(0, size / 4);
+                        ctx.bezierCurveTo(size / 2, -size, size, 0, 0, size);
+                        ctx.bezierCurveTo(-size, 0, -size / 2, -size, 0, size / 4);
+                        ctx.fill();
+                        break;
+                        
+                    case 'heart_bezier':
+                        ctx.fillStyle = '#ff69b4';
+                        ctx.beginPath();
+                        ctx.moveTo(0, this.size / 4);
+                        ctx.bezierCurveTo(this.size / 2, -this.size, this.size, 0, 0, this.size);
+                        ctx.bezierCurveTo(-this.size, 0, -this.size / 2, -this.size, 0, this.size / 4);
+                        ctx.fill();
+                        break;
+                        
+                    case 'shockwave':
+                        ctx.strokeStyle = `hsla(${(Date.now() * 0.1) % 360}, 100%, 50%, ${this.life * 0.6})`;
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.fillStyle = `hsla(${(Date.now() * 0.1 + 60) % 360}, 100%, 50%, ${this.life * 0.2})`;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.size * 0.7, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                        
+                    case 'smoke':
+                        ctx.fillStyle = this.color;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                        
+                    case 'neon':
+                        ctx.fillStyle = this.color;
+                        ctx.shadowColor = this.color;
+                        ctx.shadowBlur = 20;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                        break;
+                        
+                    default: // circle
+                        ctx.fillStyle = this.color;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        // ==================== 粒子效果生成函数（参考文档优化）====================
+        function createEnemyDeathParticles(enemy) {
+            const centerX = enemy.x + enemy.w/2;
+            const centerY = enemy.y + enemy.h/2;
+            const newParticles = [];
+            
+            // 基础碎屑粒子
+            for (let i = 0; i < 20; i++) {
+                newParticles.push(new Particle(centerX, centerY, {
+                    type: 'square',
+                    color: enemy.color,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    size: Math.random() * 3 + 1,
+                    gravity: 0.2,
+                    lifeDecay: Math.random() * 0.02 + 0.01
+                }));
+            }
+            
+            // 根据敌人类型添加特殊粒子
+            switch(enemy.type) {
+                case 'sigma':
+                    // Sigma: 黑色方块+极光边框 -> 彩虹色碎屑
+                    for (let i = 0; i < 15; i++) {
+                        newParticles.push(new Particle(centerX, centerY, {
+                            type: 'rainbow',
+                            vx: (Math.random() - 0.5) * 10,
+                            vy: (Math.random() - 0.5) * 10,
+                            size: Math.random() * 5 + 2,
+                            gravity: 0.1,
+                            lifeDecay: 0.03
+                        }));
+                    }
+                    // 电光粒子
+                    for (let i = 0; i < 10; i++) {
+                        newParticles.push(new Particle(centerX, centerY, {
+                            type: 'electric',
+                            color: '#00ffff',
+                            vx: (Math.random() - 0.5) * 6,
+                            vy: (Math.random() - 0.5) * 6,
+                            size: Math.random() * 6 + 3,
+                            lifeDecay: 0.04
+                        }));
+                    }
+                    break;
+                    
+                case 'gqh':
+                    // gqh学姐: 粉色爱心粒子
+                    for (let i = 0; i < 25; i++) {
+                        newParticles.push(new Particle(centerX, centerY, {
+                            type: Math.random() > 0.7 ? 'heart_bezier' : 'heart',
+                            color: '#ff69b4',
+                            vx: (Math.random() - 0.5) * 7,
+                            vy: (Math.random() - 0.5) * 7,
+                            size: Math.random() * 8 + 4,
+                            gravity: 0.15,
+                            lifeDecay: Math.random() * 0.015 + 0.01
+                        }));
+                    }
+                    break;
+                    
+                case 'gay0':
+                    // Gay0: 彩虹色粒子 + 冲击波
+                    particleCount = 30;
+                    for(let i = 0; i < particleCount; i++) {
+                        newParticles.push(new Particle(centerX, centerY, {
+                            type: 'rainbow',
+                            vx: (Math.random() - 0.5) * 9,
+                            vy: (Math.random() - 0.5) * 9,
+                            size: Math.random() * 4 + 2,
+                            gravity: 0.15,
+                            lifeDecay: 0.025
+                        }));
+                    }
+                    // 彩虹冲击波
+                    for(let j = 0; j < 3; j++) {
+                        setTimeout(() => {
+                            for(let k = 0; k < 8; k++) {
+                                const angle = (Math.PI * 2 / 8) * k;
+                                const px = centerX + Math.cos(angle) * j * 15;
+                                const py = centerY + Math.sin(angle) * j * 15;
+                                newParticles.push(new Particle(px, py, {
+                                    type: 'shockwave',
+                                    color: `hsl(${(Date.now()/10 + j*120)%360}, 100%, 50%)`,
+                                    size: 5,
+                                    expansionRate: 15,
+                                    lifeDecay: 0.02
+                                }));
+                            }
+                        }, j * 50);
+                    }
+                    break;
+                    
+                case 'tank':
+                    // Boss: 霓虹光晕效果
+                    for (let i = 0; i < 15; i++) {
+                        newParticles.push(new Particle(centerX, centerY, {
+                            type: 'neon',
+                            color: `hsla(${Math.random() * 60 + 300}, 100%, 50%, 0.8)`,
+                            vx: (Math.random() - 0.5) * 6,
+                            vy: (Math.random() - 0.5) * 6,
+                            size: Math.random() * 12 + 5,
+                            gravity: 0.08,
+                            lifeDecay: 0.02
+                        }));
+                    }
+                    break;
+            }
+            
+            // 烟雾粒子（通用）
+            for (let i = 0; i < 8; i++) {
+                newParticles.push(new Particle(centerX, centerY, {
+                    type: 'smoke',
+                    color: 'rgba(150, 150, 150, 0.8)',
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    size: Math.random() * 10 + 5,
+                    gravity: -0.05,
+                    lifeDecay: 0.015
+                }));
+            }
+            
+            return newParticles;
+        }
+
+        // ==================== 攻击视觉特效 ====================
+        function createMuzzleFlash(x, y) {
+            for (let i = 0; i < 12; i++) {
+                particles.push(new Particle(x, y, {
+                    type: 'star_spark',
+                    color: '#ffff00',
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    size: Math.random() * 8 + 4,
+                    gravity: 0.1,
+                    lifeDecay: 0.08
+                }));
+            }
+        }
+
+        function createHitParticles(x, y, isCritical = false) {
+            const count = isCritical ? 15 : 8;
+            const color = isCritical ? '#ffff00' : '#ffaa00';
+            
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, {
+                    type: 'star_spark',
+                    color: color,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    size: Math.random() * 4 + 2,
+                    gravity: 0.15,
+                    lifeDecay: 0.04
+                }));
+            }
+        }
+
+        // ==================== 敌人角色类 ====================
+        class Enemy {
+            constructor(type) {
+                const side = Math.floor(Math.random()*4);
+                if(side===0){this.x=Math.random()*1100; this.y=-50}
+                else if(side===1){this.x=1150; this.y=Math.random()*650}
+                else if(side===2){this.x=Math.random()*1100; this.y=700}
+                else {this.x=-50; this.y=Math.random()*650}
+                
+                this.type = type;
+                this.w = 40; this.h = 40;
+                this.hp = 500 + wave * 250;
+                this.maxHp = this.hp;
+                this.speed = 2 + Math.random() * 2;
+                this.color = '#ff3333';
+                this.hitFlash = 0;
+                this.lastSkill = 0;
+                this.trail = [];
+
+                if(type === 'fast') { this.speed += 4; this.color = '#ffaa00'; }
+                if(type === 'tank') { this.w = 75; this.h = 75; this.hp *= 3; this.maxHp = this.hp; this.color = '#5555ff'; }
+                if(type === 'sigma') { this.w = 50; this.h = 50; this.hp *= 2.5; this.maxHp = this.hp; this.color = '#000'; this.trail = []; this.maxTrail = 8; }
+                if(type === 'gay0') { this.hp *= 1.8; this.color = 'rainbow'; }
+                if(type === 'gqh') { this.w = 65; this.h = 65; this.hp *= 4.5; this.maxHp = this.hp; this.color = '#ff69b4'; this.heartParticles = []; }
+            }
+
+            draw() {
+                ctx.save();
+                // 1. Sigma 多重残影绘制
+                if (this.type === 'sigma') {
+                    this.trail.unshift({ x: this.x, y: this.y });
+                    if (this.trail.length > this.maxTrail) this.trail.pop();
+                    this.trail.forEach((pos, index) => {
+                        const alpha = 0.8 - (index / this.maxTrail) * 0.8;
+                        ctx.globalAlpha = alpha * 0.7;
+                        const gradient = ctx.createLinearGradient(pos.x, pos.y, pos.x + this.w, pos.y + this.h);
+                        gradient.addColorStop(0, '#9d00ff');
+                        gradient.addColorStop(0.5, '#00ffea');
+                        gradient.addColorStop(1, '#ff00ff');
+                        ctx.strokeStyle = gradient;
+                        ctx.lineWidth = 2 + index * 0.3;
+                        ctx.strokeRect(pos.x + 4, pos.y + 4, this.w - 8, this.h - 8);
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = '#00ffff';
+                    });
+                    ctx.globalAlpha = 1.0;
+                }
+                // 2. 绘制角色本体
+                if (this.color === 'rainbow') {
+                    ctx.fillStyle = `hsl(${(Date.now() / 5) % 360}, 100%, 50%)`;
+                } else {
+                    ctx.fillStyle = (this.hitFlash > 0) ? '#fff' : this.color;
+                }
+                ctx.shadowBlur = (this.hitFlash > 0) ? 20 : 10;
+                ctx.shadowColor = ctx.fillStyle;
+                // 3. 绘制 Sigma 的霓虹边框
+                if (this.type === 'sigma') {
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(this.x, this.y, this.w, this.h);
+                    const borderGradient = ctx.createLinearGradient(this.x, this.y, this.x + this.w, this.y + this.h);
+                    borderGradient.addColorStop(0, '#ff00ff');
+                    borderGradient.addColorStop(0.5, '#00ffff');
+                    borderGradient.addColorStop(1, '#ffff00');
+                    ctx.strokeStyle = borderGradient;
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(this.x + 2, this.y + 2, this.w - 4, this.h - 4);
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = borderGradient;
+                } else {
+                    ctx.fillRect(this.x, this.y, this.w, this.h);
+                }
+                // 4. gqh学姐：粉色贝塞尔爱心粒子环绕
+                if (this.type === 'gqh') {
+                    if (Math.random() < 0.1) {
+                        this.heartParticles.push(new Particle(
+                            this.x + this.w / 2 + (Math.random() - 0.5) * 10,
+                            this.y + this.h / 2 + (Math.random() - 0.5) * 10,
+                            '#ff69b4',
+                            'heart_bezier'
+                        ));
+                    }
+                    this.heartParticles.forEach((p, i) => {
+                        p.update();
+                        p.draw();
+                        if (p.life <= 0) this.heartParticles.splice(i, 1);
+                    });
+                }
+                // 5. 绘制文字图标
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 13px Arial';
+                ctx.textAlign = 'center';
+                let tag = 'WTD';
+                if (this.type === 'fast') tag = '😈';
+                if (this.type === 'tank') tag = '奶龙';
+                if (this.type === 'sigma') tag = 'Sigma';
+                if (this.type === 'gay0') tag = 'Gay0';
+                if (this.type === 'gqh') tag = 'gqh学姐';
+                ctx.fillText(tag, this.x + this.w / 2, this.y + this.h / 2 + 5);
+                // 6. 绘制血条
+                if (this.hp < this.maxHp) {
+                    ctx.fillStyle = '#220000';
+                    ctx.fillRect(this.x, this.y - 12, this.w, 6);
+                    ctx.fillStyle = '#0f0';
+                    ctx.fillRect(this.x, this.y - 12, this.w * (this.hp / this.maxHp), 6);
+                }
+                ctx.restore();
+                if (this.hitFlash > 0) this.hitFlash--;
+            }
+
+            update() {
+                const ang = Math.atan2(player.y - this.y, player.x - this.x);
+                this.x += Math.cos(ang) * this.speed;
+                this.y += Math.sin(ang) * this.speed;
+                const now = Date.now();
+                if(now - this.lastSkill > 2000) {
+                    if(this.type === 'gqh') fireEnemyBullet(this.x+32, this.y+32, ang, 'heart');
+                    if(this.type === 'sigma') fireEnemyBullet(this.x+25, this.y+25, ang, 'laser');
+                    if(this.type === 'gay0') fireEnemyBullet(this.x+20, this.y+20, ang, 'rainbow');
+                    this.lastSkill = now;
+                }
+            }
+        }
+
+        // ==================== 核心逻辑 ====================
+        function fireEnemyBullet(x, y, ang, type) {
+            enemyBullets.push({ x, y, vx: Math.cos(ang)*5, vy: Math.sin(ang)*5, type });
+        }
+
+        function spawnWave() {
+            document.getElementById('wave-val').innerText = wave;
+            let count = 8 + wave * 3;
+            for(let i=0; i<count; i++) {
+                setTimeout(() => {
+                    if(!active) return;
+                    let type = 'normal';
+                    const r = Math.random();
+                    if(wave >= 2 && r > 0.8) type = 'fast';
+                    if(wave >= 3 && r > 0.85) type = 'tank';
+                    if(wave >= 4 && r > 0.9) type = 'sigma';
+                    if(wave >= 5 && r > 0.93) type = 'gay0';
+                    if(wave >= 6 && r > 0.95) type = 'gqh';
+                    enemies.push(new Enemy(type));
+                }, i * 400);
+            }
+            if(wave % 3 === 0) setTimeout(spawnBoss, 3000);
+        }
+
+        function spawnBoss() {
+            bossActive = true;
+            boss = {
+                x: 450, y: -250, w: 200, h: 220,
+                hp: 30000 + wave * 600+wave*wave,
+                maxHp: 30000 + wave * 600+wave*wave,
+                speed: 2, dir: 1, lastShot: 0
+            };
+            document.getElementById('boss-ui').style.display = 'block';
+        }
+
+        function handleShooting() {
+            if((mouse.pressed || keys[' ']) && Date.now() - player.lastShot > player.shotDelay) {
+                const ang = Math.atan2(mouse.y - (player.y+22), mouse.x - (player.x+22));
+                for(let i=-1; i<=1; i++) {
+                    player.bullets.push({ 
+                        x: player.x+22, y: player.y+22, 
+                        vx: Math.cos(ang + i*0.12)*16, vy: Math.sin(ang + i*0.12)*16,
+                        trail: []
+                    });
+                }
+                player.lastShot = Date.now();
+                muzzleFlash = 5;
+                // 枪口火焰粒子（基于文档优化）
+                createMuzzleFlash(player.x+22, player.y+22);
+            }
+        }
+
+        function loop() {
+            if(!active) return;
+            ctx.fillStyle = '#050010';
+            ctx.fillRect(0, 0, 1100, 650);
+
+            // 枪口火焰反馈
+            if (muzzleFlash > 0) {
+                ctx.save();
+                for(let i=0; i<3; i++) {
+                    const radius = 40 + i*20;
+                    const alpha = 0.3 - i*0.1;
+                    const grad = ctx.createRadialGradient(player.x+22, player.y+22, 0, player.x+22, player.y+22, radius);
+                    const hue = (Date.now()/50 + i*40) % 360;
+                    grad.addColorStop(0, `hsla(${hue}, 100%, 70%, ${alpha})`);
+                    grad.addColorStop(1, `hsla(${(hue+60)%360}, 100%, 50%, 0)`);
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(player.x+22, player.y+22, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+                muzzleFlash--;
+            }
+
+            // 移动玩家
+            let mx = 0, my = 0;
+            if(keys['w']) my -= player.speed; if(keys['s']) my += player.speed;
+            if(keys['a']) mx -= player.speed; if(keys['d']) mx += player.speed;
+            player.x = Math.max(0, Math.min(1055, player.x + mx));
+            player.y = Math.max(0, Math.min(605, player.y + my));
+
+            handleShooting();
+
+            // 更新子弹与拖尾
+            player.bullets.forEach((b, i) => {
+                b.trail.push({x: b.x, y: b.y});
+                if(b.trail.length > 6) b.trail.shift();
+                b.x += b.vx; b.y += b.vy;
+                
+                // 子弹拖尾
+                ctx.save();
+                b.trail.forEach((t, ti) => {
+                    const alpha = (ti / b.trail.length) * 0.7;
+                    ctx.globalAlpha = alpha;
+                    const gradient = ctx.createLinearGradient(t.x, t.y, t.x + 4, t.y + 4);
+                    gradient.addColorStop(0, '#00ffff');
+                    gradient.addColorStop(1, '#0088ff');
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.moveTo(t.x, t.y - 3);
+                    ctx.lineTo(t.x + 4, t.y);
+                    ctx.lineTo(t.x, t.y + 3);
+                    ctx.lineTo(t.x - 4, t.y);
+                    ctx.closePath();
+                    ctx.fill();
+                });
+                ctx.restore();
+
+                if(b.x<0||b.x>1100||b.y<0||b.y>650) player.bullets.splice(i, 1);
+                
+                // 子弹碰撞敌人
+                enemies.forEach((e, ei) => {
+                    if(b.x > e.x && b.x < e.x + e.w && b.y > e.y && b.y < e.y + e.h) {
+                        e.hp -= player.dmg; e.hitFlash = 3;
+                        player.bullets.splice(i, 1);
+                        // 击中火星效果（基于文档优化）
+                        createHitParticles(b.x, b.y);
+                        if(e.hp <= 0) {
+                            score += 200; xp += 30;
+                            // 敌人死亡特效（使用优化的粒子系统）
+                            const deathParticles = createEnemyDeathParticles(e);
+                            particles.push(...deathParticles);
+                            enemies.splice(ei, 1);
+                        }
+                    }
+                });
+
+                // 子弹碰撞Boss
+                if(bossActive && b.x > boss.x && b.x < boss.x + boss.w && b.y > boss.y && b.y < boss.y + boss.h) {
+                    boss.hp -= player.dmg; player.bullets.splice(i, 1);
+                    const pct = (boss.hp/boss.maxHp)*100;
+                    document.getElementById('boss-bar').style.width = pct + "%";
+                    if(boss.hp <= 0) {
+                        bossActive = false; score += 20000; wave++; 
+                        document.getElementById('boss-ui').style.display = 'none';
+                        // Boss死亡粒子
+                        for(let i=0; i<50; i++) {
+                            particles.push(new Particle(
+                                boss.x + boss.w/2,
+                                boss.y + boss.h/2,
+                                {
+                                    type: 'neon',
+                                    color: `hsla(${Math.random() * 60 + 300}, 100%, 50%, 0.8)`,
+                                    vx: (Math.random() - 0.5) * 10,
+                                    vy: (Math.random() - 0.5) * 10,
+                                    size: Math.random() * 15 + 8,
+                                    gravity: 0.1,
+                                    lifeDecay: 0.02
+                                }
+                            ));
+                        }
+                        spawnWave();
+                    }
+                }
+            });
+
+            // 更新粒子
+            particles.forEach((p, i) => {
+                p.update();
+                p.draw();
+                if(p.life <= 0) particles.splice(i, 1);
+            });
+
+            // 敌人 AI
+            enemies.forEach(e => { e.update(); e.draw(); });
+
+            // 敌人子弹
+            enemyBullets.forEach((eb, i) => {
+                eb.x += eb.vx; eb.y += eb.vy;
+                ctx.save();
+                if(eb.type==='heart') { ctx.fillStyle='#ff69b4'; ctx.fillText('❤', eb.x, eb.y); }
+                else if(eb.type==='rainbow') { ctx.fillStyle=`hsl(${Date.now()%360},100%,50%)`; ctx.beginPath(); ctx.arc(eb.x,eb.y,6,0,Math.PI*2); ctx.fill(); }
+                else { ctx.fillStyle='#f33'; ctx.beginPath(); ctx.arc(eb.x,eb.y,8,0,Math.PI*2); ctx.fill(); }
+                ctx.restore();
+
+                if(!god && eb.x > player.x && eb.x < player.x+player.w && eb.y > player.y && eb.y < player.y+player.h) {
+                    health -= 20; enemyBullets.splice(i, 1);
+                    if(health <= 0) location.reload();
+                }
+            });
+
+            // 绘制 Boss
+            if(bossActive && boss) {
+                if(boss.y < 80) boss.y += 2;
+                else {
+                    boss.x += boss.speed * boss.dir;
+                    if(boss.x < 50 || boss.x > 850) boss.dir *= -1;
+                    if(Date.now() - boss.lastShot > 1000) {
+                        for(let i=0; i<15; i++) {
+                            const a = (Math.PI*2/15)*i;
+                            enemyBullets.push({ x: boss.x+100, y: boss.y+115, vx: Math.cos(a)*7, vy: Math.sin(a)*7 });
+                        }
+                        boss.lastShot = Date.now();
+                    }
+                }
+                // Boss霓虹光晕效果
+                ctx.save();
+                ctx.shadowBlur = 25;
+                ctx.shadowColor = '#FF00FF';
+                ctx.drawImage(bossImg, boss.x, boss.y, boss.w, boss.h);
+                ctx.restore();
+                ctx.drawImage(bossImg, boss.x, boss.y, boss.w, boss.h);
+            }
+
+            // 绘制玩家
+            ctx.fillStyle = '#00a8ff'; ctx.shadowBlur = 15; ctx.shadowColor = '#00faff';
+            ctx.fillRect(player.x, player.y, player.w, player.h);
+            ctx.shadowBlur = 0;
+
+            if(enemies.length === 0 && !bossActive) { wave++; spawnWave(); }
+            updateUI();
+            requestAnimationFrame(loop);
+        }
+
+        // ==================== UI 更新 ====================
+        function updateUI() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('health').innerText = Math.max(0, health);
+            document.getElementById('level').innerText = level;
+            document.getElementById('damage').innerText = player.dmg;
+            document.getElementById('combo').innerText = combo;
+        }
+
+        window.onkeydown = e => keys[e.key.toLowerCase()] = true;
+        window.onkeyup = e => keys[e.key.toLowerCase()] = false;
+        canvas.onmousemove = e => { const r = canvas.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top; };
+        canvas.onmousedown = () => mouse.pressed = true;
+        canvas.onmouseup = () => mouse.pressed = false;
+        
+        document.getElementById('start-btn').onclick = () => { if(!active) { active = true; spawnWave(); loop(); } };
+        document.getElementById('reset-btn').onclick = () => location.reload();
+
+        ctx.fillStyle = "#fff"; ctx.font = "24px Arial"; ctx.textAlign = "center";
+        ctx.fillText("点击开始战斗进入 KCM-挖土豆 3.0", 550, 325);
+    </script>
+</body>
+</html>
