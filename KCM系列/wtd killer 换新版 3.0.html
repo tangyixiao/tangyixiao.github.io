@@ -1,601 +1,1703 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
-<meta charset='UTF-8'><meta name='viewport' content='width=device-width initial-scale=1'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCM-挖土豆 3.0 正式版 - </title>
+    <style>
+        :root {
+            --primary: #ff00ff;
+            --secondary: #00ffff;
+            --accent: #ffff00;
+            --bg: #050010;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
 
-<link href='https://fonts.loli.net/css?family=Open+Sans:400italic,700italic,700,400&subset=latin,latin-ext' rel='stylesheet' type='text/css' /><style type='text/css'>html {overflow-x: initial !important;}:root { --bg-color:#ffffff; --text-color:#333333; --select-text-bg-color:#B5D6FC; --select-text-font-color:auto; --monospace:"Lucida Console",Consolas,"Courier",monospace; --title-bar-height:20px; }
-.mac-os-11 { --title-bar-height:28px; }
-html { font-size: 14px; background-color: var(--bg-color); color: var(--text-color); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-body { margin: 0px; padding: 0px; height: auto; inset: 0px; font-size: 1rem; line-height: 1.42857; overflow-x: hidden; background: inherit; tab-size: 4; }
-iframe { margin: auto; }
-a.url { word-break: break-all; }
-a:active, a:hover { outline: 0px; }
-.in-text-selection, ::selection { text-shadow: none; background: var(--select-text-bg-color); color: var(--select-text-font-color); }
-#write { margin: 0px auto; height: auto; width: inherit; word-break: normal; overflow-wrap: break-word; position: relative; white-space: normal; overflow-x: visible; padding-top: 36px; }
-#write.first-line-indent p { text-indent: 2em; }
-#write.first-line-indent li p, #write.first-line-indent p * { text-indent: 0px; }
-#write.first-line-indent li { margin-left: 2em; }
-.for-image #write { padding-left: 8px; padding-right: 8px; }
-body.typora-export { padding-left: 30px; padding-right: 30px; }
-.typora-export .footnote-line, .typora-export li, .typora-export p { white-space: pre-wrap; }
-.typora-export .task-list-item input { pointer-events: none; }
-@media screen and (max-width: 500px) {
-  body.typora-export { padding-left: 0px; padding-right: 0px; }
-  #write { padding-left: 20px; padding-right: 20px; }
-  .CodeMirror-sizer { margin-left: 0px !important; }
-  .CodeMirror-gutters { display: none !important; }
-}
-#write li > figure:last-child { margin-bottom: 0.5rem; }
-#write ol, #write ul { position: relative; }
-img { max-width: 100%; vertical-align: middle; image-orientation: from-image; }
-button, input, select, textarea { color: inherit; font: inherit; }
-input[type="checkbox"], input[type="radio"] { line-height: normal; padding: 0px; }
-*, ::after, ::before { box-sizing: border-box; }
-#write h1, #write h2, #write h3, #write h4, #write h5, #write h6, #write p, #write pre { width: inherit; }
-#write h1, #write h2, #write h3, #write h4, #write h5, #write h6, #write p { position: relative; }
-p { line-height: inherit; }
-h1, h2, h3, h4, h5, h6 { break-after: avoid-page; break-inside: avoid; orphans: 4; }
-p { orphans: 4; }
-h1 { font-size: 2rem; }
-h2 { font-size: 1.8rem; }
-h3 { font-size: 1.6rem; }
-h4 { font-size: 1.4rem; }
-h5 { font-size: 1.2rem; }
-h6 { font-size: 1rem; }
-.md-math-block, .md-rawblock, h1, h2, h3, h4, h5, h6, p { margin-top: 1rem; margin-bottom: 1rem; }
-.hidden { display: none; }
-.md-blockmeta { color: rgb(204, 204, 204); font-weight: 700; font-style: italic; }
-a { cursor: pointer; }
-sup.md-footnote { padding: 2px 4px; background-color: rgba(238, 238, 238, 0.7); color: rgb(85, 85, 85); border-radius: 4px; cursor: pointer; }
-sup.md-footnote a, sup.md-footnote a:hover { color: inherit; text-transform: inherit; text-decoration: inherit; }
-#write input[type="checkbox"] { cursor: pointer; width: inherit; height: inherit; }
-figure { overflow-x: auto; margin: 1.2em 0px; max-width: calc(100% + 16px); padding: 0px; }
-figure > table { margin: 0px; }
-tr { break-inside: avoid; break-after: auto; }
-thead { display: table-header-group; }
-table { border-collapse: collapse; border-spacing: 0px; width: 100%; overflow: auto; break-inside: auto; text-align: left; }
-table.md-table td { min-width: 32px; }
-.CodeMirror-gutters { border-right: 0px; background-color: inherit; }
-.CodeMirror-linenumber { user-select: none; }
-.CodeMirror { text-align: left; }
-.CodeMirror-placeholder { opacity: 0.3; }
-.CodeMirror pre { padding: 0px 4px; }
-.CodeMirror-lines { padding: 0px; }
-div.hr:focus { cursor: none; }
-#write pre { white-space: pre-wrap; }
-#write.fences-no-line-wrapping pre { white-space: pre; }
-#write pre.ty-contain-cm { white-space: normal; }
-.CodeMirror-gutters { margin-right: 4px; }
-.md-fences { font-size: 0.9rem; display: block; break-inside: avoid; text-align: left; overflow: visible; white-space: pre; background: inherit; position: relative !important; }
-.md-fences-adv-panel { width: 100%; margin-top: 10px; text-align: center; padding-top: 0px; padding-bottom: 8px; overflow-x: auto; }
-#write .md-fences.mock-cm { white-space: pre-wrap; }
-.md-fences.md-fences-with-lineno { padding-left: 0px; }
-#write.fences-no-line-wrapping .md-fences.mock-cm { white-space: pre; overflow-x: auto; }
-.md-fences.mock-cm.md-fences-with-lineno { padding-left: 8px; }
-.CodeMirror-line, twitterwidget { break-inside: avoid; }
-.footnotes { opacity: 0.8; font-size: 0.9rem; margin-top: 1em; margin-bottom: 1em; }
-.footnotes + .footnotes { margin-top: 0px; }
-.md-reset { margin: 0px; padding: 0px; border: 0px; outline: 0px; vertical-align: top; background: 0px 0px; text-decoration: none; text-shadow: none; float: none; position: static; width: auto; height: auto; white-space: nowrap; cursor: inherit; -webkit-tap-highlight-color: transparent; line-height: normal; font-weight: 400; text-align: left; box-sizing: content-box; direction: ltr; }
-li div { padding-top: 0px; }
-blockquote { margin: 1rem 0px; }
-li .mathjax-block, li p { margin: 0.5rem 0px; }
-li blockquote { margin: 1rem 0px; }
-li { margin: 0px; position: relative; }
-blockquote > :last-child { margin-bottom: 0px; }
-blockquote > :first-child, li > :first-child { margin-top: 0px; }
-.footnotes-area { color: rgb(136, 136, 136); margin-top: 0.714rem; padding-bottom: 0.143rem; white-space: normal; }
-#write .footnote-line { white-space: pre-wrap; }
-@media print {
-  body, html { border: 1px solid transparent; height: 99%; break-after: avoid; break-before: avoid; font-variant-ligatures: no-common-ligatures; }
-  #write { margin-top: 0px; padding-top: 0px; border-color: transparent !important; }
-  .typora-export * { -webkit-print-color-adjust: exact; }
-  .typora-export #write { break-after: avoid; }
-  .typora-export #write::after { height: 0px; }
-  .is-mac table { break-inside: avoid; }
-  .typora-export-show-outline .typora-export-sidebar { display: none; }
-}
-.footnote-line { margin-top: 0.714em; font-size: 0.7em; }
-a img, img a { cursor: pointer; }
-pre.md-meta-block { font-size: 0.8rem; min-height: 0.8rem; white-space: pre-wrap; background: rgb(204, 204, 204); display: block; overflow-x: hidden; }
-p > .md-image:only-child:not(.md-img-error) img, p > img:only-child { display: block; margin: auto; }
-#write.first-line-indent p > .md-image:only-child:not(.md-img-error) img { left: -2em; position: relative; }
-p > .md-image:only-child { display: inline-block; width: 100%; }
-#write .MathJax_Display { margin: 0.8em 0px 0px; }
-.md-math-block { width: 100%; }
-.md-math-block:not(:empty)::after { display: none; }
-.MathJax_ref { fill: currentcolor; }
-[contenteditable="true"]:active, [contenteditable="true"]:focus, [contenteditable="false"]:active, [contenteditable="false"]:focus { outline: 0px; box-shadow: none; }
-.md-task-list-item { position: relative; list-style-type: none; }
-.task-list-item.md-task-list-item { padding-left: 0px; }
-.md-task-list-item > input { position: absolute; top: 0px; left: 0px; margin-left: -1.2em; margin-top: calc(1em - 10px); border: none; }
-.math { font-size: 1rem; }
-.md-toc { min-height: 3.58rem; position: relative; font-size: 0.9rem; border-radius: 10px; }
-.md-toc-content { position: relative; margin-left: 0px; }
-.md-toc-content::after, .md-toc::after { display: none; }
-.md-toc-item { display: block; color: rgb(65, 131, 196); }
-.md-toc-item a { text-decoration: none; }
-.md-toc-inner:hover { text-decoration: underline; }
-.md-toc-inner { display: inline-block; cursor: pointer; }
-.md-toc-h1 .md-toc-inner { margin-left: 0px; font-weight: 700; }
-.md-toc-h2 .md-toc-inner { margin-left: 2em; }
-.md-toc-h3 .md-toc-inner { margin-left: 4em; }
-.md-toc-h4 .md-toc-inner { margin-left: 6em; }
-.md-toc-h5 .md-toc-inner { margin-left: 8em; }
-.md-toc-h6 .md-toc-inner { margin-left: 10em; }
-@media screen and (max-width: 48em) {
-  .md-toc-h3 .md-toc-inner { margin-left: 3.5em; }
-  .md-toc-h4 .md-toc-inner { margin-left: 5em; }
-  .md-toc-h5 .md-toc-inner { margin-left: 6.5em; }
-  .md-toc-h6 .md-toc-inner { margin-left: 8em; }
-}
-a.md-toc-inner { font-size: inherit; font-style: inherit; font-weight: inherit; line-height: inherit; }
-.footnote-line a:not(.reversefootnote) { color: inherit; }
-.md-attr { display: none; }
-.md-fn-count::after { content: "."; }
-code, pre, samp, tt { font-family: var(--monospace); }
-kbd { margin: 0px 0.1em; padding: 0.1em 0.6em; font-size: 0.8em; color: rgb(36, 39, 41); background: rgb(255, 255, 255); border: 1px solid rgb(173, 179, 185); border-radius: 3px; box-shadow: rgba(12, 13, 14, 0.2) 0px 1px 0px, rgb(255, 255, 255) 0px 0px 0px 2px inset; white-space: nowrap; vertical-align: middle; }
-.md-comment { color: rgb(162, 127, 3); opacity: 0.6; font-family: var(--monospace); }
-code { text-align: left; vertical-align: initial; }
-a.md-print-anchor { white-space: pre !important; border-width: initial !important; border-style: none !important; border-color: initial !important; display: inline-block !important; position: absolute !important; width: 1px !important; right: 0px !important; outline: 0px !important; background: 0px 0px !important; text-decoration: initial !important; text-shadow: initial !important; }
-.os-windows.monocolor-emoji .md-emoji { font-family: "Segoe UI Symbol", sans-serif; }
-.md-diagram-panel > svg { max-width: 100%; }
-[lang="flow"] svg, [lang="mermaid"] svg { max-width: 100%; height: auto; }
-[lang="mermaid"] .node text { font-size: 1rem; }
-table tr th { border-bottom: 0px; }
-video { max-width: 100%; display: block; margin: 0px auto; }
-iframe { max-width: 100%; width: 100%; border: none; }
-.highlight td, .highlight tr { border: 0px; }
-mark { background: rgb(255, 255, 0); color: rgb(0, 0, 0); }
-.md-html-inline .md-plain, .md-html-inline strong, mark .md-inline-math, mark strong { color: inherit; }
-.md-expand mark .md-meta { opacity: 0.3 !important; }
-mark .md-meta { color: rgb(0, 0, 0); }
-@media print {
-  .typora-export h1, .typora-export h2, .typora-export h3, .typora-export h4, .typora-export h5, .typora-export h6 { break-inside: avoid; }
-}
-.md-diagram-panel .messageText { stroke: none !important; }
-.md-diagram-panel .start-state { fill: var(--node-fill); }
-.md-diagram-panel .edgeLabel rect { opacity: 1 !important; }
-.md-fences.md-fences-math { font-size: 1em; }
-.md-fences-advanced:not(.md-focus) { padding: 0px; white-space: nowrap; border: 0px; }
-.md-fences-advanced:not(.md-focus) { background: inherit; }
-.typora-export-show-outline .typora-export-content { max-width: 1440px; margin: auto; display: flex; flex-direction: row; }
-.typora-export-sidebar { width: 300px; font-size: 0.8rem; margin-top: 80px; margin-right: 18px; }
-.typora-export-show-outline #write { --webkit-flex:2; flex: 2 1 0%; }
-.typora-export-sidebar .outline-content { position: fixed; top: 0px; max-height: 100%; overflow: hidden auto; padding-bottom: 30px; padding-top: 60px; width: 300px; }
-@media screen and (max-width: 1024px) {
-  .typora-export-sidebar, .typora-export-sidebar .outline-content { width: 240px; }
-}
-@media screen and (max-width: 800px) {
-  .typora-export-sidebar { display: none; }
-}
-.outline-content li, .outline-content ul { margin-left: 0px; margin-right: 0px; padding-left: 0px; padding-right: 0px; list-style: none; }
-.outline-content ul { margin-top: 0px; margin-bottom: 0px; }
-.outline-content strong { font-weight: 400; }
-.outline-expander { width: 1rem; height: 1.42857rem; position: relative; display: table-cell; vertical-align: middle; cursor: pointer; padding-left: 4px; }
-.outline-expander::before { content: ""; position: relative; font-family: Ionicons; display: inline-block; font-size: 8px; vertical-align: middle; }
-.outline-item { padding-top: 3px; padding-bottom: 3px; cursor: pointer; }
-.outline-expander:hover::before { content: ""; }
-.outline-h1 > .outline-item { padding-left: 0px; }
-.outline-h2 > .outline-item { padding-left: 1em; }
-.outline-h3 > .outline-item { padding-left: 2em; }
-.outline-h4 > .outline-item { padding-left: 3em; }
-.outline-h5 > .outline-item { padding-left: 4em; }
-.outline-h6 > .outline-item { padding-left: 5em; }
-.outline-label { cursor: pointer; display: table-cell; vertical-align: middle; text-decoration: none; color: inherit; }
-.outline-label:hover { text-decoration: underline; }
-.outline-item:hover { border-color: rgb(245, 245, 245); background-color: var(--item-hover-bg-color); }
-.outline-item:hover { margin-left: -28px; margin-right: -28px; border-left: 28px solid transparent; border-right: 28px solid transparent; }
-.outline-item-single .outline-expander::before, .outline-item-single .outline-expander:hover::before { display: none; }
-.outline-item-open > .outline-item > .outline-expander::before { content: ""; }
-.outline-children { display: none; }
-.info-panel-tab-wrapper { display: none; }
-.outline-item-open > .outline-children { display: block; }
-.typora-export .outline-item { padding-top: 1px; padding-bottom: 1px; }
-.typora-export .outline-item:hover { margin-right: -8px; border-right: 8px solid transparent; }
-.typora-export .outline-expander::before { content: "+"; font-family: inherit; top: -1px; }
-.typora-export .outline-expander:hover::before, .typora-export .outline-item-open > .outline-item > .outline-expander::before { content: "−"; }
-.typora-export-collapse-outline .outline-children { display: none; }
-.typora-export-collapse-outline .outline-item-open > .outline-children, .typora-export-no-collapse-outline .outline-children { display: block; }
-.typora-export-no-collapse-outline .outline-expander::before { content: "" !important; }
-.typora-export-show-outline .outline-item-active > .outline-item .outline-label { font-weight: 700; }
-.md-inline-math-container mjx-container { zoom: 0.95; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+        
+        body {
+            background: radial-gradient(circle at center, #1a0033 0%, #050010 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 20px;
+        }
 
+        .game-header {
+            width: 100%; max-width: 1100px; margin: 15px 0; padding: 20px;
+            background: var(--glass); backdrop-filter: blur(20px);
+            border-radius: 20px; border: 3px solid var(--primary);
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.4); text-align: center;
+        }
 
-:root {
-    --side-bar-bg-color: #fafafa;
-    --control-text-color: #777;
-}
+        .game-title {
+            font-size: 3.5rem; font-weight: 900;
+            background: linear-gradient(90deg, #ff00ff, #00ffff, #ffff00, #ff00ff);
+            background-size: 200% auto; -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; animation: shine 4s linear infinite;
+            margin-bottom: 10px;
+        }
 
-@include-when-export url(https://fonts.loli.net/css?family=Open+Sans:400italic,700italic,700,400&subset=latin,latin-ext);
+        @keyframes shine { to { background-position: 200% center; } }
 
-/* open-sans-regular - latin-ext_latin */
-  /* open-sans-italic - latin-ext_latin */
-    /* open-sans-700 - latin-ext_latin */
-    /* open-sans-700italic - latin-ext_latin */
-  html {
-    font-size: 16px;
-    -webkit-font-smoothing: antialiased;
-}
+        .hud {
+            display: grid; grid-template-columns: repeat(5, 1fr) 3fr;
+            gap: 15px; width: 1100px; margin-bottom: 20px;
+            padding: 15px; background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px); border-radius: 15px;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+        }
 
-body {
-    font-family: "Open Sans","Clear Sans", "Helvetica Neue", Helvetica, Arial, 'Segoe UI Emoji', sans-serif;
-    color: rgb(51, 51, 51);
-    line-height: 1.6;
-}
+        .hud-item {
+            background: rgba(30, 0, 60, 0.8); padding: 15px; border-radius: 12px;
+            border: 2px solid var(--secondary); text-align: center;
+            backdrop-filter: blur(5px); 
+        }
 
-#write {
-    max-width: 860px;
-  	margin: 0 auto;
-  	padding: 30px;
-    padding-bottom: 100px;
-}
+        .hud-value { 
+            font-size: 2.2rem; font-weight: bold; color: var(--secondary); 
+            text-shadow: 0 0 15px var(--secondary); margin-bottom: 5px;
+            animation: valuePulse 2s infinite;
+        }
 
-@media only screen and (min-width: 1400px) {
-	#write {
-		max-width: 1024px;
-	}
-}
+        @keyframes valuePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
 
-@media only screen and (min-width: 1800px) {
-	#write {
-		max-width: 1200px;
-	}
-}
+        .hud-label { font-size: 0.9rem; color: #aaa; text-transform: uppercase; }
 
-#write > ul:first-child,
-#write > ol:first-child{
-    margin-top: 30px;
-}
+        .ability-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 10px; grid-column: 6;
+        }
 
-a {
-    color: #4183C4;
-}
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    position: relative;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    font-weight: bold;
-    line-height: 1.4;
-    cursor: text;
-}
-h1:hover a.anchor,
-h2:hover a.anchor,
-h3:hover a.anchor,
-h4:hover a.anchor,
-h5:hover a.anchor,
-h6:hover a.anchor {
-    text-decoration: none;
-}
-h1 tt,
-h1 code {
-    font-size: inherit;
-}
-h2 tt,
-h2 code {
-    font-size: inherit;
-}
-h3 tt,
-h3 code {
-    font-size: inherit;
-}
-h4 tt,
-h4 code {
-    font-size: inherit;
-}
-h5 tt,
-h5 code {
-    font-size: inherit;
-}
-h6 tt,
-h6 code {
-    font-size: inherit;
-}
-h1 {
-    font-size: 2.25em;
-    line-height: 1.2;
-    border-bottom: 1px solid #eee;
-}
-h2 {
-    font-size: 1.75em;
-    line-height: 1.225;
-    border-bottom: 1px solid #eee;
-}
+        .ability {
+            width: 70px; height: 70px; border-radius: 15px;
+            background: rgba(50, 20, 80, 0.9); border: 3px solid var(--primary);
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; cursor: pointer; transition: all 0.2s;
+            position: relative; overflow: hidden; backdrop-filter: blur(5px);
+        }
 
-/*@media print {
-    .typora-export h1,
-    .typora-export h2 {
-        border-bottom: none;
-        padding-bottom: initial;
-    }
+        .ability:hover {
+            transform: scale(1.1); border-color: var(--secondary);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.7);
+        }
 
-    .typora-export h1::after,
-    .typora-export h2::after {
-        content: "";
-        display: block;
-        height: 100px;
-        margin-top: -96px;
-        border-top: 1px solid #eee;
-    }
-}*/
+        .ability-icon { font-size: 1.8rem; margin-bottom: 5px; }
+        .ability-key { font-size: 0.9rem; color: #ffff00; background: rgba(0,0,0,0.7); padding: 3px 6px; border-radius: 5px; }
 
-h3 {
-    font-size: 1.5em;
-    line-height: 1.43;
-}
-h4 {
-    font-size: 1.25em;
-}
-h5 {
-    font-size: 1em;
-}
-h6 {
-   font-size: 1em;
-    color: #777;
-}
-p,
-blockquote,
-ul,
-ol,
-dl,
-table{
-    margin: 0.8em 0;
-}
-li>ol,
-li>ul {
-    margin: 0 0;
-}
-hr {
-    height: 2px;
-    padding: 0;
-    margin: 16px 0;
-    background-color: #e7e7e7;
-    border: 0 none;
-    overflow: hidden;
-    box-sizing: content-box;
-}
+        .ability-cooldown {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: rgba(255, 0, 0, 0.8); transition: height 0.1s;
+        }
 
-li p.first {
-    display: inline-block;
-}
-ul,
-ol {
-    padding-left: 30px;
-}
-ul:first-child,
-ol:first-child {
-    margin-top: 0;
-}
-ul:last-child,
-ol:last-child {
-    margin-bottom: 0;
-}
-blockquote {
-    border-left: 4px solid #dfe2e5;
-    padding: 0 15px;
-    color: #777777;
-}
-blockquote blockquote {
-    padding-right: 0;
-}
-table {
-    padding: 0;
-    word-break: initial;
-}
-table tr {
-    border: 1px solid #dfe2e5;
-    margin: 0;
-    padding: 0;
-}
-table tr:nth-child(2n),
-thead {
-    background-color: #f8f8f8;
-}
-table th {
-    font-weight: bold;
-    border: 1px solid #dfe2e5;
-    border-bottom: 0;
-    margin: 0;
-    padding: 6px 13px;
-}
-table td {
-    border: 1px solid #dfe2e5;
-    margin: 0;
-    padding: 6px 13px;
-}
-table th:first-child,
-table td:first-child {
-    margin-top: 0;
-}
-table th:last-child,
-table td:last-child {
-    margin-bottom: 0;
-}
+        .auto-toggle {
+            position: absolute; top: 5px; right: 5px; width: 15px; height: 15px;
+            border-radius: 50%; background: #555; border: 2px solid #fff;
+            cursor: pointer; transition: all 0.3s;
+        }
 
-.CodeMirror-lines {
-    padding-left: 4px;
-}
+        .auto-toggle.active { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
 
-.code-tooltip {
-    box-shadow: 0 1px 1px 0 rgba(0,28,36,.3);
-    border-top: 1px solid #eef2f2;
-}
+        .game-container {
+            position: relative; width: 1100px; height: 650px;
+            background: rgba(5, 0, 16, 0.7) !important; border-radius: 20px;
+            border: 3px solid var(--primary); box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(255, 0, 255, 0.1);
+            overflow: hidden; backdrop-filter: blur(15px) saturate(180%);
+            margin-bottom: 20px;
+        }
 
-.md-fences,
-code,
-tt {
-    border: 1px solid #e7eaed;
-    background-color: #f8f8f8;
-    border-radius: 3px;
-    padding: 0;
-    padding: 2px 4px 0px 4px;
-    font-size: 0.9em;
-}
+        #game-canvas { width: 100%; height: 100%; }
 
-code {
-    background-color: #f3f4f4;
-    padding: 0 2px 0 2px;
-}
+        .boss-ui {
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            width: 90%; height: 35px; background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #ff5555; border-radius: 20px; overflow: hidden;
+            z-index: 10; display: none; backdrop-filter: blur(5px);
+        }
 
-.md-fences {
-    margin-bottom: 15px;
-    margin-top: 15px;
-    padding-top: 8px;
-    padding-bottom: 6px;
-}
+        .boss-bar { height: 100%; background: linear-gradient(to right, #ff0000, #ff5555, #ff8888); width: 100%; transition: width 0.5s; }
+        .boss-text {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            color: white; font-weight: bold; text-shadow: 2px 2px 4px black;
+            font-size: 1.2rem;
+        }
 
+        .dev-panel {
+            position: absolute; top: 20px; left: 20px; width: 350px;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(20px) saturate(180%);
+            border: 2px solid var(--accent); border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255, 255, 0, 0.5);
+            padding: 20px; z-index: 100; display: none;
+            overflow-y: auto; max-height: 80%;
+        }
 
-.md-task-list-item > input {
-  margin-left: -1.3em;
-}
+        .dev-panel h3 { color: var(--accent); margin-bottom: 15px; text-align: center; }
+        .dev-category { margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px; }
+        .dev-category h4 { color: var(--secondary); margin-bottom: 10px; }
+        .dev-category label { display: block; margin: 8px 0; color: #aaa; }
+        .dev-category input[type="range"] { width: 100%; margin: 5px 0; }
+        .dev-category button {
+            background: linear-gradient(45deg, #ff00ff, #aa00ff);
+            color: white; border: none; padding: 8px 15px;
+            border-radius: 5px; margin: 5px; cursor: pointer;
+            transition: all 0.3s;
+        }
+        .dev-category button:hover { background: linear-gradient(45deg, #ff33ff, #cc33ff); transform: scale(1.05); }
 
-@media print {
-    html {
-        font-size: 13px;
-    }
-    table,
-    pre {
-        page-break-inside: avoid;
-    }
-    pre {
-        word-wrap: break-word;
-    }
-}
+        .controls {
+            width: 1100px; display: flex; gap: 15px; margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
 
-.md-fences {
-	background-color: #f8f8f8;
-}
-#write pre.md-meta-block {
-	padding: 1rem;
-    font-size: 85%;
-    line-height: 1.45;
-    background-color: #f7f7f7;
-    border: 0;
-    border-radius: 3px;
-    color: #777777;
-    margin-top: 0 !important;
-}
+        .btn-main, .btn-dev {
+            flex: 1; padding: 16px 32px; font-size: 1.2rem;
+            border: none; border-radius: 50px; cursor: pointer;
+            font-weight: bold; transition: all 0.3s;
+            min-width: 160px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
 
-.mathjax-block>.code-tooltip {
-	bottom: .375rem;
-}
+        .btn-main {
+            background: linear-gradient(45deg, var(--primary), #aa00ff);
+            color: #fff; border: 3px solid rgba(255, 255, 255, 0.3);
+        }
 
-.md-mathjax-midline {
-    background: #fafafa;
-}
+        .btn-dev {
+            background: linear-gradient(45deg, var(--accent), #ffaa00);
+            color: #000; border: 3px solid rgba(255, 255, 255, 0.5);
+        }
 
-#write>h3.md-focus:before{
-	left: -1.5625rem;
-	top: .375rem;
-}
-#write>h4.md-focus:before{
-	left: -1.5625rem;
-	top: .285714286rem;
-}
-#write>h5.md-focus:before{
-	left: -1.5625rem;
-	top: .285714286rem;
-}
-#write>h6.md-focus:before{
-	left: -1.5625rem;
-	top: .285714286rem;
-}
-.md-image>.md-meta {
-    /*border: 1px solid #ddd;*/
-    border-radius: 3px;
-    padding: 2px 0px 0px 4px;
-    font-size: 0.9em;
-    color: inherit;
-}
+        .btn-main:hover, .btn-dev:hover {
+            transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+        }
 
-.md-tag {
-    color: #a7a7a7;
-    opacity: 1;
-}
+        .instructions {
+            width: 1100px; background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px; padding: 20px; margin-top: 10px;
+            border: 3px solid var(--primary); backdrop-filter: blur(10px);
+            display: none;
+        }
 
-.md-toc { 
-    margin-top:20px;
-    padding-bottom:20px;
-}
+        .instructions h2 { color: var(--primary); margin-bottom: 15px; text-align: center; }
 
-.sidebar-tabs {
-    border-bottom: none;
-}
-
-#typora-quick-open {
-    border: 1px solid #ddd;
-    background-color: #f8f8f8;
-}
-
-#typora-quick-open-item {
-    background-color: #FAFAFA;
-    border-color: #FEFEFE #e5e5e5 #e5e5e5 #eee;
-    border-style: solid;
-    border-width: 1px;
-}
-
-/** focus mode */
-.on-focus-mode blockquote {
-    border-left-color: rgba(85, 85, 85, 0.12);
-}
-
-header, .context-menu, .megamenu-content, footer{
-    font-family: "Segoe UI", "Arial", sans-serif;
-}
-
-.file-node-content:hover .file-node-icon,
-.file-node-content:hover .file-node-open-state{
-    visibility: visible;
-}
-
-.mac-seamless-mode #typora-sidebar {
-    background-color: #fafafa;
-    background-color: var(--side-bar-bg-color);
-}
-
-.md-lang {
-    color: #b4654d;
-}
-
-/*.html-for-mac {
-    --item-hover-bg-color: #E6F0FE;
-}*/
-
-#md-notification .btn {
-    border: 0;
-}
-
-.dropdown-menu .divider {
-    border-color: #e5e5e5;
-    opacity: 0.4;
-}
-
-.ty-preferences .window-content {
-    background-color: #fafafa;
-}
-
-.ty-preferences .nav-group-item.active {
-    color: white;
-    background: #999;
-}
-
-.menu-item-container a.menu-style-btn {
-    background-color: #f5f8fa;
-    background-image: linear-gradient( 180deg , hsla(0, 0%, 100%, 0.8), hsla(0, 0%, 100%, 0)); 
-}
-
-
-
-</style><title>3.0正式版</title>
+        body::after {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(120, 0, 200, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 150, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(255, 50, 50, 0.05) 0%, transparent 50%);
+            pointer-events: none; z-index: -1;
+        }
+    </style>
 </head>
-<body class='typora-export os-windows'><div class='typora-export-content'>
-<div id='write'  class=''><h1 id='🚀-kcm-挖土豆-30双生视觉-·-震撼发布'><span>🚀 KCM-挖土豆 3.0：双生视觉 · 震撼发布</span></h1><h3 id='neon-os-核心系统全面升级支持-深色浅色-模式动态切换'><strong><span>NEON OS 核心系统全面升级，支持 [深色/浅色] 模式动态切换</span></strong></h3><hr /><h2 id='🌓--视觉进化光影的双重奏-'><span>🌓 [ 视觉进化：光影的双重奏 ]</span></h2><h3 id='🌑-深色协议午夜执行-midnight-protocol'><strong><span>🌑 深色协议：午夜执行 (Midnight Protocol)</span></strong></h3><p><span>经典的赛博朋克重金属风格。深邃的底色配合高亮霓虹边框，让每一颗粒子都像在宇宙中爆炸。它是战斗员的最佳掩护，是属于黑客与猎杀者的极致冷静。</span></p><h3 id='☀️-昼白协议昼白模式-ivory-os---new'><strong><span>☀️ 昼白协议：昼白模式 (Ivory OS) - [NEW!]</span></strong></h3><p><strong><span>“高级，从纯净开始。”</span></strong>
-<span>专为追求极简美学的战斗员设计。</span></p><ul><li><strong><span>晶透毛玻璃</span></strong><span>：HUD 仪表盘进化为纯净的银色透明质感，边框呈现细腻的珍珠白。</span></li><li><strong><span>高对比视觉</span></strong><span>：黑色与深灰的角色在纯白底色上如利刃般清晰，每一帧画面都像是一张极简主义艺术海报。</span></li><li><strong><span>丝滑打击感</span></strong><span>：在浅色模式下，粒子爆裂犹如破碎的晶体，打击反馈更加明亮、干脆。</span></li></ul><hr /><h2 id='🔥--neon-os-30-核心黑科技-'><span>🔥 [ Neon OS 3.0 核心黑科技 ]</span></h2><h3 id='1-物理引擎碎片级毁灭动画'><strong><span>1. 物理引擎：碎片级毁灭动画</span></strong></h3><p><span>无论是深色还是浅色模式，</span><strong><span>物理粒子系统</span></strong><span>都已全面重构：</span></p><ul><li><strong><span>受击白光 (Hit Flash)</span></strong><span>：敌人中弹时，身体会瞬间发生高频闪烁，给你最硬核的触觉心理暗示。</span></li><li><strong><span>重力飞溅</span></strong><span>：gqh学姐碎裂时的爱心、Sigma 毁灭时的方块残渣，现在都具备重力感应，会划出优美的弧线后坠落消失。</span></li></ul><h3 id='2-灵魂回归sigma--gqh学姐'><strong><span>2. 灵魂回归：Sigma &amp; gqh学姐</span></strong></h3><p><span>这些灵魂角色已完美适配双主题：</span></p><ul><li><span>在</span><strong><span>深色模式</span></strong><span>下，他们是发光的霓虹符号。</span></li><li><span>在</span><strong><span>昼白模式</span></strong><span>下，他们是冷峻的几何艺术。</span></li></ul><h3 id='3-真神降临土豆-boss-影像化'><strong><span>3. 真神降临：土豆 BOSS 影像化</span></strong></h3><p><span>告别抽象，拥抱真实！最终 Boss 接入 </span><strong><span>HD 图片渲染引擎</span></strong><span>，以从未有过的压迫力屹立在屏幕中心。在昼白协议下，Boss 的影像更显肃杀与神圣。</span></p><hr /><h2 id='🔐--禁忌权限开发者后台-'><span>🔐 [ 禁忌权限：开发者后台 ]</span></h2><p><strong><span>ADMIN ACCESS KEY:</span></strong><span> </span>
-<code>5D5F-V6C7-SD54-D568-FDS5-DFDF</code></p><p><strong><span>在后台控制台中，你不仅能切换主题，更能重启世界：</span></strong></p><ul><li><strong><span>修改现实</span></strong><span>：实时调整攻击、射速、移速。</span></li><li><strong><span>上帝权限</span></strong><span>：开启无敌，或者瞬间清空整个波次。</span></li></ul><hr /><h3 id='左手暗影右手昼白'><strong><span>“左手暗影，右手昼白。”</span></strong></h3><h3 id='无论哪种色彩你都是这个世界的主宰'><strong><span>无论哪种色彩，你都是这个世界的主宰。</span></strong></h3><h3 id='-kcm-挖土豆-30-·-昼夜交替-·-立即开火-'><strong><span>[ KCM-挖土豆 3.0 · 昼夜交替 · 立即开火 ]</span></strong></h3><hr /><p><strong><span>NEON OS 视觉实验室 · 荣誉出品</span></strong>
-<em><span>V3.0.0-DualTheme-Ready</span></em></p></div></div>
+<body>
+    <div class="game-header">
+        <h1 class="game-title">KCM-挖土豆 3.0 </h1>
+        <p style="color:#666;">使用自定义图片资源 | 完全开发者模式 | 当前波次: <span id="wave-val" style="color:var(--secondary)">1</span></p>
+    </div>
+
+    <div class="hud">
+        <div class="hud-item"><div class="hud-label">得分</div><div id="score" class="hud-value">0</div></div>
+        <div class="hud-item"><div class="hud-label">生命值</div><div id="health" class="hud-value">200</div></div>
+        <div class="hud-item"><div class="hud-label">等级</div><div id="level" class="hud-value">1</div></div>
+        <div class="hud-item"><div class="hud-label">连击</div><div id="combo" class="hud-value">0</div></div>
+        <div class="hud-item"><div class="hud-label">攻击力</div><div id="damage" class="hud-value">50</div></div>
+        
+        <div class="ability-bar">
+            <div class="ability" data-key="Q" data-skill="lightning">
+                <div class="ability-icon">⚡</div>
+                <div class="ability-key">Q</div>
+                <div class="auto-toggle active" id="auto-toggle-1"></div>
+                <div class="ability-cooldown" id="cooldown1"></div>
+            </div>
+            <div class="ability" data-key="W" data-skill="shield">
+                <div class="ability-icon">🛡️</div>
+                <div class="ability-key">W</div>
+                <div class="auto-toggle active" id="auto-toggle-2"></div>
+                <div class="ability-cooldown" id="cooldown2"></div>
+            </div>
+            <div class="ability" data-key="E" data-skill="blackhole">
+                <div class="ability-icon">🌀</div>
+                <div class="ability-key">E</div>
+                <div class="auto-toggle active" id="auto-toggle-3"></div>
+                <div class="ability-cooldown" id="cooldown3"></div>
+            </div>
+            <div class="ability" data-key="R" data-skill="drone">
+                <div class="ability-icon">🌟</div>
+                <div class="ability-key">R</div>
+                <div class="auto-toggle active" id="auto-toggle-4"></div>
+                <div class="ability-cooldown" id="cooldown4"></div>
+            </div>
+            <div class="ability" data-key="T" data-skill="timestop">
+                <div class="ability-icon">⏳</div>
+                <div class="ability-key">T</div>
+                <div class="auto-toggle active" id="auto-toggle-5"></div>
+                <div class="ability-cooldown" id="cooldown5"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="boss-ui" id="boss-ui">
+            <div class="boss-bar" id="boss-bar"></div>
+            <div class="boss-text" id="boss-text">BOSS: 100%</div>
+        </div>
+        
+        <div class="dev-panel" id="dev-panel">
+            <h3>🧪 完全开发者模式</h3>
+            
+            <div class="dev-category">
+                <h4>玩家属性</h4>
+                <label>生命值: <span id="dev-health-val">200</span>
+                    <input type="range" id="dev-health" min="1" max="10000" value="200" step="10">
+                </label>
+                <label>攻击力: <span id="dev-damage-val">50</span>
+                    <input type="range" id="dev-damage" min="1" max="1000" value="50" step="5">
+                </label>
+                <label>移动速度: <span id="dev-speed-val">8</span>
+                    <input type="range" id="dev-speed" min="1" max="20" value="8" step="0.5">
+                </label>
+                <label>射速(ms): <span id="dev-firerate-val">100</span>
+                    <input type="range" id="dev-firerate" min="10" max="1000" value="100" step="10">
+                </label>
+            </div>
+            
+            <div class="dev-category">
+                <h4>调试工具</h4>
+                <button id="dev-invincible">无敌模式: 关</button>
+                <button id="dev-onehit">一击必杀: 关</button>
+                <button id="dev-spawn-boss">召唤BOSS</button>
+                <button id="dev-spawn-enemy">生成敌人</button>
+                <button id="dev-skip-wave">跳过波次</button>
+            </div>
+            
+            <div class="dev-category">
+                <h4>预设配置</h4>
+                <select id="dev-presets">
+                    <option value="normal">正常模式</option>
+                    <option value="easy">简单模式</option>
+                    <option value="hard">困难模式</option>
+                    <option value="sandbox">沙盒模式</option>
+                </select>
+                <button id="dev-save">保存配置</button>
+                <button id="dev-load">加载配置</button>
+                <button id="dev-export">导出配置</button>
+            </div>
+            
+            <div class="dev-category">
+                <h4>游戏控制</h4>
+                <label>敌人生成速率: <span id="dev-spawnrate-val">1.0</span>x
+                    <input type="range" id="dev-spawnrate" min="0.1" max="5.0" value="1.0" step="0.1">
+                </label>
+                <label>敌人生命倍数: <span id="dev-enemyhp-val">1.0</span>x
+                    <input type="range" id="dev-enemyhp" min="0.1" max="10.0" value="1.0" step="0.1">
+                </label>
+                <button id="dev-clear-enemies">清除所有敌人</button>
+                <button id="dev-clear-bullets">清除所有子弹</button>
+            </div>
+        </div>
+        
+        <canvas id="game-canvas" width="1100" height="650"></canvas>
+    </div>
+
+    <div class="controls">
+        <button class="btn-main" id="start-btn">开始游戏</button>
+        <button class="btn-main" id="pause-btn">暂停游戏</button>
+        <button class="btn-main" id="reset-btn">重置游戏</button>
+        <button class="btn-dev" id="devmode-btn">开发者模式</button>
+        <button class="btn-main" id="instructions-btn">游戏说明</button>
+    </div>
+
+    <div class="instructions" id="instructions-panel">
+        <h2>🎮 特色说明</h2>
+        <p>本版本使用了来自【链接内容】的自定义图片资源：</p>
+        <ul>
+            <li><strong>普通敌人</strong>: 68c4300e86454f137181048533f853ce.png (260×210)</li>
+            <li><strong>快速敌人</strong>: 0d57820732fbd6b484c274d9ec98df2b.png (154×155)</li>
+            <li><strong>坦克敌人</strong>: 3fac8eb5212ea04b3e7b48a079e43d48.png (125×126)</li>
+            <li><strong>彩虹敌人(gay0)</strong>: a2010e7766c32a84a60fe90b8e1332aa.png (640×480)</li>
+            <li><strong>野花BOSS</strong>: 使用彩虹敌人图片</li>
+        </ul>
+        <p>按 <kbd>~</kbd> 键开启开发者模式，可以实时调整所有游戏参数！</p>
+    </div>
+
+    <script>
+        // ==================== 游戏引擎核心 ====================
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // ==================== 自定义图片资源加载 ====================
+        // 基于【链接内容】的图片链接
+        const enemyImages = {
+            normal: new Image(),
+            fast: new Image(),
+            tank: new Image(),
+            gay0: new Image(),
+            sigma: new Image(),
+            gqh: new Image(),
+            bossNormal: new Image(),
+            shadowT: new Image(),
+            wildflower: new Image()
+        };
+        
+        // 分配图片链接
+        enemyImages.normal.src = "https://i.ibb.co/fYsJk2DB/68c4300e86454f137181048533f853ce.png";
+        enemyImages.fast.src = "https://i.ibb.co/nMfzgZ6D/0d57820732fbd6b484c274d9ec98df2b.png";
+        enemyImages.tank.src = "https://i.ibb.co/Mx2sxgBM/3fac8eb5212ea04b3e7b48a079e43d48.png";
+        enemyImages.gay0.src = "https://i.ibb.co/yFHS0R72/a2010e7766c32a84a60fe90b8e1332aa.png";
+        
+        // 为其他敌人类型设置默认图片
+        enemyImages.sigma.src = enemyImages.normal.src;
+        enemyImages.gqh.src = enemyImages.tank.src;
+        
+        // BOSS图片设置
+        enemyImages.bossNormal.src = "https://pub-141831e61e69445289222976a15b6fb3.r2.dev/Image_to_url_V2/474492734b053576d92067d8a8939b4e-imagetourl.cloud-1770938930310-8c4ahh.png";
+        enemyImages.shadowT.src = "https://cdn.luogu.com.cn/upload/image_hosting/gcrsj6dz.png";
+        enemyImages.wildflower.src = enemyImages.gay0.src; // 使用彩虹敌人图片作为野花BOSS
+        
+        // 图片加载状态跟踪
+        let imagesLoaded = 0;
+        const totalImages = Object.keys(enemyImages).length;
+        
+        for (let key in enemyImages) {
+            enemyImages[key].onload = () => {
+                imagesLoaded++;
+                console.log(`${key} 图片加载完成 (${imagesLoaded}/${totalImages})`);
+            };
+            enemyImages[key].onerror = () => {
+                console.error(`${key} 图片加载失败`);
+            };
+        }
+        
+        // ==================== 游戏状态 ====================
+        let gameRunning = false;
+        let gamePaused = false;
+        let gameLoop;
+        let score = 0;
+        let health = 200;
+        let maxHealth = 200;
+        let playerLevel = 1;
+        let xp = 0;
+        let xpToNextLevel = 100;
+        let wave = 1;
+        let combo = 0;
+        let maxCombo = 0;
+        let comboTimeout = null;
+        let godMode = false;
+        let devMode = false;
+        let bossSpawnCount = 0;
+        let lastFrameTime = Date.now();
+        let lastLevelUpTime = 0;
+        
+        // ==================== 玩家属性 ====================
+        const player = {
+            x: canvas.width / 2 - 25,
+            y: canvas.height / 2 - 25,
+            width: 50,
+            height: 50,
+            speed: 8,
+            color: '#00a8ff',
+            bullets: [],
+            lastShot: 0,
+            shotDelay: 100,
+            damage: 50,
+            pierce: 0,
+            explosive: false,
+            tripleShot: true,
+            homing: false,
+            bulletCount: 1,
+            regenRate: 0,
+            dodgeChance: 0,
+            invincible: false,
+            oneHitKill: false
+        };
+        
+        // ==================== 技能系统 ====================
+        const abilities = {
+            lightning: { name: "电磁炮", cooldown: 8000, lastUsed: 0, auto: true },
+            shield: { name: "绝对防御", cooldown: 12000, lastUsed: 0, auto: true, active: false, duration: 0 },
+            blackhole: { name: "黑洞", cooldown: 15000, lastUsed: 0, auto: true },
+            drone: { name: "浮游炮", cooldown: 20000, lastUsed: 0, auto: true, drones: [] },
+            timestop: { name: "时间停滞", cooldown: 25000, lastUsed: 0, auto: true, active: false, duration: 0 }
+        };
+        
+        // ==================== 敌人系统 ====================
+        let enemies = [];
+        let particles = [];
+        let enemyBullets = [];
+        let boss = null;
+        let bossActive = false;
+        
+        // ==================== 粒子系统 ====================
+        class Particle {
+            constructor(x, y, options = {}) {
+                this.x = x;
+                this.y = y;
+                this.vx = options.vx || (Math.random() - 0.5) * 8;
+                this.vy = options.vy || (Math.random() - 0.5) * 8;
+                this.life = 1.0;
+                this.maxLife = options.life || 1.0;
+                this.lifeDecay = options.lifeDecay || 0.02;
+                this.size = options.size || Math.random() * 4 + 2;
+                this.color = options.color || '#ffffff';
+                this.type = options.type || 'circle';
+            }
+            
+            update() {
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.lifeDecay;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                
+                switch(this.type) {
+                    case 'circle':
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case 'square':
+                        ctx.fillRect(this.x, this.y, this.size, this.size);
+                        break;
+                    case 'star':
+                        ctx.beginPath();
+                        for (let i = 0; i < 5; i++) {
+                            const angle = (i * Math.PI * 2) / 5;
+                            const radius = this.size;
+                            ctx.lineTo(this.x + Math.cos(angle) * radius, this.y + Math.sin(angle) * radius);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                }
+                ctx.restore();
+            }
+        }
+        
+        // ==================== 完全开发者模式管理器 ====================
+        class DevModeManager {
+            constructor() {
+                this.active = false;
+                this.presets = {
+                    normal: { health: 200, damage: 50, speed: 8, shotDelay: 100 },
+                    easy: { health: 500, damage: 100, speed: 10, shotDelay: 80 },
+                    hard: { health: 100, damage: 30, speed: 6, shotDelay: 150 },
+                    sandbox: { health: 9999, damage: 999, speed: 15, shotDelay: 50 }
+                };
+                this.config = {};
+                this.init();
+            }
+            
+            init() {
+                this.bindSliders();
+                this.bindButtons();
+                this.loadConfig();
+            }
+            
+            toggle() {
+                this.active = !this.active;
+                document.getElementById('dev-panel').style.display = this.active ? 'block' : 'none';
+                if (this.active) this.updateAllDisplays();
+            }
+            
+            bindSliders() {
+                // 玩家属性滑块
+                document.getElementById('dev-health').oninput = (e) => {
+                    player.health = parseInt(e.target.value);
+                    maxHealth = player.health;
+                    document.getElementById('dev-health-val').textContent = player.health;
+                    document.getElementById('health').textContent = Math.round(player.health);
+                };
+                
+                document.getElementById('dev-damage').oninput = (e) => {
+                    player.damage = parseInt(e.target.value);
+                    document.getElementById('dev-damage-val').textContent = player.damage;
+                    document.getElementById('damage').textContent = player.damage;
+                };
+                
+                document.getElementById('dev-speed').oninput = (e) => {
+                    player.speed = parseFloat(e.target.value);
+                    document.getElementById('dev-speed-val').textContent = player.speed;
+                };
+                
+                document.getElementById('dev-firerate').oninput = (e) => {
+                    player.shotDelay = parseInt(e.target.value);
+                    document.getElementById('dev-firerate-val').textContent = player.shotDelay;
+                };
+                
+                // 游戏控制滑块
+                document.getElementById('dev-spawnrate').oninput = (e) => {
+                    this.config.spawnRate = parseFloat(e.target.value);
+                    document.getElementById('dev-spawnrate-val').textContent = this.config.spawnRate;
+                };
+                
+                document.getElementById('dev-enemyhp').oninput = (e) => {
+                    this.config.enemyHpMultiplier = parseFloat(e.target.value);
+                    document.getElementById('dev-enemyhp-val').textContent = this.config.enemyHpMultiplier;
+                };
+            }
+            
+            bindButtons() {
+                document.getElementById('dev-invincible').onclick = () => {
+                    player.invincible = !player.invincible;
+                    document.getElementById('dev-invincible').textContent = `无敌模式: ${player.invincible ? '开' : '关'}`;
+                };
+                
+                document.getElementById('dev-onehit').onclick = () => {
+                    player.oneHitKill = !player.oneHitKill;
+                    document.getElementById('dev-onehit').textContent = `一击必杀: ${player.oneHitKill ? '开' : '关'}`;
+                };
+                
+                document.getElementById('dev-spawn-boss').onclick = () => spawnBoss();
+                document.getElementById('dev-spawn-enemy').onclick = () => spawnRandomEnemy();
+                document.getElementById('dev-skip-wave').onclick = () => { wave++; spawnWave(); };
+                document.getElementById('dev-clear-enemies').onclick = () => { enemies = []; };
+                document.getElementById('dev-clear-bullets').onclick = () => { enemyBullets = []; };
+                
+                // 预设配置
+                document.getElementById('dev-presets').onchange = (e) => {
+                    this.applyPreset(e.target.value);
+                };
+                
+                document.getElementById('dev-save').onclick = () => this.saveConfig();
+                document.getElementById('dev-load').onclick = () => this.loadConfig();
+                document.getElementById('dev-export').onclick = () => this.exportConfig();
+            }
+            
+            applyPreset(name) {
+                const preset = this.presets[name];
+                player.health = preset.health;
+                maxHealth = preset.health;
+                player.damage = preset.damage;
+                player.speed = preset.speed;
+                player.shotDelay = preset.shotDelay;
+                
+                this.updateAllDisplays();
+                updateUI();
+            }
+            
+            updateAllDisplays() {
+                document.getElementById('dev-health-val').textContent = player.health;
+                document.getElementById('dev-damage-val').textContent = player.damage;
+                document.getElementById('dev-speed-val').textContent = player.speed;
+                document.getElementById('dev-firerate-val').textContent = player.shotDelay;
+                
+                document.getElementById('dev-health').value = player.health;
+                document.getElementById('dev-damage').value = player.damage;
+                document.getElementById('dev-speed').value = player.speed;
+                document.getElementById('dev-firerate').value = player.shotDelay;
+            }
+            
+            saveConfig() {
+                this.config = {
+                    player: {
+                        health: player.health,
+                        damage: player.damage,
+                        speed: player.speed,
+                        shotDelay: player.shotDelay
+                    },
+                    game: {
+                        spawnRate: this.config.spawnRate || 1.0,
+                        enemyHpMultiplier: this.config.enemyHpMultiplier || 1.0
+                    },
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('kcm3-dev-config', JSON.stringify(this.config));
+                alert('配置已保存到本地存储！');
+            }
+            
+            loadConfig() {
+                const saved = localStorage.getItem('kcm3-dev-config');
+                if (saved) {
+                    this.config = JSON.parse(saved);
+                    Object.assign(player, this.config.player);
+                    this.updateAllDisplays();
+                    updateUI();
+                    alert('配置已加载！');
+                } else {
+                    alert('没有找到保存的配置！');
+                }
+            }
+            
+            exportConfig() {
+                const configStr = JSON.stringify(this.config, null, 2);
+                const blob = new Blob([configStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `kcm3-config-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        }
+        
+        const devManager = new DevModeManager();
+        
+        // ==================== 游戏控制函数 ====================
+        function initGame() {
+            score = 0;
+            health = maxHealth;
+            playerLevel = 1;
+            xp = 0;
+            xpToNextLevel = 100;
+            wave = 1;
+            bossSpawnCount = 0;
+            
+            player.x = canvas.width / 2 - 25;
+            player.y = canvas.height / 2 - 25;
+            player.bullets = [];
+            player.lastShot = 0;
+            player.invincible = false;
+            player.oneHitKill = false;
+            
+            enemies = [];
+            particles = [];
+            enemyBullets = [];
+            boss = null;
+            bossActive = false;
+            
+            for (let ability in abilities) {
+                abilities[ability].lastUsed = 0;
+                abilities[ability].active = false;
+                abilities[ability].auto = true;
+            }
+            
+            updateUI();
+            document.getElementById('boss-ui').style.display = 'none';
+            document.getElementById('wave-val').textContent = wave;
+        }
+        
+        function startGame() {
+            if (gameRunning) return;
+            initGame();
+            gameRunning = true;
+            gamePaused = false;
+            gameLoop = requestAnimationFrame(updateGame);
+            document.getElementById('start-btn').textContent = '游戏中...';
+            spawnWave();
+        }
+        
+        function pauseGame() {
+            if (!gameRunning) return;
+            gamePaused = !gamePaused;
+            if (gamePaused) {
+                cancelAnimationFrame(gameLoop);
+                document.getElementById('pause-btn').textContent = '继续游戏';
+            } else {
+                gameLoop = requestAnimationFrame(updateGame);
+                document.getElementById('pause-btn').textContent = '暂停游戏';
+            }
+        }
+        
+        function resetGame() {
+            gameRunning = false;
+            cancelAnimationFrame(gameLoop);
+            initGame();
+            ctx.fillStyle = '#050010';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#fff';
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('点击开始游戏进入 KCM-挖土豆 3.0 ', canvas.width/2, canvas.height/2);
+            document.getElementById('start-btn').textContent = '开始游戏';
+        }
+        
+        // ==================== 游戏更新循环 ====================
+        function updateGame() {
+            if (!gameRunning || gamePaused) return;
+            
+            const currentTime = Date.now();
+            
+            // 清除画布
+            ctx.fillStyle = '#050010';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 移动玩家
+            movePlayer();
+            
+            // 射击
+            if (mouse.pressed) shootPlayer();
+            
+            // 更新子弹
+            updateBullets();
+            
+            // 更新敌人
+            updateEnemies();
+            
+            // 更新粒子
+            updateParticles();
+            
+            // 绘制玩家
+            drawPlayer();
+            
+            // 绘制UI
+            drawUI();
+            
+            // 检查游戏状态
+            if (health <= 0) {
+                endGame();
+                return;
+            }
+            
+            lastFrameTime = currentTime;
+            gameLoop = requestAnimationFrame(updateGame);
+        }
+        
+        // ==================== 游戏逻辑函数 ====================
+        function movePlayer() {
+            let moveX = 0, moveY = 0;
+            if (keys['w'] || keys['ArrowUp']) moveY -= player.speed;
+            if (keys['s'] || keys['ArrowDown']) moveY += player.speed;
+            if (keys['a'] || keys['ArrowLeft']) moveX -= player.speed;
+            if (keys['d'] || keys['ArrowRight']) moveX += player.speed;
+            
+            if (moveX !== 0 && moveY !== 0) {
+                moveX *= 0.7071;
+                moveY *= 0.7071;
+            }
+            
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x + moveX));
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y + moveY));
+        }
+        
+        function shootPlayer() {
+            const now = Date.now();
+            if (now - player.lastShot < player.shotDelay) return;
+            
+            player.lastShot = now;
+            const dx = mouse.x - (player.x + player.width/2);
+            const dy = mouse.y - (player.y + player.height/2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance === 0) return;
+            
+            for (let i = 0; i < player.bulletCount; i++) {
+                let angleOffset = 0;
+                if (player.tripleShot && i < 3) angleOffset = (i - 1) * 0.1;
+                
+                const angle = Math.atan2(dy, dx) + angleOffset;
+                const bullet = {
+                    x: player.x + player.width/2,
+                    y: player.y + player.height/2,
+                    vx: Math.cos(angle) * 16,
+                    vy: Math.sin(angle) * 16,
+                    damage: player.damage,
+                    life: 100
+                };
+                player.bullets.push(bullet);
+            }
+            
+            // 枪口火焰粒子
+            for (let i = 0; i < 8; i++) {
+                particles.push(new Particle(
+                    player.x + player.width/2,
+                    player.y + player.height/2,
+                    {
+                        vx: (Math.random() - 0.5) * 10,
+                        vy: (Math.random() - 0.5) * 10,
+                        color: '#ffff00',
+                        type: 'star',
+                        lifeDecay: 0.05
+                    }
+                ));
+            }
+        }
+        
+        function updateBullets() {
+            // 玩家子弹
+            for (let i = player.bullets.length - 1; i >= 0; i--) {
+                const bullet = player.bullets[i];
+                bullet.x += bullet.vx;
+                bullet.y += bullet.vy;
+                bullet.life--;
+                
+                // 绘制子弹
+                ctx.save();
+                ctx.fillStyle = '#00ffaa';
+                ctx.shadowColor = '#00ffaa';
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                
+                // 边界检查
+                if (bullet.x < 0 || bullet.x > canvas.width || 
+                    bullet.y < 0 || bullet.y > canvas.height || 
+                    bullet.life <= 0) {
+                    player.bullets.splice(i, 1);
+                    continue;
+                }
+                
+                // 碰撞检测 - 敌人
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    const enemy = enemies[j];
+                    if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width &&
+                        bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
+                        
+                        const damage = player.oneHitKill ? enemy.health : bullet.damage;
+                        enemy.health -= damage;
+                        
+                        // 击中特效
+                        for (let k = 0; k < 5; k++) {
+                            particles.push(new Particle(
+                                bullet.x, bullet.y,
+                                {
+                                    vx: (Math.random() - 0.5) * 5,
+                                    vy: (Math.random() - 0.5) * 5,
+                                    color: enemy.color,
+                                    lifeDecay: 0.03
+                                }
+                            ));
+                        }
+                        
+                        if (enemy.health <= 0) {
+                            score += 100;
+                            xp += 20;
+                            combo++;
+                            if (combo > maxCombo) maxCombo = combo;
+                            resetComboTimer();
+                            
+                            // 敌人死亡特效
+                            createEnemyDeathParticles(enemy);
+                            enemies.splice(j, 1);
+                        }
+                        
+                        if (!player.pierce) {
+                            player.bullets.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+                
+                // 碰撞检测 - Boss
+                if (boss && bossActive) {
+                    if (bullet.x > boss.x && bullet.x < boss.x + boss.width &&
+                        bullet.y > boss.y && bullet.y < boss.y + boss.height) {
+                        
+                        const damage = player.oneHitKill ? boss.health : bullet.damage;
+                        boss.health -= damage;
+                        updateBossHealth();
+                        
+                        if (boss.health <= 0) {
+                            bossActive = false;
+                            score += 5000;
+                            xp += 500;
+                            document.getElementById('boss-ui').style.display = 'none';
+                            
+                            // Boss死亡特效
+                            for (let k = 0; k < 50; k++) {
+                                particles.push(new Particle(
+                                    boss.x + boss.width/2,
+                                    boss.y + boss.height/2,
+                                    {
+                                        vx: (Math.random() - 0.5) * 15,
+                                        vy: (Math.random() - 0.5) * 15,
+                                        color: boss.type === 'wildflower' ? '#ff69b4' : '#ff00ff',
+                                        size: Math.random() * 10 + 5,
+                                        lifeDecay: 0.02
+                                    }
+                                ));
+                            }
+                        }
+                        
+                        if (!player.pierce) {
+                            player.bullets.splice(i, 1);
+                        }
+                    }
+                }
+            }
+            
+            // 敌人子弹
+            for (let i = enemyBullets.length - 1; i >= 0; i--) {
+                const bullet = enemyBullets[i];
+                bullet.x += bullet.vx;
+                bullet.y += bullet.vy;
+                
+                // 绘制子弹
+                ctx.save();
+                ctx.fillStyle = bullet.color || '#ff5555';
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, bullet.radius || 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                
+                // 边界检查
+                if (bullet.x < -50 || bullet.x > canvas.width + 50 ||
+                    bullet.y < -50 || bullet.y > canvas.height + 50) {
+                    enemyBullets.splice(i, 1);
+                    continue;
+                }
+                
+                // 玩家碰撞
+                if (!player.invincible && !abilities.shield.active &&
+                    bullet.x > player.x && bullet.x < player.x + player.width &&
+                    bullet.y > player.y && bullet.y < player.y + player.height) {
+                    
+                    health -= bullet.damage || 10;
+                    updateUI();
+                    enemyBullets.splice(i, 1);
+                    
+                    if (health <= 0) {
+                        health = 0;
+                        endGame();
+                    }
+                }
+            }
+        }
+        
+        function updateEnemies() {
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                
+                // 移动敌人
+                const dx = (player.x + player.width/2) - (enemy.x + enemy.width/2);
+                const dy = (player.y + player.height/2) - (enemy.y + enemy.height/2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 0) {
+                    enemy.x += (dx / distance) * enemy.speed;
+                    enemy.y += (dy / distance) * enemy.speed;
+                }
+                
+                // 绘制敌人 - 使用图片
+                ctx.save();
+                
+                let enemyImg = enemyImages.normal;
+                let shadowColor = enemy.color;
+                let shadowBlur = 15;
+                
+                switch(enemy.type) {
+                    case 'normal':
+                        enemyImg = enemyImages.normal;
+                        shadowColor = '#ff5555';
+                        break;
+                    case 'fast':
+                        enemyImg = enemyImages.fast;
+                        shadowColor = '#ffaa00';
+                        break;
+                    case 'tank':
+                        enemyImg = enemyImages.tank;
+                        shadowColor = '#5555ff';
+                        break;
+                    case 'gay0':
+                        enemyImg = enemyImages.gay0;
+                        shadowColor = 'rgba(255, 0, 255, 0.7)';
+                        shadowBlur = 20;
+                        break;
+                    case 'sigma':
+                        enemyImg = enemyImages.sigma;
+                        shadowColor = 'rgba(0, 0, 0, 0.8)';
+                        break;
+                    case 'gqh':
+                        enemyImg = enemyImages.gqh;
+                        shadowColor = '#ff69b4';
+                        break;
+                }
+                
+                // 检查图片是否加载完成
+                if (enemyImg.complete && enemyImg.width > 0) {
+                    // 添加发光效果
+                    ctx.shadowColor = shadowColor;
+                    ctx.shadowBlur = shadowBlur;
+                    
+                    // 绘制敌人图片
+                    ctx.drawImage(enemyImg, enemy.x, enemy.y, enemy.width, enemy.height);
+                    
+                    // 如果是彩虹敌人，添加闪烁效果
+                    if (enemy.type === 'gay0') {
+                        const pulse = Math.sin(Date.now() / 200) * 0.2 + 0.8;
+                        ctx.globalAlpha = pulse;
+                        ctx.drawImage(enemyImg, enemy.x, enemy.y, enemy.width, enemy.height);
+                        ctx.globalAlpha = 1.0;
+                    }
+                } else {
+                    // 图片未加载，使用原始颜色方块
+                    ctx.fillStyle = enemy.color;
+                    ctx.shadowColor = enemy.color;
+                    ctx.shadowBlur = 15;
+                    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                    
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.shadowBlur = 0;
+                    ctx.fillText(enemy.type, enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                }
+                
+                // 绘制血条
+                if (enemy.health < enemy.maxHealth) {
+                    const healthPercent = enemy.health / enemy.maxHealth;
+                    ctx.fillStyle = '#220000';
+                    ctx.fillRect(enemy.x, enemy.y - 10, enemy.width, 5);
+                    ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : (healthPercent > 0.25 ? '#ffff00' : '#ff0000');
+                    ctx.fillRect(enemy.x, enemy.y - 10, enemy.width * healthPercent, 5);
+                }
+                ctx.restore();
+                
+                // 玩家碰撞检测
+                if (!player.invincible && !abilities.shield.active &&
+                    enemy.x < player.x + player.width &&
+                    enemy.x + enemy.width > player.x &&
+                    enemy.y < player.y + player.height &&
+                    enemy.y + enemy.height > player.y) {
+                    
+                    health -= 15;
+                    updateUI();
+                    enemies.splice(i, 1);
+                    
+                    if (health <= 0) {
+                        health = 0;
+                        endGame();
+                    }
+                }
+            }
+            
+            // 更新Boss
+            if (boss && bossActive) {
+                boss.x += boss.speed * boss.moveDirection;
+                if (boss.x <= 50 || boss.x + boss.width >= canvas.width - 50) {
+                    boss.moveDirection *= -1;
+                }
+                
+                // 绘制Boss
+                ctx.save();
+                let bossImg;
+                let shadowColor = '#ff00ff';
+                let shadowBlur = 30;
+                
+                if (boss.type === 'wildflower') {
+                    bossImg = enemyImages.wildflower;
+                    shadowColor = 'rgba(255, 105, 180, 0.8)';
+                    shadowBlur = 40;
+                } else if (boss.type === 'shadowT') {
+                    bossImg = enemyImages.shadowT;
+                    shadowColor = 'rgba(0, 0, 0, 0.9)';
+                } else {
+                    bossImg = enemyImages.bossNormal;
+                }
+                
+                // 检查BOSS图片是否加载完成
+                if (bossImg.complete && bossImg.width > 0) {
+                    ctx.shadowColor = shadowColor;
+                    ctx.shadowBlur = shadowBlur;
+                    ctx.drawImage(bossImg, boss.x, boss.y, boss.width, boss.height);
+                    
+                    // BOSS特殊效果
+                    if (boss.type === 'wildflower') {
+                        const pulse = Math.sin(Date.now() / 100) * 0.2 + 0.8;
+                        ctx.globalAlpha = pulse;
+                        ctx.drawImage(bossImg, boss.x, boss.y, boss.width, boss.height);
+                        ctx.globalAlpha = 1.0;
+                    }
+                } else {
+                    // 图片未加载时的后备方案
+                    if (boss.type === 'wildflower') {
+                        ctx.fillStyle = 'rgba(255, 105, 180, 0.9)';
+                        ctx.shadowColor = '#ff69b4';
+                        ctx.shadowBlur = 40;
+                        ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+                        ctx.fillStyle = '#ffb6c1';
+                        ctx.font = 'bold 48px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.shadowBlur = 10;
+                        ctx.fillText('🌸', boss.x + boss.width/2, boss.y + boss.height/2);
+                    } else {
+                        ctx.fillStyle = boss.color || '#ff00ff';
+                        ctx.shadowColor = boss.color || '#ff00ff';
+                        ctx.shadowBlur = 30;
+                        ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+                    }
+                }
+                ctx.restore();
+                
+                // BOSS射击
+                const now = Date.now();
+                if (now - boss.lastShot > boss.shotDelay) {
+                    shootBoss();
+                    boss.lastShot = now;
+                }
+            }
+        }
+        
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const particle = particles[i];
+                particle.update();
+                particle.draw();
+                if (particle.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+        
+        // ==================== 绘制函数 ====================
+        function drawPlayer() {
+            ctx.save();
+            ctx.fillStyle = player.color;
+            ctx.shadowColor = player.color;
+            ctx.shadowBlur = 20;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // 绘制玩家标识
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowBlur = 0;
+            ctx.fillText('P', player.x + player.width/2, player.y + player.height/2);
+            
+            // 护盾效果
+            if (abilities.shield.active) {
+                ctx.strokeStyle = '#00ffff';
+                ctx.lineWidth = 5;
+                ctx.shadowColor = '#00ffff';
+                ctx.shadowBlur = 30;
+                ctx.beginPath();
+                ctx.arc(player.x + player.width/2, player.y + player.height/2, player.width/2 + 15, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            
+            // 无敌模式指示
+            if (player.invincible) {
+                ctx.strokeStyle = '#ffff00';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = '#ffff00';
+                ctx.shadowBlur = 20;
+                ctx.beginPath();
+                ctx.arc(player.x + player.width/2, player.y + player.height/2, player.width/2 + 25, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+        
+        function drawUI() {
+            // 在画面右上角显示开发者模式状态
+            if (devManager.active) {
+                ctx.save();
+                
+                // 绘制开发者模式状态面板背景（毛玻璃效果）
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                ctx.fillRect(canvas.width - 210, 10, 200, 120);
+                
+                // 添加边框效果
+                ctx.strokeStyle = '#ffff00';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(canvas.width - 210, 10, 200, 120);
+                
+                // 面板标题
+                ctx.fillStyle = '#ffff00';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText('🧪 开发者模式', canvas.width - 200, 30);
+                
+                // 状态信息
+                ctx.fillStyle = '#00ffff';
+                ctx.font = '14px Arial';
+                let yPos = 55;
+                
+                ctx.fillText(`无敌: ${player.invincible ? '✅ 开启' : '❌ 关闭'}`, canvas.width - 200, yPos);
+                yPos += 20;
+                
+                ctx.fillText(`一击必杀: ${player.oneHitKill ? '✅ 开启' : '❌ 关闭'}`, canvas.width - 200, yPos);
+                yPos += 20;
+                
+                ctx.fillText(`当前波次: ${wave}`, canvas.width - 200, yPos);
+                yPos += 20;
+                
+                ctx.fillText(`敌人数量: ${enemies.length}`, canvas.width - 200, yPos);
+                yPos += 20;
+                
+                // 显示FPS（性能监控）
+                if (lastFrameTime) {
+                    const fps = Math.round(1000 / (Date.now() - lastFrameTime));
+                    ctx.fillText(`FPS: ${fps}`, canvas.width - 200, yPos);
+                }
+                
+                // 显示坐标信息
+                ctx.fillStyle = '#ffaa00';
+                ctx.font = '12px Arial';
+                ctx.fillText(`玩家坐标: (${Math.round(player.x)}, ${Math.round(player.y)})`, canvas.width - 200, yPos + 25);
+                
+                ctx.restore();
+            }
+            
+            // 显示连击效果（如果连击大于10）
+            if (combo > 10) {
+                ctx.save();
+                ctx.fillStyle = `hsl(${Date.now() / 50 % 360}, 100%, 50%)`;
+                ctx.font = 'bold 48px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = '#ffffff';
+                ctx.shadowBlur = 10;
+                ctx.fillText(`${combo} 连击！`, canvas.width / 2, 80);
+                ctx.restore();
+            }
+            
+            // 显示BOSS警告（当BOSS即将出现时）
+            if (wave % 3 === 0 && enemies.length === 0 && !bossActive) {
+                ctx.save();
+                const pulse = Math.sin(Date.now() / 200) * 0.5 + 0.5;
+                ctx.fillStyle = `rgba(255, 0, 0, ${pulse})`;
+                ctx.font = 'bold 32px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⚠️ BOSS 即将出现 ⚠️', canvas.width / 2, canvas.height / 2 - 100);
+                ctx.restore();
+            }
+            
+            // 显示技能冷却提示（当技能刚使用时）
+            const now = Date.now();
+            for (const abilityKey in abilities) {
+                const ability = abilities[abilityKey];
+                const timeSinceUse = now - ability.lastUsed;
+                if (timeSinceUse < 1000) { // 显示1秒内的技能使用提示
+                    const alpha = 1 - (timeSinceUse / 1000);
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = '#00ffff';
+                    ctx.font = 'bold 24px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`✨ ${ability.name} ✨`, player.x + player.width/2, player.y - 40);
+                    ctx.restore();
+                    break; // 只显示一个提示
+                }
+            }
+            
+            // 显示等级提升提示（如果最近升级了）
+            if (lastLevelUpTime && now - lastLevelUpTime < 2000) {
+                const alpha = 1 - ((now - lastLevelUpTime) / 2000);
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = '#ffff00';
+                ctx.font = 'bold 36px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`🎉 等级 ${playerLevel} 🎉`, canvas.width / 2, 150);
+                ctx.restore();
+            }
+        }
+        
+        // ==================== 工具函数 ====================
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('health').textContent = Math.round(health);
+            document.getElementById('level').textContent = playerLevel;
+            document.getElementById('combo').textContent = combo;
+            document.getElementById('damage').textContent = player.damage;
+            document.getElementById('wave-val').textContent = wave;
+            
+            // 更新技能冷却显示
+            updateAbilityCooldowns();
+            
+            // 检查升级
+            if (xp >= xpToNextLevel) {
+                xp -= xpToNextLevel;
+                playerLevel++;
+                xpToNextLevel = Math.floor(xpToNextLevel * 1.5);
+                levelUp();
+            }
+        }
+        
+        function updateAbilityCooldowns() {
+            const now = Date.now();
+            for (let i = 1; i <= 5; i++) {
+                const abilityKeys = Object.keys(abilities);
+                const ability = abilities[abilityKeys[i-1]];
+                const cooldownElement = document.getElementById(`cooldown${i}`);
+                if (!ability) continue;
+                
+                const timeSinceLastUse = now - ability.lastUsed;
+                const cooldownPercent = Math.min(100, (timeSinceLastUse / ability.cooldown) * 100);
+                cooldownElement.style.height = `${100 - cooldownPercent}%`;
+            }
+        }
+        
+        function updateBossHealth() {
+            if (!boss) return;
+            const healthPercent = (boss.health / boss.maxHealth) * 100;
+            document.getElementById('boss-bar').style.width = `${healthPercent}%`;
+            
+            let bossName = 'BOSS';
+            if (boss.type === 'wildflower') bossName = '🌸 Wild flower 🌸';
+            else if (boss.type === 'shadowT') bossName = '👤 shadowT';
+            else bossName = 'WTD BOSS';
+            
+            document.getElementById('boss-text').textContent = `${bossName}: ${Math.round(healthPercent)}%`;
+        }
+        
+        function resetComboTimer() {
+            if (comboTimeout) clearTimeout(comboTimeout);
+            comboTimeout = setTimeout(() => {
+                combo = 0;
+                updateUI();
+            }, 3000);
+        }
+        
+        function endGame() {
+            gameRunning = false;
+            cancelAnimationFrame(gameLoop);
+            alert(`游戏结束！\n最终得分: ${score}\n最高连击: ${maxCombo}\n波次: ${wave}`);
+            resetGame();
+        }
+        
+        function levelUp() {
+            lastLevelUpTime = Date.now();
+            const upgrades = [
+                { name: '攻击力提升', effect: () => player.damage += 20 },
+                { name: '射速提升', effect: () => player.shotDelay = Math.max(50, player.shotDelay - 20) },
+                { name: '生命提升', effect: () => { maxHealth += 50; health += 50; } },
+                { name: '速度提升', effect: () => player.speed += 0.5 },
+                { name: '穿透子弹', effect: () => player.pierce += 1 },
+                { name: '三连发', effect: () => player.tripleShot = true },
+                { name: '追踪子弹', effect: () => player.homing = true }
+            ];
+            
+            const upgrade = upgrades[Math.floor(Math.random() * upgrades.length)];
+            upgrade.effect();
+            
+            alert(`等级提升到 ${playerLevel}！\n获得天赋：${upgrade.name}`);
+            updateUI();
+        }
+        
+        // ==================== 敌人生成函数 ====================
+        function spawnWave() {
+            const enemyCount = Math.min(5 + wave * 2, 20);
+            for (let i = 0; i < enemyCount; i++) {
+                setTimeout(() => {
+                    if (!gameRunning) return;
+                    spawnRandomEnemy();
+                }, i * 500);
+            }
+            
+            if (wave % 3 === 0) {
+                setTimeout(spawnBoss, 3000);
+            }
+        }
+        
+        function spawnRandomEnemy() {
+            const enemyTypes = ['normal', 'fast', 'tank', 'gay0', 'sigma', 'gqh'];
+            const weights = [0.4, 0.2, 0.15, 0.1, 0.1, 0.05];
+            
+            let rand = Math.random();
+            let type = 'normal';
+            for (let i = 0; i < enemyTypes.length; i++) {
+                if (rand < weights[i]) {
+                    type = enemyTypes[i];
+                    break;
+                }
+                rand -= weights[i];
+            }
+            
+            const hpMultiplier = devManager.config.enemyHpMultiplier || 1.0;
+            const enemy = {
+                x: Math.random() < 0.5 ? -60 : canvas.width + 60,
+                y: Math.random() * canvas.height,
+                width: 0,
+                height: 0,
+                health: 0,
+                maxHealth: 0,
+                speed: 0,
+                color: '#ff5555',
+                type: type
+            };
+            
+            // 根据敌人类型设置不同属性，使用图片资源
+            switch(type) {
+                case 'normal':
+                    enemy.width = 40;
+                    enemy.height = 40;
+                    enemy.health = enemy.maxHealth = 500 * hpMultiplier;
+                    enemy.speed = 2.5;
+                    enemy.color = '#ff5555';
+                    break;
+                case 'fast':
+                    enemy.width = 35;
+                    enemy.height = 35;
+                    enemy.health = enemy.maxHealth = 300 * hpMultiplier;
+                    enemy.speed = 6;
+                    enemy.color = '#ffaa00';
+                    break;
+                case 'tank':
+                    enemy.width = 60;
+                    enemy.height = 60;
+                    enemy.health = enemy.maxHealth = 1500 * hpMultiplier;
+                    enemy.speed = 1.5;
+                    enemy.color = '#5555ff';
+                    break;
+                case 'gay0':
+                    enemy.width = 50;
+                    enemy.height = 50;
+                    enemy.health = enemy.maxHealth = 600 * hpMultiplier;
+                    enemy.speed = 4.5;
+                    enemy.color = 'rgba(255, 0, 255, 0.7)';
+                    break;
+                case 'sigma':
+                    enemy.width = 45;
+                    enemy.height = 45;
+                    enemy.health = enemy.maxHealth = 800 * hpMultiplier;
+                    enemy.speed = 4;
+                    enemy.color = 'rgba(0, 0, 0, 0.8)';
+                    break;
+                case 'gqh':
+                    enemy.width = 65;
+                    enemy.height = 65;
+                    enemy.health = enemy.maxHealth = 2000 * hpMultiplier;
+                    enemy.speed = 2.5;
+                    enemy.color = '#ff69b4';
+                    break;
+            }
+            
+            enemies.push(enemy);
+        }
+        
+        function spawnBoss() {
+            bossActive = true;
+            bossSpawnCount++;
+            const isWildFlower = (bossSpawnCount % 5 === 0);
+            
+            if (isWildFlower) {
+                boss = {
+                    x: canvas.width / 2 - 100,
+                    y: -150,
+                    width: 200,
+                    height: 200,
+                    health: 60000,
+                    maxHealth: 60000,
+                    speed: 2.0,
+                    color: '#ff69b4',
+                    type: 'wildflower',
+                    moveDirection: 1,
+                    lastShot: 0,
+                    shotDelay: 300
+                };
+            } else {
+                const isShadowT = Math.random() < 0.5;
+                boss = {
+                    x: canvas.width / 2 - 100,
+                    y: -150,
+                    width: 200,
+                    height: 200,
+                    health: 3000 + wave * 600 + wave * wave,
+                    maxHealth: 3000 + wave * 600 + wave * wave,
+                    speed: 1.5,
+                    color: isShadowT ? '#222222' : '#ff00ff',
+                    type: isShadowT ? 'shadowT' : 'normal',
+                    moveDirection: 1,
+                    lastShot: 0,
+                    shotDelay: 800
+                };
+            }
+            
+            document.getElementById('boss-ui').style.display = 'block';
+            updateBossHealth();
+        }
+        
+        function shootBoss() {
+            if (!boss) return;
+            
+            const centerX = boss.x + boss.width/2;
+            const centerY = boss.y + boss.height/2;
+            
+            if (boss.type === 'wildflower') {
+                // 野花发射尖刺
+                for (let i = 0; i < 8; i++) {
+                    const angle = (Math.PI * 2 * i / 8) + (Date.now() / 1000);
+                    enemyBullets.push({
+                        x: centerX, y: centerY,
+                        vx: Math.cos(angle) * 8,
+                        vy: Math.sin(angle) * 8,
+                        color: '#ff69b4',
+                        radius: 8,
+                        damage: 20
+                    });
+                }
+            } else {
+                // 普通BOSS发射弹幕
+                for (let i = 0; i < 12; i++) {
+                    const angle = (Math.PI * 2 * i / 12) + Date.now() / 1000;
+                    enemyBullets.push({
+                        x: centerX, y: centerY,
+                        vx: Math.cos(angle) * 6,
+                        vy: Math.sin(angle) * 6,
+                        color: boss.type === 'shadowT' ? '#666666' : '#ff00ff',
+                        radius: 6,
+                        damage: 15
+                    });
+                }
+            }
+        }
+        
+        function createEnemyDeathParticles(enemy) {
+            for (let i = 0; i < 20; i++) {
+                particles.push(new Particle(
+                    enemy.x + enemy.width/2,
+                    enemy.y + enemy.height/2,
+                    {
+                        vx: (Math.random() - 0.5) * 10,
+                        vy: (Math.random() - 0.5) * 10,
+                        color: enemy.color === 'rainbow' ? 
+                            `hsl(${Math.random() * 360}, 100%, 50%)` : enemy.color,
+                        size: Math.random() * 5 + 2,
+                        lifeDecay: 0.03
+                    }
+                ));
+            }
+        }
+        
+        // ==================== 事件监听 ====================
+        const keys = {};
+        const mouse = { x: 0, y: 0, pressed: false };
+        
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            keys[key] = true;
+            
+            // 开发者模式快捷键
+            if (key === '`' || key === '~') {
+                devManager.toggle();
+            }
+            
+            // 技能快捷键
+            if (key === 'q' || key === 'w' || key === 'e' || key === 'r' || key === 't') {
+                const skillIndex = ['q','w','e','r','t'].indexOf(key);
+                if (skillIndex !== -1) {
+                    const abilityKeys = Object.keys(abilities);
+                    const ability = abilities[abilityKeys[skillIndex]];
+                    if (Date.now() - ability.lastUsed > ability.cooldown) {
+                        ability.lastUsed = Date.now();
+                        if (key === 'w') {
+                            abilities.shield.active = true;
+                            abilities.shield.duration = 4000;
+                            setTimeout(() => {
+                                abilities.shield.active = false;
+                            }, 4000);
+                        }
+                        updateAbilityCooldowns();
+                    }
+                }
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+        
+        canvas.addEventListener('mousedown', () => {
+            mouse.pressed = true;
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            mouse.pressed = false;
+        });
+        
+        // 按钮事件
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('pause-btn').addEventListener('click', pauseGame);
+        document.getElementById('reset-btn').addEventListener('click', resetGame);
+        document.getElementById('devmode-btn').addEventListener('click', () => devManager.toggle());
+        document.getElementById('instructions-btn').addEventListener('click', () => {
+            const panel = document.getElementById('instructions-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        });
+        
+        // 技能自动释放切换
+        for (let i = 1; i <= 5; i++) {
+            document.getElementById(`auto-toggle-${i}`).addEventListener('click', (e) => {
+                e.stopPropagation();
+                const abilityKeys = Object.keys(abilities);
+                const ability = abilities[abilityKeys[i-1]];
+                ability.auto = !ability.auto;
+                document.getElementById(`auto-toggle-${i}`).classList.toggle('active', ability.auto);
+            });
+        }
+        
+        // 初始化游戏
+        resetGame();
+        
+        // 等待图片加载完成后显示加载完成信息
+function checkImagesLoaded() {
+    if (imagesLoaded === totalImages) {
+        console.log('所有图片加载完成！');
+        ctx.fillStyle = "#fff";
+        ctx.font = "24px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("KCM-挖土豆 3.0  - 图片已全部加载", canvas.width/2, canvas.height/2 - 30);
+        ctx.font = "18px Arial";
+        ctx.fillText("使用【链接内容】提供的图片资源", canvas.width/2, canvas.height/2 + 20);
+        ctx.fillText("按 ~ 键开启开发者模式", canvas.width/2, canvas.height/2 + 50);
+        
+        // 显示图片加载统计
+        ctx.fillStyle = "#00ffaa";
+        ctx.font = "16px Arial";
+        ctx.fillText(`图片加载: ${imagesLoaded}/${totalImages} 完成`, canvas.width/2, canvas.height/2 + 80);
+    } else {
+        // 显示加载进度
+        const progress = (imagesLoaded / totalImages) * 100;
+        ctx.fillStyle = "#ffaa00";
+        ctx.font = "18px Arial";
+        ctx.fillText(`正在加载图片: ${Math.round(progress)}%`, canvas.width/2, canvas.height/2 + 50);
+        
+        // 显示进度条
+        ctx.fillStyle = "#333333";
+        ctx.fillRect(canvas.width/2 - 100, canvas.height/2 + 60, 200, 20);
+        ctx.fillStyle = "#00ffff";
+        ctx.fillRect(canvas.width/2 - 100, canvas.height/2 + 60, progress * 2, 20);
+        
+        // 继续检查
+        setTimeout(checkImagesLoaded, 100);
+    }
+}
+
+// 初始显示
+ctx.fillStyle = "#050010";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.fillStyle = "#fff";
+ctx.font = "24px Arial";
+ctx.textAlign = "center";
+ctx.fillText("KCM-挖土豆 3.0  - 正在加载...", canvas.width/2, canvas.height/2 - 30);
+ctx.font = "18px Arial";
+ctx.fillText("基于【链接内容】的图片资源重构", canvas.width/2, canvas.height/2 + 20);
+
+// 开始检查图片加载状态
+setTimeout(checkImagesLoaded, 100);
+
+// 每帧更新技能冷却显示
+setInterval(updateAbilityCooldowns, 100);
+
+// ==================== 游戏初始化完成 ====================
+console.log("KCM-挖土豆 3.0 初始化完成！");
+console.log("使用的图片资源：");
+console.log("普通敌人: " + enemyImages.normal.src);
+console.log("快速敌人: " + enemyImages.fast.src);
+console.log("坦克敌人: " + enemyImages.tank.src);
+console.log("彩虹敌人: " + enemyImages.gay0.src);
+console.log("野花BOSS: " + enemyImages.wildflower.src);
+console.log("影子BOSS: " + enemyImages.shadowT.src);
+console.log("普通BOSS: " + enemyImages.bossNormal.src);
+    </script>
 </body>
 </html>
