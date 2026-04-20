@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 · Tangyixiao</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* 复用主页的全局变量与毛玻璃风格 */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-gradient: linear-gradient(145deg, #f0f5fa 0%, #e6edf4 100%);
+      --card-bg: rgba(255, 255, 255, 0.75);
+      --text-primary: #1e2f4d;
+      --text-secondary: #3a5670;
+      --accent: #3b71ca;
+      --accent-soft: #eef3fc;
+      --btn-bg: #ffffffd9;
+      --border-light: rgba(60, 80, 120, 0.08);
+    }
+    body.dark {
+      --bg-gradient: linear-gradient(145deg, #121a26 0%, #1a2536 100%);
+      --card-bg: rgba(25, 35, 50, 0.8);
+      --text-primary: #eef3fc;
+      --text-secondary: #bdd0ec;
+      --accent: #5f9eff;
+      --accent-soft: #1f3145;
+      --btn-bg: rgba(30, 45, 65, 0.8);
+      --border-light: rgba(200, 220, 255, 0.08);
+    }
+    body {
+      font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+      background: var(--bg-gradient);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: var(--text-primary);
+      transition: background 0.3s;
+    }
+    .auth-card {
+      max-width: 440px;
+      width: 100%;
+      background: var(--card-bg);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 36px;
+      padding: 36px 32px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2);
+    }
+    h2 {
+      font-weight: 650;
+      font-size: 2rem;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+    .sub {
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+    }
+    .input-group {
+      margin-bottom: 22px;
+    }
+    .input-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    .input-group input {
+      width: 100%;
+      padding: 14px 18px;
+      background: var(--btn-bg);
+      border: 1px solid var(--border-light);
+      border-radius: 40px;
+      font-size: 1rem;
+      color: var(--text-primary);
+      outline: none;
+      backdrop-filter: blur(4px);
+      transition: 0.2s;
+    }
+    .input-group input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 113, 202, 0.2);
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 40px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-top: 8px;
+    }
+    .btn-primary:hover {
+      background: #2a5bbf;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2);
+    }
+    .footer-links {
+      margin-top: 24px;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+    .footer-links a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .error-msg {
+      color: #d14545;
+      font-size: 0.9rem;
+      margin-top: 6px;
+      min-height: 20px;
+    }
+    .back-home {
+      display: inline-block;
+      margin-top: 20px;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+<div class="auth-card">
+  <h2><i class="fas fa-sign-in-alt" style="margin-right: 12px;"></i>登录</h2>
+  <div class="sub">欢迎回来，继续你的创作旅程</div>
+  <form id="loginForm">
+    <div class="input-group">
+      <label><i class="fas fa-user"></i> 用户名 / 邮箱</label>
+      <input type="text" id="loginIdentifier" placeholder="输入用户名或邮箱" required>
+    </div>
+    <div class="input-group">
+      <label><i class="fas fa-lock"></i> 密码</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" required>
+    </div>
+    <div class="error-msg" id="loginError"></div>
+    <button type="submit" class="btn-primary">登 录</button>
+  </form>
+  <div class="footer-links">
+    还没有账号？ <a href="register.html">立即注册</a>
+  </div>
+  <a href="index.html" class="back-home"><i class="fas fa-arrow-left"></i> 返回首页</a>
+</div>
+
+<script src="auth.js"></script>
+<script>
+  // 登录逻辑（auth.js 提供核心方法）
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const identifier = document.getElementById('loginIdentifier').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorDiv = document.getElementById('loginError');
+    
+    if (!identifier || !password) {
+      errorDiv.textContent = '请填写完整信息';
+      return;
+    }
+    
+    // 调用 auth.js 中的登录函数
+    const result = await Auth.login(identifier, password);
+    if (result.success) {
+      // 存储登录状态并跳转
+      localStorage.setItem('tangyixiao_user', JSON.stringify(result.user));
+      window.location.href = 'index.html';
+    } else {
+      errorDiv.textContent = result.message || '登录失败，请检查账号密码';
+    }
+  });
+</script>
+</body>
+</html>
