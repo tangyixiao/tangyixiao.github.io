@@ -1,635 +1,803 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <title>🍥 唐一潇 · 作品集</title>
-  <!-- Font Awesome 图标库 (v6 免费版) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <style>
-    /* ===== 全局变量 & 重置 ===== */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes"
+    />
+    <title>🍥 唐一潇 · 作品集</title>
+    <!-- Font Awesome 图标库 (v6 免费版) -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      /* ===== 全局变量 & 重置 ===== */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    :root {
-      --bg-gradient: linear-gradient(145deg, #f0f5fa 0%, #e6edf4 100%);
-      --card-bg: rgba(255, 255, 255, 0.75);
-      --card-border: 1px solid rgba(255, 255, 255, 0.5);
-      --text-primary: #1e2f4d;
-      --text-secondary: #3a5670;
-      --accent: #3b71ca;
-      --accent-light: #5e8de0;
-      --accent-soft: #eef3fc;
-      --btn-bg: #ffffffd9;
-      --btn-hover-bg: #ffffff;
-      --btn-shadow: 0 8px 20px -6px rgba(0, 20, 40, 0.12), 0 2px 6px rgba(0,0,0,0.02);
-      --btn-hover-shadow: 0 14px 28px -8px rgba(27, 55, 96, 0.18), 0 4px 10px rgba(0,0,0,0.05);
-      --border-light: rgba(60, 80, 120, 0.08);
-      --search-bg: rgba(255,255,255,0.6);
-      --footer-color: #5f7a9a;
-      --toggle-bg: #d9e2ec;
-      --toggle-icon: #2c3e5c;
-    }
+      :root {
+        --bg-gradient: linear-gradient(145deg, #f0f5fa 0%, #e6edf4 100%);
+        --card-bg: rgba(255, 255, 255, 0.75);
+        --card-border: 1px solid rgba(255, 255, 255, 0.5);
+        --text-primary: #1e2f4d;
+        --text-secondary: #3a5670;
+        --accent: #3b71ca;
+        --accent-light: #5e8de0;
+        --accent-soft: #eef3fc;
+        --btn-bg: #ffffffd9;
+        --btn-hover-bg: #ffffff;
+        --btn-shadow:
+          0 8px 20px -6px rgba(0, 20, 40, 0.12), 0 2px 6px rgba(0, 0, 0, 0.02);
+        --btn-hover-shadow:
+          0 14px 28px -8px rgba(27, 55, 96, 0.18),
+          0 4px 10px rgba(0, 0, 0, 0.05);
+        --border-light: rgba(60, 80, 120, 0.08);
+        --search-bg: rgba(255, 255, 255, 0.6);
+        --footer-color: #5f7a9a;
+        --toggle-bg: #d9e2ec;
+        --toggle-icon: #2c3e5c;
+      }
 
-    /* 深色模式变量 */
-    body.dark {
-      --bg-gradient: linear-gradient(145deg, #121a26 0%, #1a2536 100%);
-      --card-bg: rgba(25, 35, 50, 0.8);
-      --card-border: 1px solid rgba(255, 255, 255, 0.06);
-      --text-primary: #eef3fc;
-      --text-secondary: #bdd0ec;
-      --accent: #5f9eff;
-      --accent-light: #7aaeff;
-      --accent-soft: #1f3145;
-      --btn-bg: rgba(30, 45, 65, 0.8);
-      --btn-hover-bg: #2a405b;
-      --btn-shadow: 0 8px 18px -4px rgba(0,0,0,0.5), 0 0 0 1px rgba(100,150,255,0.1);
-      --btn-hover-shadow: 0 12px 24px -6px #0000004d, 0 0 0 1px #3b71ca33;
-      --border-light: rgba(200, 220, 255, 0.08);
-      --search-bg: rgba(20, 30, 45, 0.7);
-      --footer-color: #8da4c7;
-      --toggle-bg: #2c4058;
-      --toggle-icon: #bbd1ff;
-    }
+      /* 深色模式变量 */
+      body.dark {
+        --bg-gradient: linear-gradient(145deg, #121a26 0%, #1a2536 100%);
+        --card-bg: rgba(25, 35, 50, 0.8);
+        --card-border: 1px solid rgba(255, 255, 255, 0.06);
+        --text-primary: #eef3fc;
+        --text-secondary: #bdd0ec;
+        --accent: #5f9eff;
+        --accent-light: #7aaeff;
+        --accent-soft: #1f3145;
+        --btn-bg: rgba(30, 45, 65, 0.8);
+        --btn-hover-bg: #2a405b;
+        --btn-shadow:
+          0 8px 18px -4px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(100, 150, 255, 0.1);
+        --btn-hover-shadow: 0 12px 24px -6px #0000004d, 0 0 0 1px #3b71ca33;
+        --border-light: rgba(200, 220, 255, 0.08);
+        --search-bg: rgba(20, 30, 45, 0.7);
+        --footer-color: #8da4c7;
+        --toggle-bg: #2c4058;
+        --toggle-icon: #bbd1ff;
+      }
 
-    body {
-      font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
-      background: var(--bg-gradient);
-      min-height: 100vh;
-      padding: 24px 16px 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-primary);
-      transition: background 0.3s ease, color 0.2s;
-      line-height: 1.5;
-    }
+      body {
+        font-family:
+          "Segoe UI",
+          "Microsoft YaHei",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: var(--bg-gradient);
+        min-height: 100vh;
+        padding: 24px 16px 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-primary);
+        transition:
+          background 0.3s ease,
+          color 0.2s;
+        line-height: 1.5;
+      }
 
-    /* 主卡片 — 毛玻璃效果 */
-    .glass-panel {
-      max-width: 1300px;
-      width: 100%;
-      margin: 0 auto;
-      background: var(--card-bg);
-      backdrop-filter: blur(14px) saturate(180%);
-      -webkit-backdrop-filter: blur(14px) saturate(180%);
-      border: var(--card-border);
-      border-radius: 36px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 0 0 1px rgba(255,255,255,0.1);
-      padding: 32px 28px 28px;
-      transition: background 0.3s, border 0.2s;
-    }
+      /* 主卡片 — 毛玻璃效果 */
+      .glass-panel {
+        max-width: 1300px;
+        width: 100%;
+        margin: 0 auto;
+        background: var(--card-bg);
+        backdrop-filter: blur(14px) saturate(180%);
+        -webkit-backdrop-filter: blur(14px) saturate(180%);
+        border: var(--card-border);
+        border-radius: 36px;
+        box-shadow:
+          0 25px 50px -12px rgba(0, 0, 0, 0.25),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+        padding: 32px 28px 28px;
+        transition:
+          background 0.3s,
+          border 0.2s;
+      }
 
-    /* 头部区域：头像＋标题＋主题切换 */
-    .profile-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
-      margin-bottom: 20px;
-    }
+      /* 头部区域：头像＋标题＋主题切换 */
+      .profile-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
 
-    .title-section {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
+      .title-section {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
 
-    .avatar-badge {
-      width: 58px;
-      height: 58px;
-      background: linear-gradient(135deg, #3b71ca, #7aa5f5);
-      border-radius: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 12px 18px -8px rgba(27, 55, 96, 0.3);
-      color: white;
-      font-size: 28px;
-      font-weight: 500;
-      border: 2px solid rgba(255,255,255,0.5);
-      transition: transform 0.2s;
-    }
-    .avatar-badge i {
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-    }
+      .avatar-badge {
+        width: 58px;
+        height: 58px;
+        background: linear-gradient(135deg, #3b71ca, #7aa5f5);
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 12px 18px -8px rgba(27, 55, 96, 0.3);
+        color: white;
+        font-size: 28px;
+        font-weight: 500;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        transition: transform 0.2s;
+      }
+      .avatar-badge i {
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      }
 
-    h1 {
-      font-weight: 650;
-      font-size: 2.2rem;
-      letter-spacing: -0.01em;
-      background: linear-gradient(145deg, var(--text-primary), var(--accent));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      margin: 0;
-      line-height: 1.2;
-    }
-    .subhead {
-      color: var(--text-secondary);
-      margin-top: 4px;
-      font-weight: 400;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+      h1 {
+        font-weight: 650;
+        font-size: 2.2rem;
+        letter-spacing: -0.01em;
+        background: linear-gradient(145deg, var(--text-primary), var(--accent));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        margin: 0;
+        line-height: 1.2;
+      }
+      .subhead {
+        color: var(--text-secondary);
+        margin-top: 4px;
+        font-weight: 400;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
 
-    /* 工具条：主题切换 + 搜索 */
-    .toolbar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
+      /* 工具条：主题切换 + 搜索 */
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
 
-    .theme-toggle {
-      background: var(--toggle-bg);
-      border: none;
-      border-radius: 48px;
-      width: 48px;
-      height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--toggle-icon);
-      font-size: 22px;
-      cursor: pointer;
-      backdrop-filter: blur(5px);
-      box-shadow: var(--btn-shadow);
-      transition: all 0.25s;
-      border: 1px solid var(--border-light);
-    }
-    .theme-toggle:hover {
-      transform: scale(1.05);
-      background: var(--accent-soft);
-      box-shadow: var(--btn-hover-shadow);
-    }
+      .theme-toggle {
+        background: var(--toggle-bg);
+        border: none;
+        border-radius: 48px;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--toggle-icon);
+        font-size: 22px;
+        cursor: pointer;
+        backdrop-filter: blur(5px);
+        box-shadow: var(--btn-shadow);
+        transition: all 0.25s;
+        border: 1px solid var(--border-light);
+      }
+      .theme-toggle:hover {
+        transform: scale(1.05);
+        background: var(--accent-soft);
+        box-shadow: var(--btn-hover-shadow);
+      }
 
-    .search-wrapper {
-      position: relative;
-      min-width: 240px;
-    }
-    .search-wrapper i {
-      position: absolute;
-      left: 18px;
-      top: 14px;
-      color: var(--text-secondary);
-      font-size: 1rem;
-      opacity: 0.7;
-    }
-    #searchInput {
-      width: 100%;
-      padding: 14px 18px 14px 48px;
-      background: var(--search-bg);
-      border: 1px solid var(--border-light);
-      border-radius: 60px;
-      font-size: 0.95rem;
-      color: var(--text-primary);
-      outline: none;
-      backdrop-filter: blur(5px);
-      box-shadow: var(--btn-shadow);
-      transition: all 0.2s;
-    }
-    #searchInput:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(59, 113, 202, 0.2), var(--btn-shadow);
-    }
-    #searchInput::placeholder {
-      color: var(--text-secondary);
-      opacity: 0.6;
-      font-weight: 300;
-    }
+      .search-wrapper {
+        position: relative;
+        min-width: 240px;
+      }
+      .search-wrapper i {
+        position: absolute;
+        left: 18px;
+        top: 14px;
+        color: var(--text-secondary);
+        font-size: 1rem;
+        opacity: 0.7;
+      }
+      #searchInput {
+        width: 100%;
+        padding: 14px 18px 14px 48px;
+        background: var(--search-bg);
+        border: 1px solid var(--border-light);
+        border-radius: 60px;
+        font-size: 0.95rem;
+        color: var(--text-primary);
+        outline: none;
+        backdrop-filter: blur(5px);
+        box-shadow: var(--btn-shadow);
+        transition: all 0.2s;
+      }
+      #searchInput:focus {
+        border-color: var(--accent);
+        box-shadow:
+          0 0 0 3px rgba(59, 113, 202, 0.2),
+          var(--btn-shadow);
+      }
+      #searchInput::placeholder {
+        color: var(--text-secondary);
+        opacity: 0.6;
+        font-weight: 300;
+      }
 
-    /* 简介卡片 */
-    .intro-card {
-      background: var(--accent-soft);
-      border-radius: 28px;
-      padding: 16px 24px;
-      margin: 20px 0 28px;
-      border: 1px solid var(--border-light);
-      backdrop-filter: blur(4px);
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .intro-card i {
-      font-size: 1.8rem;
-      color: var(--accent);
-      opacity: 0.8;
-    }
-    .intro-card span {
-      font-size: 1.05rem;
-    }
+      /* 简介卡片 */
+      .intro-card {
+        background: var(--accent-soft);
+        border-radius: 28px;
+        padding: 16px 24px;
+        margin: 20px 0 28px;
+        border: 1px solid var(--border-light);
+        backdrop-filter: blur(4px);
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .intro-card i {
+        font-size: 1.8rem;
+        color: var(--accent);
+        opacity: 0.8;
+      }
+      .intro-card span {
+        font-size: 1.05rem;
+      }
 
-    /* 分组标题 */
-    .section-title {
-      display: flex;
-      align-items: baseline;
-      margin: 32px 0 18px 6px;
-    }
-    .section-title h2 {
-      font-weight: 600;
-      font-size: 1.5rem;
-      letter-spacing: -0.2px;
-      color: var(--text-primary);
-      border-left: 6px solid var(--accent);
-      padding-left: 18px;
-    }
-    .section-title .badge-count {
-      margin-left: 14px;
-      background: var(--accent-soft);
-      padding: 4px 12px;
-      border-radius: 40px;
-      font-size: 0.9rem;
-      color: var(--accent);
-      font-weight: 500;
-      border: 1px solid var(--border-light);
-    }
+      /* 分组标题 */
+      .section-title {
+        display: flex;
+        align-items: baseline;
+        margin: 32px 0 18px 6px;
+      }
+      .section-title h2 {
+        font-weight: 600;
+        font-size: 1.5rem;
+        letter-spacing: -0.2px;
+        color: var(--text-primary);
+        border-left: 6px solid var(--accent);
+        padding-left: 18px;
+      }
+      .section-title .badge-count {
+        margin-left: 14px;
+        background: var(--accent-soft);
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 0.9rem;
+        color: var(--accent);
+        font-weight: 500;
+        border: 1px solid var(--border-light);
+      }
 
-    /* 按钮网格 — 卡片式布局 */
-    .btn-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 14px;
-      margin-bottom: 8px;
-    }
+      /* 按钮网格 — 卡片式布局 */
+      .btn-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 14px;
+        margin-bottom: 8px;
+      }
 
-    /* 按钮本身 — 精致悬浮 */
-    .btn {
-      background: var(--btn-bg);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-      border: 1px solid var(--border-light);
-      border-radius: 28px;
-      padding: 14px 16px;
-      color: var(--text-primary);
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 0.95rem;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: var(--btn-shadow);
-      transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
-      word-break: break-word;
-      line-height: 1.3;
-    }
-    .btn i {
-      font-size: 1.3rem;
-      min-width: 24px;
-      color: var(--accent);
-      transition: transform 0.15s;
-    }
-    .btn:hover {
-      background: var(--btn-hover-bg);
-      transform: translateY(-3px);
-      box-shadow: var(--btn-hover-shadow);
-      border-color: var(--accent-light);
-    }
-    .btn:hover i {
-      transform: scale(1.05);
-    }
+      /* 按钮本身 — 精致悬浮 */
+      .btn {
+        background: var(--btn-bg);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid var(--border-light);
+        border-radius: 28px;
+        padding: 14px 16px;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: var(--btn-shadow);
+        transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+        word-break: break-word;
+        line-height: 1.3;
+      }
+      .btn i {
+        font-size: 1.3rem;
+        min-width: 24px;
+        color: var(--accent);
+        transition: transform 0.15s;
+      }
+      .btn:hover {
+        background: var(--btn-hover-bg);
+        transform: translateY(-3px);
+        box-shadow: var(--btn-hover-shadow);
+        border-color: var(--accent-light);
+      }
+      .btn:hover i {
+        transform: scale(1.05);
+      }
 
-    /* 某些长按钮特殊处理 */
-    .btn.long-text {
-      font-size: 0.88rem;
-    }
+      /* 某些长按钮特殊处理 */
+      .btn.long-text {
+        font-size: 0.88rem;
+      }
 
-    /* 无结果提示 */
-    .no-result {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 32px 20px;
-      color: var(--text-secondary);
-      font-style: italic;
-      background: var(--accent-soft);
-      border-radius: 48px;
-      border: 1px dashed var(--border-light);
-      margin-top: 8px;
-    }
+      /* 无结果提示 */
+      .no-result {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 32px 20px;
+        color: var(--text-secondary);
+        font-style: italic;
+        background: var(--accent-soft);
+        border-radius: 48px;
+        border: 1px dashed var(--border-light);
+        margin-top: 8px;
+      }
 
-    /* 页脚 */
-    .footer {
-      margin-top: 36px;
-      padding-top: 22px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-      color: var(--footer-color);
-      border-top: 1px solid var(--border-light);
-      font-size: 0.9rem;
-    }
-    .back-to-top {
-      background: none;
-      border: 1px solid var(--border-light);
-      border-radius: 40px;
-      padding: 8px 18px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      backdrop-filter: blur(4px);
-      background: var(--btn-bg);
-      font-size: 0.9rem;
-      transition: 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .back-to-top:hover {
-      background: var(--btn-hover-bg);
-      color: var(--accent);
-      border-color: var(--accent);
-    }
+      /* 页脚 */
+      .footer {
+        margin-top: 36px;
+        padding-top: 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        color: var(--footer-color);
+        border-top: 1px solid var(--border-light);
+        font-size: 0.9rem;
+      }
+      .back-to-top {
+        background: none;
+        border: 1px solid var(--border-light);
+        border-radius: 40px;
+        padding: 8px 18px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+        background: var(--btn-bg);
+        font-size: 0.9rem;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .back-to-top:hover {
+        background: var(--btn-hover-bg);
+        color: var(--accent);
+        border-color: var(--accent);
+      }
 
-    /* 响应式微调 */
-    @media (max-width: 640px) {
-      .glass-panel { padding: 22px 16px; }
-      h1 { font-size: 1.8rem; }
-      .btn-grid { grid-template-columns: repeat(2, 1fr); }
-      .toolbar { width: 100%; }
-      .search-wrapper { flex: 1; min-width: 160px; }
-      .profile-row { flex-direction: column; align-items: flex-start; }
-    }
+      /* 响应式微调 */
+      @media (max-width: 640px) {
+        .glass-panel {
+          padding: 22px 16px;
+        }
+        h1 {
+          font-size: 1.8rem;
+        }
+        .btn-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .toolbar {
+          width: 100%;
+        }
+        .search-wrapper {
+          flex: 1;
+          min-width: 160px;
+        }
+        .profile-row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
 
-    @media (max-width: 420px) {
-      .btn-grid { grid-template-columns: 1fr; }
-    }
+      @media (max-width: 420px) {
+        .btn-grid {
+          grid-template-columns: 1fr;
+        }
+      }
 
-    /* 过滤隐藏 */
-    .btn.hidden-by-filter {
-      display: none !important;
-    }
-  </style>
-</head>
-<body>
-<div class="glass-panel">
-  
-  <!-- 头部：头像 + 标题 + 工具 -->
-  <div class="profile-row">
-    <div class="title-section">
-      <div class="avatar-badge">
-        <i class="fas fa-code"></i>
-      </div>
-      <div>
-        <h1>Tangyixiao</h1>
-        <div class="subhead">
-          <i class="fas fa-map-pin" style="font-size: 0.9rem;"></i> 
-          <span>github.io · 游戏 & 算法工坊</span>
+      /* 过滤隐藏 */
+      .btn.hidden-by-filter {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="glass-panel">
+      <!-- 头部：头像 + 标题 + 工具 -->
+      <div class="profile-row">
+        <div class="title-section">
+          <div class="avatar-badge">
+            <i class="fas fa-code"></i>
+          </div>
+          <div>
+            <h1>Tangyixiao</h1>
+            <div class="subhead">
+              <i class="fas fa-map-pin" style="font-size: 0.9rem"></i>
+              <span>github.io · 游戏 & 算法工坊</span>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="search-wrapper">
+            <i class="fas fa-search"></i>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="搜索项目… (支持拼音/英文)"
+              autocomplete="off"
+            />
+          </div>
+          <button
+            class="theme-toggle"
+            id="themeToggle"
+            aria-label="切换深色模式"
+          >
+            <i class="fas fa-moon"></i>
+          </button>
         </div>
       </div>
-    </div>
-    <div class="toolbar">
-      <div class="search-wrapper">
-        <i class="fas fa-search"></i>
-        <input type="text" id="searchInput" placeholder="搜索项目… (支持拼音/英文)" autocomplete="off">
+
+      <!-- 简短介绍卡片 -->
+      <div class="intro-card">
+        <i class="fas fa-gamepad"></i>
+        <span
+          >欢迎来到我的作品集！ 包含 OI Wiki、KCM系列、射击/身法游戏 …
+          点击卡片即可体验。</span
+        >
       </div>
-      <button class="theme-toggle" id="themeToggle" aria-label="切换深色模式">
-        <i class="fas fa-moon"></i>
-      </button>
+
+      <!-- ========= 分组1: 个人档案 & 文档 ========= -->
+      <div class="section-title">
+        <h2>📌 个人·文档</h2>
+        <span class="badge-count">核心入口</span>
+      </div>
+      <div class="btn-grid" id="group-social">
+        <a
+          href="./OI-wiki/site/index.html"
+          class="btn"
+          data-title="OI Wiki 文档"
+          ><i class="fas fa-book-open"></i> OI Wiki 文档</a
+        >
+        <a
+          href="https://github.com/Tangyixiao"
+          class="btn"
+          target="_blank"
+          data-title="GitHub 主页"
+          ><i class="fab fa-github"></i> GitHub 主页</a
+        >
+        <a
+          href="https://www.zhihu.com/people/lcmypu"
+          class="btn"
+          target="_blank"
+          data-title="知乎主页"
+          ><i class="fab fa-zhihu"></i> 知乎主页</a
+        >
+        <a
+          href="https://www.luogu.com.cn/user/1222486"
+          class="btn"
+          target="_blank"
+          data-title="洛谷主页"
+          ><i class="fas fa-laptop-code"></i> 洛谷主页</a
+        >
+      </div>
+
+      <!-- ========= 分组2: KCM 挖土豆系列 ========= -->
+      <div class="section-title">
+        <h2>🥔 KCM · 挖土豆宇宙</h2>
+        <span class="badge-count">经典系列</span>
+      </div>
+      <div class="btn-grid" id="group-potato">
+        <a
+          href="./KCM系列/KCM挖土豆2.0.html"
+          class="btn"
+          data-title="KCM挖土豆2.0"
+          ><i class="fas fa-seedling"></i> KCM挖土豆 2.0</a
+        >
+        <a
+          href="./KCM系列/KCM挖土豆3.0.html"
+          class="btn"
+          data-title="KCM挖土豆3.0"
+          ><i class="fas fa-seedling"></i> KCM挖土豆 3.0</a
+        >
+        <a
+          href="./KCM系列/KCM-挖土豆 4.3.html"
+          class="btn"
+          data-title="KCM挖土豆4.3"
+          ><i class="fas fa-seedling"></i> KCM挖土豆 4.3</a
+        >
+        <a
+          href="./KCM系列/KCM-挖土豆 5.0.html"
+          class="btn long-text"
+          data-title="KCM挖土豆5.0 5D5F"
+          ><i class="fas fa-key"></i> KCM挖土豆 5.0
+          <span style="opacity: 0.8; font-size: 0.8rem">(序列号内置)</span></a
+        >
+      </div>
+
+      <!-- ========= 分组3: 射击 · 对战 · 刀战 ========= -->
+      <div class="section-title">
+        <h2>🔫 射击 · 竞技场</h2>
+        <span class="badge-count">wtd / CS / 刀战</span>
+      </div>
+      <div class="btn-grid" id="group-shooter">
+        <a href="./KCM系列/wtd.html" class="btn" data-title="wtd射击游戏"
+          ><i class="fas fa-water"></i> wtd射击游戏</a
+        >
+        <a href="./KCM系列/KCM CS 1.0.html" class="btn" data-title="KCM CS 1.0"
+          ><i class="fas fa-crosshairs"></i> KCM CS 1.0</a
+        >
+        <a href="./KCM系列/KCM CS 2.0.html" class="btn" data-title="KCM CS 2.0"
+          ><i class="fas fa-crosshairs"></i> KCM CS 2.0</a
+        >
+        <a href="./KCM系列/KCM刀战 1.0.html" class="btn" data-title="KCM刀战1.0"
+          ><i class="fas fa-khanda"></i> KCM 刀战 1.0</a
+        >
+        <a
+          href="./KCM系列/wtd killer（浅色版+开发者模式）.html"
+          class="btn"
+          data-title="wtd killer 浅色版"
+          ><i class="fas fa-skull"></i> wtd killer (浅色+开发者)</a
+        >
+        <a
+          href="./KCM系列/wtd killer 换新版1.0.html"
+          class="btn"
+          data-title="wtd killer 换新1.0"
+          ><i class="fas fa-skull"></i> wtd killer 换新1.0</a
+        >
+        <a
+          href="./KCM系列/wtd killer 换新版 3.0.html"
+          class="btn"
+          data-title="wtd killer 换新3.0"
+          ><i class="fas fa-skull"></i> wtd killer 换新3.0</a
+        >
+      </div>
+
+      <!-- ========= 分组4: 身法 · 东方 · Galgame ========= -->
+      <div class="section-title">
+        <h2>🌀 极限 · 异想</h2>
+        <span class="badge-count">身法/东方/洛少</span>
+      </div>
+      <div class="btn-grid" id="group-extra">
+        <a href="./极限身法/极限身法.html" class="btn" data-title="极限身法"
+          ><i class="fas fa-running"></i> 极限身法</a
+        >
+        <a
+          href="./极限身法/极限身法（无bug版）.html"
+          class="btn"
+          data-title="极限身法无bug版"
+          ><i class="fas fa-shield-alt"></i> 极限身法 (无bug版)</a
+        >
+        <a href="./KCM系列/东方.html" class="btn" data-title="东方Project"
+          ><i class="fas fa-feather-alt"></i> 东方 Project</a
+        >
+        <a href="./luoshao/luoshao.html" class="btn" data-title="洛少Galgame"
+          ><i class="fas fa-heart"></i> 洛少 Galgame</a
+        >
+      </div>
+
+      <!-- 无搜索结果占位 (默认隐藏) -->
+      <div id="noResultMsg" class="no-result" style="display: none">
+        <i
+          class="fas fa-search-minus"
+          style="
+            font-size: 2rem;
+            opacity: 0.6;
+            margin-bottom: 10px;
+            display: block;
+          "
+        ></i>
+        没有找到匹配的项目，试试其他关键词～
+      </div>
+
+      <!-- 页脚：更新时间 + 回到顶部 -->
+      <div class="footer">
+        <div style="display: flex; gap: 12px; align-items: center">
+          <i class="far fa-calendar-alt"></i>
+          <span>最后更新：2026-02-11 · 持续迭代中</span>
+        </div>
+        <button class="back-to-top" id="backToTopBtn">
+          <i class="fas fa-arrow-up"></i> 返回顶部
+        </button>
+      </div>
     </div>
-  </div>
 
-  <!-- 简短介绍卡片 -->
-  <div class="intro-card">
-    <i class="fas fa-gamepad"></i>
-    <span>欢迎来到我的作品集！ 包含 OI Wiki、KCM系列、射击/身法游戏 … 点击卡片即可体验。</span>
-  </div>
+    <script>
+      (function () {
+        "use strict";
 
-  <!-- ========= 分组1: 个人档案 & 文档 ========= -->
-  <div class="section-title">
-    <h2>📌 个人·文档</h2>
-    <span class="badge-count">核心入口</span>
-  </div>
-  <div class="btn-grid" id="group-social">
-    <a href="./OI-wiki/site/index.html" class="btn" data-title="OI Wiki 文档"><i class="fas fa-book-open"></i> OI Wiki 文档</a>
-    <a href="https://github.com/Tangyixiao" class="btn" target="_blank" data-title="GitHub 主页"><i class="fab fa-github"></i> GitHub 主页</a>
-    <a href="https://www.zhihu.com/people/lcmypu" class="btn" target="_blank" data-title="知乎主页"><i class="fab fa-zhihu"></i> 知乎主页</a>
-    <a href="https://www.luogu.com.cn/user/1222486" class="btn" target="_blank" data-title="洛谷主页"><i class="fas fa-laptop-code"></i> 洛谷主页</a>
-  </div>
+        // ---------- 主题切换 (深色模式) ----------
+        const themeToggle = document.getElementById("themeToggle");
+        const body = document.body;
+        const icon = themeToggle.querySelector("i");
 
-  <!-- ========= 分组2: KCM 挖土豆系列 ========= -->
-  <div class="section-title">
-    <h2>🥔 KCM · 挖土豆宇宙</h2>
-    <span class="badge-count">经典系列</span>
-  </div>
-  <div class="btn-grid" id="group-potato">
-    <a href="./KCM系列/KCM挖土豆2.0.html" class="btn" data-title="KCM挖土豆2.0"><i class="fas fa-seedling"></i> KCM挖土豆 2.0</a>
-    <a href="./KCM系列/KCM挖土豆3.0.html" class="btn" data-title="KCM挖土豆3.0"><i class="fas fa-seedling"></i> KCM挖土豆 3.0</a>
-    <a href="./KCM系列/KCM-挖土豆 4.3.html" class="btn" data-title="KCM挖土豆4.3"><i class="fas fa-seedling"></i> KCM挖土豆 4.3</a>
-    <a href="./KCM系列/KCM-挖土豆 5.0.html" class="btn long-text" data-title="KCM挖土豆5.0 5D5F"><i class="fas fa-key"></i> KCM挖土豆 5.0 <span style="opacity:0.8; font-size:0.8rem;">(序列号内置)</span></a>
-  </div>
-
-  <!-- ========= 分组3: 射击 · 对战 · 刀战 ========= -->
-  <div class="section-title">
-    <h2>🔫 射击 · 竞技场</h2>
-    <span class="badge-count">wtd / CS / 刀战</span>
-  </div>
-  <div class="btn-grid" id="group-shooter">
-    <a href="./KCM系列/wtd.html" class="btn" data-title="wtd射击游戏"><i class="fas fa-water"></i> wtd射击游戏</a>
-    <a href="./KCM系列/KCM CS 1.0.html" class="btn" data-title="KCM CS 1.0"><i class="fas fa-crosshairs"></i> KCM CS 1.0</a>
-    <a href="./KCM系列/KCM CS 2.0.html" class="btn" data-title="KCM CS 2.0"><i class="fas fa-crosshairs"></i> KCM CS 2.0</a>
-    <a href="./KCM系列/KCM刀战 1.0.html" class="btn" data-title="KCM刀战1.0"><i class="fas fa-khanda"></i> KCM 刀战 1.0</a>
-    <a href="./KCM系列/wtd killer（浅色版+开发者模式）.html" class="btn" data-title="wtd killer 浅色版"><i class="fas fa-skull"></i> wtd killer (浅色+开发者)</a>
-    <a href="./KCM系列/wtd killer 换新版1.0.html" class="btn" data-title="wtd killer 换新1.0"><i class="fas fa-skull"></i> wtd killer 换新1.0</a>
-    <a href="./KCM系列/wtd killer 换新版 3.0.html" class="btn" data-title="wtd killer 换新3.0"><i class="fas fa-skull"></i> wtd killer 换新3.0</a>
-  </div>
-
-  <!-- ========= 分组4: 身法 · 东方 · Galgame ========= -->
-  <div class="section-title">
-    <h2>🌀 极限 · 异想</h2>
-    <span class="badge-count">身法/东方/洛少</span>
-  </div>
-  <div class="btn-grid" id="group-extra">
-    <a href="./极限身法/极限身法.html" class="btn" data-title="极限身法"><i class="fas fa-running"></i> 极限身法</a>
-    <a href="./极限身法/极限身法（无bug版）.html" class="btn" data-title="极限身法无bug版"><i class="fas fa-shield-alt"></i> 极限身法 (无bug版)</a>
-    <a href="./KCM系列/东方.html" class="btn" data-title="东方Project"><i class="fas fa-feather-alt"></i> 东方 Project</a>
-    <a href="./luoshao/luoshao.html" class="btn" data-title="洛少Galgame"><i class="fas fa-heart"></i> 洛少 Galgame</a>
-  </div>
-
-  <!-- 无搜索结果占位 (默认隐藏) -->
-  <div id="noResultMsg" class="no-result" style="display: none;">
-    <i class="fas fa-search-minus" style="font-size: 2rem; opacity: 0.6; margin-bottom: 10px; display: block;"></i>
-    没有找到匹配的项目，试试其他关键词～
-  </div>
-
-  <!-- 页脚：更新时间 + 回到顶部 -->
-  <div class="footer">
-    <div style="display: flex; gap: 12px; align-items: center;">
-      <i class="far fa-calendar-alt"></i> 
-      <span>最后更新：2026-02-11 · 持续迭代中</span>
-    </div>
-    <button class="back-to-top" id="backToTopBtn">
-      <i class="fas fa-arrow-up"></i> 返回顶部
-    </button>
-  </div>
-</div>
-
-<script>
-  (function() {
-    "use strict";
-
-    // ---------- 主题切换 (深色模式) ----------
-    const themeToggle = document.getElementById('themeToggle');
-    const body = document.body;
-    const icon = themeToggle.querySelector('i');
-
-    // 检查本地存储
-    const savedTheme = localStorage.getItem('tangyixiao-theme');
-    if (savedTheme === 'dark') {
-      body.classList.add('dark');
-      icon.classList.remove('fa-moon');
-      icon.classList.add('fa-sun');
-    } else {
-      body.classList.remove('dark');
-      icon.classList.remove('fa-sun');
-      icon.classList.add('fa-moon');
-    }
-
-    themeToggle.addEventListener('click', () => {
-      body.classList.toggle('dark');
-      const isDark = body.classList.contains('dark');
-      if (isDark) {
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
-        localStorage.setItem('tangyixiao-theme', 'dark');
-      } else {
-        icon.classList.remove('fa-sun');
-        icon.classList.add('fa-moon');
-        localStorage.setItem('tangyixiao-theme', 'light');
-      }
-    });
-
-    // ---------- 实时搜索过滤 (功能拓展) ----------
-    const searchInput = document.getElementById('searchInput');
-    const allButtons = document.querySelectorAll('.btn');
-    const noResultMsg = document.getElementById('noResultMsg');
-    
-    // 为每个按钮预先存储搜索文本 (data-title 或 innerText)
-    // 并且保留原始显示状态
-    function getSearchableText(btn) {
-      // 优先使用 data-title (可自定义), 否则使用 innerText
-      return (btn.getAttribute('data-title') || btn.innerText || '').toLowerCase();
-    }
-
-    function filterButtons() {
-      const query = searchInput.value.trim().toLowerCase();
-      let visibleCount = 0;
-
-      allButtons.forEach(btn => {
-        const text = getSearchableText(btn);
-        if (query === '' || text.includes(query)) {
-          btn.classList.remove('hidden-by-filter');
-          visibleCount++;
+        // 检查本地存储
+        const savedTheme = localStorage.getItem("tangyixiao-theme");
+        if (savedTheme === "dark") {
+          body.classList.add("dark");
+          icon.classList.remove("fa-moon");
+          icon.classList.add("fa-sun");
         } else {
-          btn.classList.add('hidden-by-filter');
+          body.classList.remove("dark");
+          icon.classList.remove("fa-sun");
+          icon.classList.add("fa-moon");
         }
-      });
 
-      // 显示/隐藏“无结果”提示
-      if (visibleCount === 0 && query !== '') {
-        noResultMsg.style.display = 'block';
-      } else {
-        noResultMsg.style.display = 'none';
-      }
-
-      // 可选：折叠空分组？这里不做复杂处理，保留分组标题。
-    }
-
-    searchInput.addEventListener('input', filterButtons);
-    
-    // 如果希望搜索框支持清空 (Escape 键)
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        searchInput.value = '';
-        filterButtons();
-        searchInput.blur();
-      }
-    });
-
-    // 初始化: 确保所有按钮可见 (无hidden类)
-    // 但以防万一
-
-    // ---------- 回到顶部 (平滑滚动) ----------
-    const backBtn = document.getElementById('backToTopBtn');
-    backBtn.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-
-    // 小优化：对于长按钮序列号显示微调 (已经处理)
-    // 附加功能：点击按钮时复制序列号？ 不需要，但可保留原链接。
-    
-    // 动态计算每个分组的项目数？不需要，手动已写。
-    
-    // 附加: 给所有外部链接增加 rel 属性 (安全)
-    document.querySelectorAll('a[target="_blank"]').forEach(link => {
-      link.setAttribute('rel', 'noopener noreferrer');
-    });
-
-    // 如果用户想用拼音搜索，可以稍微辅助，但 innerText 已经包括中文，可以。
-    // 为了更好体验，可以手动为某些按钮增加 data-title 英文拼音 (已在html添加部分)
-    // 但默认已经包含中文。
-
-    // 手动补一些 data-title 让搜索更友好 (运行后补)
-    const btnMap = {
-      'OI Wiki 文档': 'OI Wiki docs',
-      'GitHub 主页': 'github',
-      '知乎主页': 'zhihu',
-      '洛谷主页': 'luogu',
-      'KCM挖土豆 2.0': 'potato 2.0',
-      'KCM挖土豆 3.0': 'potato 3.0',
-      'KCM挖土豆 4.3': 'potato 4.3',
-      'KCM挖土豆 5.0': 'potato 5.0 序列号',
-      'wtd射击游戏': 'wtd shooter',
-      'KCM CS 1.0': 'counter strike 1.0',
-      'KCM CS 2.0': 'counter strike 2.0',
-      'KCM 刀战 1.0': 'knife battle',
-      'wtd killer (浅色+开发者)': 'wtd killer light dev',
-      'wtd killer 换新1.0': 'wtd killer new 1.0',
-      'wtd killer 换新3.0': 'wtd killer new 3.0',
-      '极限身法': 'movement parkour',
-      '极限身法 (无bug版)': 'movement no bug',
-      '东方 Project': 'touhou',
-      '洛少 Galgame': 'luoshao gal'
-    };
-    // 为匹配的按钮设置 data-title (如果不为空)
-    allButtons.forEach(btn => {
-      const rawText = btn.innerText.trim();
-      // 简化匹配
-      for (let [key, val] of Object.entries(btnMap)) {
-        if (rawText.includes(key) || key.includes(rawText.substring(0,8))) {
-          if (!btn.hasAttribute('data-title')) {
-            btn.setAttribute('data-title', rawText + ' ' + val);
+        themeToggle.addEventListener("click", () => {
+          body.classList.toggle("dark");
+          const isDark = body.classList.contains("dark");
+          if (isDark) {
+            icon.classList.remove("fa-moon");
+            icon.classList.add("fa-sun");
+            localStorage.setItem("tangyixiao-theme", "dark");
+          } else {
+            icon.classList.remove("fa-sun");
+            icon.classList.add("fa-moon");
+            localStorage.setItem("tangyixiao-theme", "light");
           }
-          break;
+        });
+
+        // ---------- 实时搜索过滤 (功能拓展) ----------
+        const searchInput = document.getElementById("searchInput");
+        const allButtons = document.querySelectorAll(".btn");
+        const noResultMsg = document.getElementById("noResultMsg");
+
+        // 为每个按钮预先存储搜索文本 (data-title 或 innerText)
+        // 并且保留原始显示状态
+        function getSearchableText(btn) {
+          // 优先使用 data-title (可自定义), 否则使用 innerText
+          return (
+            btn.getAttribute("data-title") ||
+            btn.innerText ||
+            ""
+          ).toLowerCase();
         }
-      }
-      // 保证每个按钮都有 data-title
-      if (!btn.hasAttribute('data-title')) {
-        btn.setAttribute('data-title', rawText);
-      }
-    });
 
-    // 美化：分组标题旁显示计数（动态，可选）
-    function updateGroupCounts() {
-      // 可以不用，但我们可以加一点小彩蛋
-    }
-    // 启动时调用一次过滤 (清空状态)
-    filterButtons();
+        function filterButtons() {
+          const query = searchInput.value.trim().toLowerCase();
+          let visibleCount = 0;
 
-    // 深色模式下图标切换已经ok
-    
-  })();
-</script>
+          allButtons.forEach((btn) => {
+            const text = getSearchableText(btn);
+            if (query === "" || text.includes(query)) {
+              btn.classList.remove("hidden-by-filter");
+              visibleCount++;
+            } else {
+              btn.classList.add("hidden-by-filter");
+            }
+          });
 
-<!-- 保证所有链接均可访问，无遗漏 -->
-<!-- 附加手动修正：序列号按钮显示优化 -->
-</body>
+          // 显示/隐藏“无结果”提示
+          if (visibleCount === 0 && query !== "") {
+            noResultMsg.style.display = "block";
+          } else {
+            noResultMsg.style.display = "none";
+          }
+
+          // 可选：折叠空分组？这里不做复杂处理，保留分组标题。
+        }
+
+        searchInput.addEventListener("input", filterButtons);
+
+        // 如果希望搜索框支持清空 (Escape 键)
+        searchInput.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            searchInput.value = "";
+            filterButtons();
+            searchInput.blur();
+          }
+        });
+
+        // 初始化: 确保所有按钮可见 (无hidden类)
+        // 但以防万一
+
+        // ---------- 回到顶部 (平滑滚动) ----------
+        const backBtn = document.getElementById("backToTopBtn");
+        backBtn.addEventListener("click", () => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+
+        // 小优化：对于长按钮序列号显示微调 (已经处理)
+        // 附加功能：点击按钮时复制序列号？ 不需要，但可保留原链接。
+
+        // 动态计算每个分组的项目数？不需要，手动已写。
+
+        // 附加: 给所有外部链接增加 rel 属性 (安全)
+        document.querySelectorAll('a[target="_blank"]').forEach((link) => {
+          link.setAttribute("rel", "noopener noreferrer");
+        });
+
+        // 如果用户想用拼音搜索，可以稍微辅助，但 innerText 已经包括中文，可以。
+        // 为了更好体验，可以手动为某些按钮增加 data-title 英文拼音 (已在html添加部分)
+        // 但默认已经包含中文。
+
+        // 手动补一些 data-title 让搜索更友好 (运行后补)
+        const btnMap = {
+          "OI Wiki 文档": "OI Wiki docs",
+          "GitHub 主页": "github",
+          知乎主页: "zhihu",
+          洛谷主页: "luogu",
+          "KCM挖土豆 2.0": "potato 2.0",
+          "KCM挖土豆 3.0": "potato 3.0",
+          "KCM挖土豆 4.3": "potato 4.3",
+          "KCM挖土豆 5.0": "potato 5.0 序列号",
+          wtd射击游戏: "wtd shooter",
+          "KCM CS 1.0": "counter strike 1.0",
+          "KCM CS 2.0": "counter strike 2.0",
+          "KCM 刀战 1.0": "knife battle",
+          "wtd killer (浅色+开发者)": "wtd killer light dev",
+          "wtd killer 换新1.0": "wtd killer new 1.0",
+          "wtd killer 换新3.0": "wtd killer new 3.0",
+          极限身法: "movement parkour",
+          "极限身法 (无bug版)": "movement no bug",
+          "东方 Project": "touhou",
+          "洛少 Galgame": "luoshao gal",
+        };
+        // 为匹配的按钮设置 data-title (如果不为空)
+        allButtons.forEach((btn) => {
+          const rawText = btn.innerText.trim();
+          // 简化匹配
+          for (let [key, val] of Object.entries(btnMap)) {
+            if (
+              rawText.includes(key) ||
+              key.includes(rawText.substring(0, 8))
+            ) {
+              if (!btn.hasAttribute("data-title")) {
+                btn.setAttribute("data-title", rawText + " " + val);
+              }
+              break;
+            }
+          }
+          // 保证每个按钮都有 data-title
+          if (!btn.hasAttribute("data-title")) {
+            btn.setAttribute("data-title", rawText);
+          }
+        });
+
+        // 美化：分组标题旁显示计数（动态，可选）
+        function updateGroupCounts() {
+          // 可以不用，但我们可以加一点小彩蛋
+        }
+        // 启动时调用一次过滤 (清空状态)
+        filterButtons();
+
+        // 深色模式下图标切换已经ok
+        // 在原有 script 中增加用户状态更新函数
+        function updateUserUI() {
+          const user = Auth.getCurrentUser();
+          const loginBtn = document.getElementById("loginBtn");
+          const welcomeSpan = document.getElementById("welcomeUser");
+          const displayName = document.getElementById("displayName");
+
+          if (user) {
+            loginBtn.style.display = "none";
+            welcomeSpan.style.display = "flex";
+            displayName.textContent = user.username;
+          } else {
+            loginBtn.style.display = "inline-block";
+            welcomeSpan.style.display = "none";
+          }
+        }
+
+        // 退出登录
+        document.getElementById("logoutBtn").addEventListener("click", () => {
+          Auth.logout();
+          updateUserUI();
+          // 可选刷新
+        });
+
+        // 页面加载时调用
+        updateUserUI();
+      })();
+    </script>
+
+    <!-- 保证所有链接均可访问，无遗漏 -->
+    <!-- 附加手动修正：序列号按钮显示优化 -->
+  </body>
 </html>
