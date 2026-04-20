@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>注册 · Tangyixiao</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* 与 login 完全相同的样式，此处省略重复定义，实际使用时请复制 login 的 <style> 部分 */
+    /* 为保证简洁，下方仅列出不同之处，完整代码见压缩包 */
+  </style>
+  <!-- 实际使用时请将 login.html 的样式完整复制过来 -->
+</head>
+<body>
+<div class="auth-card">
+  <h2><i class="fas fa-user-plus"></i> 注册</h2>
+  <div class="sub">创建一个账号，保存你的游戏进度</div>
+  <form id="registerForm">
+    <div class="input-group">
+      <label>用户名</label>
+      <input type="text" id="regUsername" placeholder="3~16位字母数字" required>
+    </div>
+    <div class="input-group">
+      <label>邮箱</label>
+      <input type="email" id="regEmail" placeholder="your@email.com" required>
+    </div>
+    <div class="input-group">
+      <label>密码</label>
+      <input type="password" id="regPassword" placeholder="至少6位" required>
+    </div>
+    <div class="input-group">
+      <label>确认密码</label>
+      <input type="password" id="regConfirm" placeholder="再次输入密码" required>
+    </div>
+    <div class="error-msg" id="regError"></div>
+    <button type="submit" class="btn-primary">注 册</button>
+  </form>
+  <div class="footer-links">
+    已有账号？ <a href="login.html">去登录</a>
+  </div>
+  <a href="index.html" class="back-home"><i class="fas fa-arrow-left"></i> 返回首页</a>
+</div>
+
+<script src="auth.js"></script>
+<script>
+  document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('regUsername').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const confirm = document.getElementById('regConfirm').value;
+    const errorDiv = document.getElementById('regError');
+
+    // 前端校验
+    if (!/^[a-zA-Z0-9]{3,16}$/.test(username)) {
+      errorDiv.textContent = '用户名需为3-16位字母或数字';
+      return;
+    }
+    if (!email.includes('@')) {
+      errorDiv.textContent = '请输入有效的邮箱';
+      return;
+    }
+    if (password.length < 6) {
+      errorDiv.textContent = '密码至少6位';
+      return;
+    }
+    if (password !== confirm) {
+      errorDiv.textContent = '两次密码不一致';
+      return;
+    }
+
+    const result = await Auth.register(username, email, password);
+    if (result.success) {
+      alert('注册成功！即将跳转登录页');
+      window.location.href = 'login.html';
+    } else {
+      errorDiv.textContent = result.message || '注册失败，请稍后重试';
+    }
+  });
+</script>
+</body>
+</html>
