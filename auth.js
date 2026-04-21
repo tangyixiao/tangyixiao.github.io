@@ -8,7 +8,7 @@ const Auth = (function () {
   const REPO_NAME = "Tangyixiao.github.io"; // 或存放 users.json 的仓库
   const USERS_FILE_PATH = "users.json"; // 存储用户数据的文件路径
   const BRANCH = "main";
-
+  const WORKER_URL = "https://tangyixiao-api-gihub-io.37662981.workers.dev";
   // 模拟用户数据库（当 ENABLE_GITHUB_STORAGE = false 时使用）
   let mockUsers = [];
 
@@ -32,7 +32,7 @@ const Auth = (function () {
   function saveMockUsers() {
     localStorage.setItem("tangyixiao_mock_users", JSON.stringify(mockUsers));
   }
-
+const WORKER_URL = "https://tangyixiao-api-gihub-io.37662981.workers.dev";
   // 简单的 SHA-256 哈希（使用 Web Crypto API）
   async function sha256(message) {
     const msgBuffer = new TextEncoder().encode(message);

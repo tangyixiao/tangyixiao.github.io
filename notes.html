@@ -346,7 +346,12 @@
     <script>
       (function () {
         // ---------- 配置 ----------
-        const WORKER_BASE = "https://你的worker域名"; // 替换为实际 Worker URL
+        // 原来可能是这样（占位符）
+        // const WORKER_BASE = 'https://你的worker域名';
+
+        // 改成您的实际地址（注意末尾不要多斜杠）
+        const WORKER_BASE =
+          "https://tangyixiao-api-gihub-io.37662981.workers.dev";
         const NOTES_API = WORKER_BASE + "/api/notes";
 
         // 当前用户
