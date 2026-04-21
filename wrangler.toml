@@ -1,0 +1,8 @@
+name = "tangyixiao-api-gihub-io"
+main = "worker.js"
+compatibility_date = "2026-04-21"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tangyixiao-github-io-db"
+database_id = "1d1c37e6-13a6-472c-96d2-4f0bbecbfea7"
