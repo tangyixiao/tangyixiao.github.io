@@ -435,31 +435,42 @@
             />
             <!-- 👇 新增：登录/笔记入口 -->
             <div id="userArea" style="display: flex; gap: 8px">
-              <a
-                href="login.html"
-                class="btn"
-                id="loginLink"
-                style="padding: 8px 18px"
+              <!-- 用户状态区域（替换掉原来的单一“登录”链接） -->
+              <div
+                id="userStatus"
+                style="display: flex; align-items: center; gap: 12px"
               >
-                <i class="fas fa-sign-in-alt"></i> 登录
-              </a>
-              <span
-                id="userInfo"
-                style="display: none; align-items: center; gap: 8px"
-              >
-                <i class="fas fa-user-circle"></i>
-                <span id="usernameDisplay"></span>
-                <button
-                  id="logoutBtn"
-                  class="theme-toggle"
-                  style="width: auto; padding: 6px 12px"
+                <!-- 未登录时显示“登录”按钮 -->
+                <a
+                  href="login.html"
+                  class="btn"
+                  id="loginBtn"
+                  style="padding: 8px 18px"
                 >
-                  <i class="fas fa-sign-out-alt"></i>
-                </button>
-              </span>
-              <a href="notes.html" class="btn" style="padding: 8px 18px">
-                <i class="fas fa-book"></i> 笔记
-              </a>
+                  <i class="fas fa-sign-in-alt"></i> 登录
+                </a>
+
+                <!-- 已登录时显示用户名和退出按钮（默认隐藏） -->
+                <div
+                  id="loggedInInfo"
+                  style="display: none; align-items: center; gap: 10px"
+                >
+                  <i class="fas fa-user-circle" style="font-size: 1.3rem"></i>
+                  <span id="displayUsername" style="font-weight: 500"></span>
+                  <button
+                    id="logoutBtn"
+                    class="theme-toggle"
+                    style="width: auto; padding: 6px 14px"
+                  >
+                    <i class="fas fa-sign-out-alt"></i> 退出
+                  </button>
+                </div>
+
+                <!-- 笔记按钮保持不变 -->
+                <a href="notes.html" class="btn" style="padding: 8px 18px">
+                  <i class="fas fa-book"></i> 笔记
+                </a>
+              </div>
             </div>
           </div>
           <button
