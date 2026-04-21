@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Double Pendulum</title>
+    <style>
+      body {
+        margin: 0;
+        background: #0e0e11;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+    <script>
+      const canvas = document.getElementById("c");
+      const ctx = canvas.getContext("2d");
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      window.addEventListener("resize", resize);
+      resize();
+
+      // Physics constants
+      const g = 9.81;
+      const m1 = 1,
+        m2 = 1;
+      const l1 = 150,
+        l2 = 150;
+
+      // Initial state
+      let a1 = Math.PI / 2;
+      let a2 = Math.PI / 2 + 0.01;
+      let v1 = 0;
+      let v2 = 0;
+
+      const dt = 0.016;
+
+      // Trail storage
+      let trail = [];
+
+      function step() {
+        // Equations of motion (double pendulum)
+        const num1 = -g * (2 * m1 + m2) * Math.sin(a1);
+        const num2 = -m2 * g * Math.sin(a1 - 2 * a2);
+        const num3 = -2 * Math.sin(a1 - a2) * m2;
+        const num4 = v2 * v2 * l2 + v1 * v1 * l1 * Math.cos(a1 - a2);
+        const den = l1 * (2 * m1 + m2 - m2 * Math.cos(2 * a1 - 2 * a2));
+        const acc1 = (num1 + num2 + num3 * num4) / den;
+
+        const num5 = 2 * Math.sin(a1 - a2);
+        const num6 = v1 * v1 * l1 * (m1 + m2);
+        const num7 = g * (m1 + m2) * Math.cos(a1);
+        const num8 = v2 * v2 * l2 * m2 * Math.cos(a1 - a2);
+        const den2 = l2 * (2 * m1 + m2 - m2 * Math.cos(2 * a1 - 2 * a2));
+        const acc2 = (num5 * (num6 + num7 + num8)) / den2;
+
+        v1 += acc1 * dt;
+        v2 += acc2 * dt;
+        a1 += v1 * dt;
+        a2 += v2 * dt;
+      }
+
+      function draw() {
+        // Fading background (trail effect)
+        ctx.fillStyle = "rgba(14,14,17,0.1)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 3;
+
+        const x1 = cx + l1 * Math.sin(a1);
+        const y1 = cy + l1 * Math.cos(a1);
+
+        const x2 = x1 + l2 * Math.sin(a2);
+        const y2 = y1 + l2 * Math.cos(a2);
+
+        // Save trail
+        trail.push({ x: x2, y: y2 });
+        if (trail.length > 300) trail.shift();
+
+        // Draw trail
+        for (let i = 0; i < trail.length; i++) {
+          const p = trail[i];
+          const alpha = i / trail.length;
+          ctx.fillStyle = `rgba(0,200,255,${alpha})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Draw rods
+        ctx.strokeStyle = "#ddd";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+
+        // Draw bobs
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(x1, y1, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#00d4ff";
+        ctx.beginPath();
+        ctx.arc(x2, y2, 8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function loop() {
+        step();
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      loop();
+    </script>
+  </body>
+</html>
