@@ -7,6 +7,9 @@ const translations = {
     "a11y.mainNav": "主导航",
     "a11y.switchLanguage": "切换到英文",
     "a11y.switchTheme": "切换主题",
+    "a11y.toLight": "切换到浅色模式",
+    "a11y.toDark": "切换到深色模式",
+    "brand.name": "唐一潇",
     "nav.home": "首页",
     "nav.about": "关于",
     "nav.projects": "项目",
@@ -15,6 +18,7 @@ const translations = {
     "nav.links": "链接",
     "hero.eyebrow": "持续学习 · 持续构建",
     "hero.name": "唐一潇",
+    "hero.altName": "Tang Yixiao",
     "hero.tagline": "探索算法、数学与智能。",
     "hero.summary": "绍兴一中学生。关注 OI / 信息学竞赛、数学与物理，也在探索 AI、LLM、Agent 与开源世界。",
     "hero.projectsButton": "查看项目",
@@ -77,6 +81,9 @@ const translations = {
     "a11y.mainNav": "Primary navigation",
     "a11y.switchLanguage": "Switch to Chinese",
     "a11y.switchTheme": "Switch theme",
+    "a11y.toLight": "Switch to light mode",
+    "a11y.toDark": "Switch to dark mode",
+    "brand.name": "Tang Yixiao",
     "nav.home": "Home",
     "nav.about": "About",
     "nav.projects": "Projects",
@@ -85,6 +92,7 @@ const translations = {
     "nav.links": "Links",
     "hero.eyebrow": "Keep learning · Keep building",
     "hero.name": "Tang Yixiao",
+    "hero.altName": "唐一潇",
     "hero.tagline": "Exploring Algorithms, Mathematics & Intelligence.",
     "hero.summary": "A student at Shaoxing No.1 High School, focused on competitive programming, mathematics and physics, while exploring AI, LLMs, agents, and open source.",
     "hero.projectsButton": "View Projects",
@@ -151,6 +159,15 @@ function safeStorageSet(key, value) {
   try { localStorage.setItem(key, value); } catch (_) {}
 }
 
+function updateThemeControlLabel() {
+  const button = document.getElementById("theme-toggle");
+  if (!button) return;
+  const lang = document.documentElement.dataset.language === "en" ? "en" : "zh";
+  const theme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
+  const key = theme === "dark" ? "a11y.toLight" : "a11y.toDark";
+  button.setAttribute("aria-label", translations[lang][key]);
+}
+
 function setLanguage(lang) {
   const next = lang === "en" ? "en" : "zh";
   document.querySelectorAll("[data-i18n]").forEach((node) => {
@@ -166,6 +183,7 @@ function setLanguage(lang) {
   const label = document.getElementById("language-label");
   if (label) label.textContent = next === "zh" ? "EN" : "中文";
   safeStorageSet("site-language", next);
+  updateThemeControlLabel();
 }
 
 function initLanguage() {
@@ -187,6 +205,7 @@ function setTheme(theme) {
   const icon = document.getElementById("theme-icon");
   if (icon) icon.textContent = next === "dark" ? "☀" : "☾";
   safeStorageSet("site-theme", next);
+  updateThemeControlLabel();
 }
 
 function initTheme() {
