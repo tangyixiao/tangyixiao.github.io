@@ -239,9 +239,10 @@ Implementation approach:
 
 - keep translation strings in a JavaScript object keyed by semantic identifiers
 - mark translatable DOM elements with stable `data-i18n` keys
+- ship meaningful Chinese text directly in `index.html` as the no-JavaScript/default fallback
 - switch text content in place without page reload
 - store selected language in `localStorage`
-- default to saved preference; otherwise prefer browser language when it starts with `zh`; otherwise use English
+- default to saved preference; otherwise prefer browser language when it starts with `zh`; otherwise switch to English after initialization
 - update the document `lang` attribute after switching
 
 Chinese and English copy should be equivalent in meaning, not mechanically word-for-word where natural phrasing differs.
@@ -279,7 +280,7 @@ tangyixiao.github.io/
             └── 2026-08-13-personal-homepage-design.md
 ```
 
-`index.html` contains semantic page structure only.
+`index.html` contains semantic page structure and meaningful fallback text only.
 
 `home.css` contains visual tokens, responsive layout, components, themes, and motion rules.
 
@@ -342,7 +343,7 @@ Avoid fixed dimensions that create horizontal scrolling.
 
 ## Error Handling and Graceful Degradation
 
-- if JavaScript is disabled, the page should still display meaningful default-language content and all major links
+- if JavaScript is disabled, the page displays the complete Chinese fallback content and all major links
 - if `localStorage` access fails, toggles should still work for the current session where possible
 - if `IntersectionObserver` is unavailable, content should simply remain visible
 - if third-party images fail, textual project/OI information remains intact
@@ -364,7 +365,7 @@ Before completion, verify:
 - no horizontal overflow
 - keyboard navigation reaches interactive controls in a sensible order
 - reduced-motion mode disables nonessential animation
-- page remains usable with JavaScript disabled
+- page remains useful with JavaScript disabled and displays the Chinese fallback content
 
 ## Relationship to GitHub Profile README
 
