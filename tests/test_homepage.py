@@ -54,12 +54,16 @@ class HomepageTests(unittest.TestCase):
         ]:
             self.assertIn(token, self.html)
         for url in [
-            "https://github.com/tangyixiao", "https://github.com/tangyixiao/Code",
+            "https://github.com/tangyixiao",
             "https://www.luogu.com.cn/blog/TangyixiaoQAQ/",
             "https://home.cnblogs.com/u/TangyixiaoQAQ", "https://blog.csdn.net/DCMyyds",
             "https://space.bilibili.com/512272131"
         ]:
             self.assertIn(url, self.html)
+
+    def test_codehub_entries_use_published_pages_route(self):
+        self.assertEqual(self.html.count('href="/Code/"'), 3)
+        self.assertNotIn('href="https://github.com/tangyixiao/Code"', self.html)
 
     def test_private_email_not_exposed(self):
         self.assertNotIn("37662981@qq.com", self.html)
