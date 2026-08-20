@@ -9,6 +9,7 @@ class HomepageTests(unittest.TestCase):
     def setUpClass(cls):
         cls.app = (ROOT / "src" / "App.tsx").read_text(encoding="utf-8")
         cls.css = (ROOT / "src" / "index.css").read_text(encoding="utf-8")
+        cls.index = (ROOT / "index.html").read_text(encoding="utf-8")
 
     def test_rebuild_has_vite_react_entry(self):
         self.assertTrue((ROOT / "package.json").is_file())
@@ -33,9 +34,24 @@ class HomepageTests(unittest.TestCase):
         self.assertNotIn("figma.site", self.app)
         self.assertNotIn("higgs.ai", self.app)
 
-    def test_vs_code_palette_and_reduced_motion_are_present(self):
-        for token in ["#1e1e1e", "#252526", "#007acc", "#3794ff", "prefers-reduced-motion"]:
-            self.assertIn(token, self.css.lower())
+    def test_aurora_archive_brand_motion_and_codehub_paths_are_present(self):
+        for token in [
+            "Paradox Praxis Clinamen",
+            "佯谬·践履·偏斜",
+            "AuroraArchive",
+            "PointerParallax",
+            "href={links.code}",
+        ]:
+            self.assertIn(token, self.app)
+        for token in ["--aurora", "@keyframes aurora-drift", "prefers-reduced-motion"]:
+            self.assertIn(token, self.css)
+        self.assertIn("(hover: hover) and (pointer: fine)", self.app)
+        self.assertIn("window.innerWidth >= 900", self.app)
+
+    def test_canonical_brand_metadata_is_exact(self):
+        self.assertIn("<title>Paradox Praxis Clinamen</title>", self.index)
+        self.assertIn('name="description" content="Paradox Praxis Clinamen · 佯谬·践履·偏斜"', self.index)
+        self.assertIn('name="theme-color" content="#070b17"', self.index)
 
     def test_semantic_sections_and_accessible_navigation_exist(self):
         for token in ["<header", "<nav", "<main", "<footer", 'id="home"', 'id="about"', 'id="work"', 'id="links"']:

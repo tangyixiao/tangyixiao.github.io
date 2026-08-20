@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "build": "vite build && node scripts/copy-legacy.mjs" },
+  "scripts": { "build": "vite build && node scripts/copy-legacy.mjs", "test:browser": "node tests/homepage-smoke.mjs" },
   "dependencies": { "motion": "^13.1.1", "react": "^19.2.8", "react-dom": "^19.2.8" },
   "devDependencies": { "@tailwindcss/vite": "^4.3.3", "@types/react": "^19.2.8", "@types/react-dom": "^19.2.3", "@vitejs/plugin-react": "^5.1.1", "tailwindcss": "^4.3.3", "typescript": "^5.9.3", "vite": "^8.2.2" }
 }
