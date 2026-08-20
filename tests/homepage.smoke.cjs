@@ -20,23 +20,24 @@ function serve() {
 }
 
 async function main() {
-  const server = await serve();
+  const siteUrl = process.env.SITE_URL || 'http://127.0.0.1:18766/';
+  const server = process.env.SITE_URL ? null : await serve();
   const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH });
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-    await page.goto('http://127.0.0.1:18766/', { waitUntil: 'networkidle' });
+    await page.goto(siteUrl, { waitUntil: 'networkidle' });
     await page.getByRole('heading', { name: /TANG\s*YI XIAO/i }).waitFor();
     assert.equal(await page.locator('a[href="/Code/"]').count(), 3);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
-    await mobile.goto('http://127.0.0.1:18766/', { waitUntil: 'networkidle' });
+    await mobile.goto(siteUrl, { waitUntil: 'networkidle' });
     assert.equal(await mobile.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
     await mobile.getByRole('link', { name: /查看项目/i }).waitFor();
     console.log('homepage browser smoke passed');
   } finally {
     await browser.close();
-    await new Promise((resolve) => server.close(resolve));
+    if (server) await new Promise((resolve) => server.close(resolve));
   }
 }
 main().catch((error) => { console.error(error); process.exitCode = 1; });
