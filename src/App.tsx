@@ -13,7 +13,7 @@ const projects = [
   { id: 'agents', kind: 'RESEARCH NOTES', title: 'Agent Learning Hub', href: links.agents, text: '关于智能体、工具调用与评估的学习记录。' },
 ]
 
-function AuroraArchive() { return <div className="aurora-archive" aria-hidden="true"><i /><i /><i /><b /><b /><b /></div> }
+function AuroraArchive() { return <div className="aurora-archive" aria-hidden="true"><i /><i /><i /><b /><b /><b /><pre className="ascii-atom">{'   ·  .  ·\\n .  /\\\\ /\\\\  .\\n·  <  ◉  >  ·\\n .  \\/\\/ \\/\\/  .\\n   ·  |  ·'}</pre></div> }
 
 function Reveal({ children, delay = 0, className = '', eager = false }: { children: ReactNode; delay?: number; className?: string; eager?: boolean }) {
   const reduce = useReducedMotion()

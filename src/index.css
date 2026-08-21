@@ -9,3 +9,16 @@ footer{display:grid;grid-template-columns:1fr 1fr;gap:70px;padding:clamp(100px,1
 @keyframes aurora-drift{to{transform:translate3d(8vw,-3vh,0) rotate(14deg) scale(1.13)}}@keyframes star-pulse{to{opacity:.3;transform:scale(.55)}}
 @media(max-width:780px){.hero{padding:20px 20px 24px}.brand i{display:none}nav{align-items:center}nav>div{gap:10px;flex-shrink:1;font-size:.58rem;white-space:nowrap}.hero h1{font-size:clamp(3.2rem,15.2vw,5.5rem);letter-spacing:-.075em}.hero-kicker{font-size:.72rem}.hero-foot span:last-child{display:none}.manifesto,footer{grid-template-columns:1fr;gap:56px;padding-left:20px;padding-right:20px}.trajectory{left:78%;top:5%;height:93%}.constellation,.archive{padding-left:20px;padding-right:20px}.focus-row{grid-template-columns:48px 1fr 22px;gap:14px}.focus-row p{grid-column:2/4}.project-grid{grid-template-columns:1fr}.project-card{min-height:355px}.link-grid{grid-template-columns:1fr}.link-grid a{margin-right:0}.copyright{grid-column:auto}.aurora-archive{opacity:.45}.aurora-archive i:nth-child(1),.aurora-archive i:nth-child(2){width:92vw;height:45vw}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.aurora-archive i,.aurora-archive b{animation:none!important}.hero-orbit{transform:none!important;transition:none!important}.project-card{transform:none!important}.focus-row,.link-grid a,.orbit-button{transition:none!important}}
+
+/* Deep-sea glass pass: keeps the original archive layout, but gives every surface one visual language. */
+:root{--void:#04111f;--night:#071a2d;--ink:#e7f5ff;--muted:#7898ad;--line:rgba(113,190,229,.2);--aurora:#62ddff;--violet:#8992ff;--lilac:#b6b6ff}
+body{background:var(--void)}
+.hero{background:radial-gradient(circle at 78% 18%,#0b608c33,transparent 28%),linear-gradient(118deg,#04111f 8%,#092039 57%,#080d27)}
+.manifesto,.archive,footer{background:linear-gradient(145deg,#061729,#030b16)}
+.constellation{background:linear-gradient(145deg,#071a2d,#04111f);color:var(--ink)}
+.constellation .eyebrow{color:var(--aurora)}.constellation h2 em{color:var(--aurora)}
+.focus-list,.focus-row{border-color:var(--line)}.focus-row>span{color:#62a3bd}.focus-row b,.focus-row p{color:#89a5b8}.focus-row:hover{color:var(--aurora)}
+.orbit-button,.project-card{background:linear-gradient(150deg,rgba(20,62,91,.55),rgba(5,16,31,.72));box-shadow:inset 0 1px rgba(220,250,255,.06),0 30px 65px #02040b55;backdrop-filter:blur(20px)}
+.orbit-button{border-color:rgba(98,221,255,.6)}.project-card:hover{border-color:rgba(98,221,255,.68)}
+.aurora-archive .ascii-atom{position:absolute;right:25%;top:22%;margin:0;color:rgba(98,221,255,.46);font:11px/1.65 "DM Mono",monospace;letter-spacing:.12em;text-shadow:0 0 14px rgba(98,221,255,.8);transform:rotate(-8deg);filter:none;animation:atom-drift 9s ease-in-out infinite alternate}
+@keyframes atom-drift{to{transform:translate(-16px,12px) rotate(5deg);opacity:.72}}
