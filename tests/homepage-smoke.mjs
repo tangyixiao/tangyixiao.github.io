@@ -1,19 +1,32 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
-import { mkdtemp, rm } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
-import os from 'node:os'
+import { existsSync, readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
-const root = process.cwd()
-const port = 4174
-const debugPort = 9225
-const chrome = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-const legacyRoutes = ['notes.html', 'login.html', 'register.html', 'auth.js', 'notes-worker.js']
-let preview
-let browser
-let profile
+const filePath = fileURLToPath(import.meta.url)
+const require = createRequire(import.meta.url)
+const root = path.resolve(path.dirname(filePath), '..')
+const port = Number(process.env.PREVIEW_PORT || 4174)
+const moduleRoot = process.env.CODEX_NODE_MODULES || path.join(root, 'node_modules')
+const { chromium } = require(path.join(moduleRoot, 'playwright'))
+const copyScript = readFileSync(path.join(root, 'scripts', 'copy-legacy.mjs'), 'utf8')
+const copyManifest = copyScript.match(/const files = \[(.*?)\]/s)
+assert.ok(copyManifest, 'copy-legacy.mjs must expose its complete legacy artifact manifest')
+const legacyRoutes = [...copyManifest[1].matchAll(/'([^']+)'/g)].map((match) => match[1])
+const chromiumCandidates = [
+  process.env.CHROME_PATH,
+  process.env.CHROMIUM_PATH,
+  chromium.executablePath(),
+  ...(process.platform === 'linux' ? ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome'] : []),
+  ...(process.platform === 'darwin' ? ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'] : []),
+  ...(process.platform === 'win32' ? [
+    process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    process.env.PROGRAMFILES && path.join(process.env.PROGRAMFILES, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+  ] : []),
+].filter(Boolean).find((candidate) => existsSync(candidate))
 
 const waitFor = async (check, message) => {
   const deadline = Date.now() + 20_000
@@ -24,53 +37,47 @@ const waitFor = async (check, message) => {
   throw new Error(message)
 }
 
-class Cdp {
-  constructor(url) {
-    this.nextId = 0
-    this.pending = new Map()
-    this.socket = new WebSocket(url)
+async function expectPhase(page, selector, phase) {
+  await page.locator(selector).scrollIntoViewIfNeeded()
+  await page.waitForFunction((nextPhase) => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === nextPhase, phase)
+}
+
+async function stopProcess(processHandle) {
+  if (!processHandle || processHandle.exitCode !== null) return
+  const exited = once(processHandle, 'exit')
+  processHandle.kill()
+  await Promise.race([exited, new Promise((resolve) => setTimeout(resolve, 2_000))])
+}
+
+async function main() {
+  let preview
+  let browser
+  try {
+    for (const route of legacyRoutes) assert.ok(existsSync(path.join(root, 'dist', route)), `missing built legacy route: ${route}`)
+    assert.ok(existsSync(path.join(root, 'dist', 'assets')), 'missing copied legacy assets directory')
+    assert.ok(chromiumCandidates, 'A Chromium executable is required for homepage browser smoke tests')
+    preview = spawn(process.execPath, [path.join(root, 'node_modules/vite/bin/vite.js'), 'preview', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { cwd: root, stdio: 'ignore' })
+    await waitFor(async () => (await fetch(`http://127.0.0.1:${port}/`)).ok, 'Vite preview did not start')
+    browser = await chromium.launch({ headless: true, executablePath: chromiumCandidates, args: ['--enable-webgl', '--use-angle=swiftshader'] })
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true })
+    await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'domcontentloaded' })
+    await page.locator('[data-scene-root]').waitFor()
+    assert.equal(await page.locator('[data-scene-canvas]').count(), 1, 'mobile renders exactly one scene canvas')
+    assert.equal(await page.locator('a[href="/Code/"]').count(), 3, 'homepage must expose exactly three CodeHub anchors')
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'mobile page must not overflow horizontally')
+    assert.equal(await page.locator('h1').innerText(), 'Paradox\nPraxis\nClinamen', 'canonical hero must remain readable on mobile')
+    assert.equal(await page.title(), 'Paradox Praxis Clinamen', 'document title must use the canonical brand')
+    assert.equal(await page.locator('meta[name="description"]').getAttribute('content'), 'Paradox Praxis Clinamen · 佯谬·践履·偏斜')
+    assert.equal(await page.locator('meta[name="theme-color"]').getAttribute('content'), '#070b17')
+    for (const [selector, phase] of [['#home', 'hero'], ['#about', 'orbit'], ['#focus', 'focus'], ['#work', 'archive'], ['#links', 'links']]) {
+      await page.locator(selector).evaluate((element) => element.scrollIntoView({ behavior: 'instant', block: 'center' }))
+      await page.waitForFunction((nextPhase) => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === nextPhase, phase)
+    }
+    console.log('homepage mobile browser smoke passed')
+  } finally {
+    if (browser) await browser.close()
+    await stopProcess(preview)
   }
-  async open() { await new Promise((resolve, reject) => { this.socket.onopen = resolve; this.socket.onerror = reject; this.socket.onmessage = ({ data }) => { const message = JSON.parse(data); const pending = this.pending.get(message.id); if (!pending) return; this.pending.delete(message.id); message.error ? pending.reject(new Error(message.error.message)) : pending.resolve(message.result) } }) }
-  send(method, params = {}) { return new Promise((resolve, reject) => { const id = ++this.nextId; this.pending.set(id, { resolve, reject }); this.socket.send(JSON.stringify({ id, method, params })) }) }
-  async evaluate(expression) { const result = await this.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }); return result.result.value }
-  close() { this.socket.close() }
 }
 
-const readPage = async (cdp) => cdp.evaluate(`(async () => { await document.fonts.ready; await new Promise(r => setTimeout(r, 900)); const title = document.querySelector('h1').getBoundingClientRect(); return { codeHubAnchors: document.querySelectorAll('a[href="/Code/"]').length, viewport: window.innerWidth, scrollWidth: document.documentElement.scrollWidth, titleRight: title.right, titleText: document.querySelector('h1').innerText, documentTitle: document.title, description: document.querySelector('meta[name="description"]')?.content, themeColor: document.querySelector('meta[name="theme-color"]')?.content, heroTransform: getComputedStyle(document.querySelector('.hero-orbit')).transform, activeAnimations: document.getAnimations().filter(animation => animation.playState === 'running').length }; })()`)
-
-try {
-  for (const route of legacyRoutes) assert.ok(existsSync(path.join(root, 'dist', route)), `missing built legacy route: ${route}`)
-  assert.ok(existsSync(chrome), 'Chrome is required for homepage browser smoke tests')
-  preview = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { cwd: root, stdio: 'ignore' })
-  await waitFor(async () => (await fetch(`http://127.0.0.1:${port}/`)).ok, 'Vite preview did not start')
-  profile = await mkdtemp(path.join(os.tmpdir(), 'homepage-smoke-'))
-  browser = spawn(chrome, ['--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check', `--remote-debugging-port=${debugPort}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' })
-  const target = await waitFor(async () => { const response = await fetch(`http://127.0.0.1:${debugPort}/json/new?about:blank`, { method: 'PUT' }); return response.ok ? response.json() : null }, 'Chrome DevTools did not start')
-  const cdp = new Cdp(target.webSocketDebuggerUrl)
-  await cdp.open()
-  await cdp.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true })
-  await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] })
-  await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/` })
-  await waitFor(async () => (await cdp.evaluate('document.readyState')) === 'complete', 'Homepage did not load')
-  const mobile = await readPage(cdp)
-  assert.equal(mobile.codeHubAnchors, 3, 'homepage must expose exactly three CodeHub anchors')
-  assert.ok(mobile.scrollWidth <= mobile.viewport, `mobile page overflows: ${mobile.scrollWidth}px > ${mobile.viewport}px`)
-  assert.ok(mobile.titleRight <= mobile.viewport, `Clinamen title is clipped at ${mobile.titleRight}px of ${mobile.viewport}px`)
-  assert.equal(mobile.titleText.split('\n').at(-1), 'Clinamen', 'Clinamen must remain on a readable final line')
-  assert.equal(mobile.documentTitle, 'Paradox Praxis Clinamen', 'document title must use the canonical brand')
-  assert.equal(mobile.description, 'Paradox Praxis Clinamen · 佯谬·践履·偏斜', 'description must use the canonical bilingual brand')
-  assert.equal(mobile.themeColor, '#070b17', 'theme color must match the archive void')
-  await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] })
-  await cdp.send('Page.reload')
-  await waitFor(async () => (await cdp.evaluate('document.readyState')) === 'complete', 'Reduced-motion homepage did not reload')
-  const reduced = await readPage(cdp)
-  assert.equal(reduced.activeAnimations, 0, 'reduced-motion mode must not run animations')
-  assert.equal(reduced.heroTransform, 'none', 'reduced-motion mode must not apply parallax transforms')
-  cdp.close()
-  console.log(`browser smoke passed: ${mobile.codeHubAnchors} CodeHub anchors, ${mobile.scrollWidth}px mobile width`)
-} finally {
-  preview?.kill()
-  browser?.kill()
-  if (browser) await once(browser, 'exit')
-  if (profile) await rm(profile, { recursive: true, force: true })
-}
+main().catch((error) => { console.error(error); process.exitCode = 1 })
