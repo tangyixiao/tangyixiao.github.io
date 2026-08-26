@@ -65,7 +65,7 @@ No legacy route/content files were changed.
 
 ## Commit
 
-Pending initial commit; this section is amended with the final SHA after the task-owned changes are committed.
+Implementation commit: `08c80daf` (`feat(homepage): add lazy deep-sea WebGL scene`). The report metadata is finalized in the follow-up report-only commit after this implementation commit.
 
 ## Risks and follow-up
 
