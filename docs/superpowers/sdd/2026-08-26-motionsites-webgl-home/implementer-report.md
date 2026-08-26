@@ -125,4 +125,4 @@ One intermediate post-fix browser run caught an over-broad test assertion requir
 
 ### Fix-round commit
 
-Implementation commit SHA: to be filled after the code/report commit; report-finalization SHA will be recorded below if a separate metadata commit is required.
+Implementation commit SHA: `9dba8975` (`fix(homepage): close WebGL lifecycle and CI gaps`). This report-SHA update is finalized in the follow-up metadata commit after the implementation commit.
