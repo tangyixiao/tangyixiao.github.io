@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -12,7 +12,10 @@ const root = path.resolve(path.dirname(filePath), '..')
 const port = Number(process.env.PREVIEW_PORT || 4174)
 const moduleRoot = process.env.CODEX_NODE_MODULES || path.join(root, 'node_modules')
 const { chromium } = require(path.join(moduleRoot, 'playwright'))
-const legacyRoutes = ['notes.html', 'login.html', 'register.html', 'auth.js', 'notes-worker.js']
+const copyScript = readFileSync(path.join(root, 'scripts', 'copy-legacy.mjs'), 'utf8')
+const copyManifest = copyScript.match(/const files = \[(.*?)\]/s)
+assert.ok(copyManifest, 'copy-legacy.mjs must expose its complete legacy artifact manifest')
+const legacyRoutes = [...copyManifest[1].matchAll(/'([^']+)'/g)].map((match) => match[1])
 const chromiumCandidates = [
   process.env.CHROME_PATH,
   process.env.CHROMIUM_PATH,
@@ -51,6 +54,7 @@ async function main() {
   let browser
   try {
     for (const route of legacyRoutes) assert.ok(existsSync(path.join(root, 'dist', route)), `missing built legacy route: ${route}`)
+    assert.ok(existsSync(path.join(root, 'dist', 'assets')), 'missing copied legacy assets directory')
     assert.ok(chromiumCandidates, 'A Chromium executable is required for homepage browser smoke tests')
     preview = spawn(process.execPath, [path.join(root, 'node_modules/vite/bin/vite.js'), 'preview', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { cwd: root, stdio: 'ignore' })
     await waitFor(async () => (await fetch(`http://127.0.0.1:${port}/`)).ok, 'Vite preview did not start')

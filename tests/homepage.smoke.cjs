@@ -6,7 +6,10 @@ const path = require('node:path')
 const moduleRoot = process.env.CODEX_NODE_MODULES || path.resolve(__dirname, '..', 'node_modules')
 const { chromium } = require(path.join(moduleRoot, 'playwright'))
 const root = path.resolve(__dirname, '..', 'dist')
-const legacyRoutes = ['notes.html', 'login.html', 'register.html', 'auth.js', 'notes-worker.js']
+const copyScript = fs.readFileSync(path.resolve(__dirname, '..', 'scripts', 'copy-legacy.mjs'), 'utf8')
+const copyManifest = copyScript.match(/const files = \[(.*?)\]/s)
+assert.ok(copyManifest, 'copy-legacy.mjs must expose its complete legacy artifact manifest')
+const legacyRoutes = [...copyManifest[1].matchAll(/'([^']+)'/g)].map((match) => match[1])
 const chromeCandidates = [
   process.env.CHROME_PATH,
   process.env.CHROMIUM_PATH,
@@ -39,10 +42,46 @@ async function expectPhase(page, selector, phase) {
   await page.waitForFunction((nextPhase) => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === nextPhase, phase)
 }
 
+async function expectDelayedControllerReplay(page, siteUrl) {
+  let releaseThree
+  const threeReleased = new Promise((resolve) => { releaseThree = resolve })
+  await page.route(/\/assets\/three\.module-[^/]+\.js$/, async (route) => {
+    await threeReleased
+    await route.continue()
+  })
+  try {
+    await page.goto(siteUrl, { waitUntil: 'domcontentloaded' })
+    await page.locator('[data-scene-root]').waitFor()
+    await page.locator('#focus').evaluate((element) => element.scrollIntoView({ behavior: 'instant', block: 'center' }))
+    await page.waitForFunction(() => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === 'focus')
+    await page.locator('.orbit-button').dispatchEvent('pointerdown')
+    await page.waitForFunction(() => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-pulse') !== '0.000')
+    const expectedPulse = await page.locator('[data-scene-root]').getAttribute('data-scene-pulse')
+    releaseThree()
+    await page.waitForFunction(
+      ({ expectedPhase, expectedPulse }) => {
+        const root = document.querySelector('[data-scene-root]')
+        return root?.getAttribute('data-scene-controller-phase') === expectedPhase && root?.getAttribute('data-scene-controller-pulse') === expectedPulse
+      },
+      { expectedPhase: 'focus', expectedPulse },
+      { timeout: 3_000 },
+    )
+    assert.equal(await page.locator('[data-scene-root]').getAttribute('data-scene-controller-pulse-count'), '1', 'a delayed pulse is replayed exactly once')
+    await page.waitForTimeout(200)
+    assert.equal(await page.locator('[data-scene-root]').getAttribute('data-scene-controller-pulse-count'), '1', 'a replayed pulse is not duplicated by a late effect')
+  } finally {
+    releaseThree()
+    await page.unroute(/\/assets\/three\.module-[^/]+\.js$/)
+  }
+}
+
 async function main() {
-  for (const route of legacyRoutes) assert.ok(fs.existsSync(path.join(root, route)), `missing built legacy route: ${route}`)
-    const chrome = chromeCandidates.find((candidate) => fs.existsSync(candidate))
-    assert.ok(chrome, 'A Chromium executable is required for homepage browser smoke tests')
+  for (const route of legacyRoutes) {
+    assert.ok(fs.existsSync(path.join(root, route)), `missing built legacy route: ${route}`)
+  }
+  assert.ok(fs.existsSync(path.join(root, 'assets')), 'missing copied legacy assets directory')
+  const chrome = chromeCandidates.find((candidate) => fs.existsSync(candidate))
+  assert.ok(chrome, 'A Chromium executable is required for homepage browser smoke tests')
   if (screenshotDirectory) fs.mkdirSync(screenshotDirectory, { recursive: true })
   const siteUrl = process.env.SITE_URL || 'http://127.0.0.1:18766/'
   const server = process.env.SITE_URL ? null : await serve()
@@ -63,6 +102,7 @@ async function main() {
     assert.equal(await desktop.locator('[data-scene-root]').getAttribute('data-scene-phase'), 'hero')
     assert.equal(await desktop.locator('a[href="/Code/"]').count(), 3, 'homepage exposes exactly three CodeHub links')
     assert.equal(await desktop.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'desktop must not overflow horizontally')
+    await expectDelayedControllerReplay(desktop, siteUrl)
     for (const [selector, phase] of [['#home', 'hero'], ['#about', 'orbit'], ['#focus', 'focus'], ['#work', 'archive'], ['#links', 'links']]) await expectPhase(desktop, selector, phase)
     if (screenshotDirectory) await desktop.screenshot({ path: path.join(screenshotDirectory, 'homepage-desktop.png'), fullPage: true })
     await desktop.evaluate(() => document.querySelector('[data-scene-canvas]').dispatchEvent(new Event('webglcontextlost', { cancelable: true })))
@@ -81,11 +121,25 @@ async function main() {
 
     const reduced = await browser.newPage({ viewport: { width: 1440, height: 900 } })
     await reduced.emulateMedia({ reducedMotion: 'reduce' })
+    await reduced.addInitScript(() => {
+      window.__homepageRafCalls = 0
+      const originalRequestAnimationFrame = window.requestAnimationFrame
+      window.requestAnimationFrame = (callback) => {
+        window.__homepageRafCalls += 1
+        return originalRequestAnimationFrame(callback)
+      }
+    })
     await reduced.goto(siteUrl, { waitUntil: 'domcontentloaded' })
     await reduced.locator('[data-scene-root]').waitFor()
     assert.equal(await reduced.locator('[data-scene-root]').getAttribute('data-scene-motion'), 'reduced')
     assert.equal(await reduced.locator('[data-scene-root]').getAttribute('data-scene-animation'), 'static')
     assert.equal(await reduced.evaluate(() => document.getAnimations().filter((animation) => animation.playState === 'running').length), 0, 'reduced-motion mode must not run continuous site animations')
+    await reduced.waitForFunction(() => Number(document.querySelector('[data-scene-root]')?.getAttribute('data-scene-render-count')) === 1, undefined, { timeout: 5_000 })
+    const reducedRenderCount = await reduced.locator('[data-scene-root]').getAttribute('data-scene-render-count')
+    const reducedRafCalls = await reduced.evaluate(() => window.__homepageRafCalls)
+    await reduced.waitForTimeout(250)
+    assert.equal(await reduced.locator('[data-scene-root]').getAttribute('data-scene-render-count'), reducedRenderCount, 'reduced motion renders one stable WebGL frame')
+    assert.equal(await reduced.evaluate(() => window.__homepageRafCalls), reducedRafCalls, 'reduced motion does not schedule additional animation frames')
     if (screenshotDirectory) await reduced.screenshot({ path: path.join(screenshotDirectory, 'homepage-reduced-motion.png'), fullPage: true })
     console.log('homepage desktop browser smoke passed')
   } finally {
