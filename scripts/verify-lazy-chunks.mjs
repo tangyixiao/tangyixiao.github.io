@@ -7,7 +7,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const assetDirectory = path.join(root, 'dist', 'assets')
 const assets = await readdir(assetDirectory)
 const initial = assets.find((file) => /^index-[^/]+\.js$/.test(file))
-const scene = assets.find((file) => /^DeepSeaCanvas-[^/]+\.js$/.test(file))
+const scene = assets.find((file) => /^UniverseCanvas-[^/]+\.js$/.test(file))
 const three = assets.find((file) => /^three\.module-[^/]+\.js$/.test(file))
 
 assert.ok(initial, 'production build must contain the initial app chunk')

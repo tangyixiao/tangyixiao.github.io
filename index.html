@@ -1,2 +1,26 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="theme-color" content="#070b17" /><meta name="description" content="Paradox Praxis Clinamen · 佯谬·践履·偏斜" /><link rel="icon" href="data:," /><title>Paradox Praxis Clinamen</title></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08131f" />
+    <meta name="description" content="唐一潇的个人网站：算法、数学、物理与智能系统的学习实践和精选项目。" />
+    <link rel="icon" href="data:," />
+    <title>唐一潇 · 算法、数学与智能系统</title>
+    <script>
+      (() => {
+        let theme, language
+        try { theme = localStorage.getItem('site-theme'); language = localStorage.getItem('site-language') } catch { /* Storage can be disabled. */ }
+        if (theme !== 'light' && theme !== 'dark') theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        if (language !== 'zh' && language !== 'en') language = navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en'
+        document.documentElement.dataset.theme = theme
+        document.documentElement.dataset.language = language
+        document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en'
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
