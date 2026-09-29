@@ -6,7 +6,7 @@
   "scripts": {
     "build": "vite build && node scripts/copy-legacy.mjs && node scripts/verify-lazy-chunks.mjs",
     "test:unit": "node --experimental-strip-types --test tests/visual-lifecycle.test.mjs",
-    "test:browser": "node tests/homepage-smoke.mjs && node tests/homepage.smoke.cjs"
+    "test:browser": "node tests/homepage-smoke.mjs && node tests/homepage.smoke.cjs && node tests/homepage-redesign.cjs"
   },
   "dependencies": {
     "motion": "^13.1.1",
@@ -15,13 +15,11 @@
     "three": "^0.185.1"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.185.4",
     "@vitejs/plugin-react": "^5.1.1",
     "playwright": "^1.62.1",
-    "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "vite": "^8.2.2"
   }

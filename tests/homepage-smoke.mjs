@@ -65,11 +65,15 @@ async function main() {
     assert.equal(await page.locator('[data-scene-canvas]').count(), 1, 'mobile renders exactly one scene canvas')
     assert.equal(await page.locator('a[href="/Code/"]').count(), 3, 'homepage must expose exactly three CodeHub anchors')
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'mobile page must not overflow horizontally')
-    assert.equal(await page.locator('h1').innerText(), 'Paradox\nPraxis\nClinamen', 'canonical hero must remain readable on mobile')
-    assert.equal(await page.title(), 'Paradox Praxis Clinamen', 'document title must use the canonical brand')
-    assert.equal(await page.locator('meta[name="description"]').getAttribute('content'), 'Paradox Praxis Clinamen · 佯谬·践履·偏斜')
-    assert.equal(await page.locator('meta[name="theme-color"]').getAttribute('content'), '#070b17')
-    for (const [selector, phase] of [['#home', 'hero'], ['#about', 'orbit'], ['#focus', 'focus'], ['#work', 'archive'], ['#links', 'links']]) {
+    assert.equal(await page.locator('h1').innerText(), 'Tang Yixiao', 'owner name remains readable on mobile')
+    assert.equal(await page.title(), 'Tang Yixiao · Algorithms, Mathematics & Intelligent Systems')
+    assert.match(await page.locator('meta[name="description"]').getAttribute('content'), /selected work and learning notes/)
+    assert.equal(await page.locator('meta[name="theme-color"]').getAttribute('content'), '#f5f8fc')
+    await page.getByRole('button', { name: 'Open navigation' }).click()
+    assert.equal(await page.getByRole('button', { name: 'Close navigation' }).getAttribute('aria-expanded'), 'true')
+    await page.getByRole('link', { name: 'Work', exact: true }).click()
+    assert.equal(await page.getByRole('button', { name: 'Open navigation' }).getAttribute('aria-expanded'), 'false')
+    for (const [selector, phase] of [['#home', 'hero'], ['#work', 'projects'], ['#focus', 'focus'], ['#about', 'about'], ['#links', 'links']]) {
       await page.locator(selector).evaluate((element) => element.scrollIntoView({ behavior: 'instant', block: 'center' }))
       await page.waitForFunction((nextPhase) => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === nextPhase, phase)
     }
