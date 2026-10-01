@@ -1,7 +1,10 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { focusIds, links, projectIds, siteContent, type FocusId, type Language, type ProjectId, type Theme } from './site/content'
-import type { ScenePhase } from './visual/types'
+import type { BodyId, ScenePhase, UniverseCanvasProps } from './visual/types'
+import { solarCopy } from './visual/solarData'
+import SolarExplorer from './visual/SolarExplorer'
+import { useSpatialCards } from './visual/useSpatialCards'
 
 const UniverseCanvas = lazy(() => import('./visual/UniverseCanvas'))
 const SECTION_PHASES: Record<string, ScenePhase> = { home: 'hero', work: 'projects', focus: 'focus', about: 'about', links: 'links' }
@@ -51,8 +54,8 @@ function useScenePhase() {
   return phase
 }
 
-function SceneLayer({ phase, theme, pulse, reducedMotion }: { phase: ScenePhase; theme: Theme; pulse: number; reducedMotion: boolean }) {
-  return <Suspense fallback={<div className="scene-loading" aria-hidden="true" />}><UniverseCanvas phase={phase} theme={theme} pulse={pulse} reducedMotion={reducedMotion} /></Suspense>
+function SceneLayer(props: UniverseCanvasProps) {
+  return <Suspense fallback={<div className="scene-loading" aria-hidden="true" />}><UniverseCanvas {...props} /></Suspense>
 }
 
 function ExternalLink({ href, children, className = '' }: { href: string; children: ReactNode; className?: string }) {
@@ -64,11 +67,23 @@ function App() {
   const [language, setLanguage] = useState<Language>(initialLanguage)
   const [menuOpen, setMenuOpen] = useState(false)
   const [pulse, setPulse] = useState(0)
+  const [exploring, setExploring] = useState(false)
+  const [selectedBody, setSelectedBody] = useState<BodyId | null>(null)
+  const [paused, setPaused] = useState(false)
+  const [sceneReset, setSceneReset] = useState(0)
+  const [sceneZoom, setSceneZoom] = useState(0)
+  const [surface, setSurface] = useState<HTMLDivElement | null>(null)
+  const [available, setAvailable] = useState<boolean | null>(null)
   const manualTheme = useRef(preference('site-theme') === 'light' || preference('site-theme') === 'dark')
   const sequence = useRef(0)
   const reduce = useReducedMotion() ?? false
   const phase = useScenePhase()
   const copy = siteContent[language]
+  const solar = solarCopy[language]
+  useSpatialCards(reduce || exploring)
+  const closeExplorer = useCallback(() => { setExploring(false); setSelectedBody(null); setPaused(false) }, [])
+  const openExplorer = () => { setSelectedBody(null); setPaused(false); setSceneZoom(0); setMenuOpen(false); setExploring(true) }
+  useEffect(() => { if (available === false) closeExplorer() }, [available, closeExplorer])
 
   const pulseScene = useCallback(() => { sequence.current += 1; setPulse(sequence.current) }, [])
   const switchTheme = () => {
@@ -85,7 +100,7 @@ function App() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#08131f' : '#f5f8fc')
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#050507' : '#f5f8fc')
   }, [theme])
   useEffect(() => {
     document.documentElement.dataset.language = language
@@ -108,7 +123,7 @@ function App() {
 
   return <>
     <a className="skip-link" href="#main">{language === 'zh' ? '跳到主要内容' : 'Skip to main content'}</a>
-    <SceneLayer phase={phase} theme={theme} pulse={pulse} reducedMotion={reduce} />
+    <SceneLayer phase={phase} theme={theme} pulse={pulse} reducedMotion={reduce} mode={exploring ? 'explore' : 'browse'} selected={selectedBody} paused={paused} reset={sceneReset} zoom={sceneZoom} interactionElement={surface} onSelect={setSelectedBody} onAvailability={setAvailable} />
     <div className="site-shell">
       <header className="site-header">
         <nav className="site-nav" aria-label={language === 'zh' ? '主导航' : 'Primary navigation'}>
@@ -126,7 +141,7 @@ function App() {
           <div className="hero-copy">
             <Reveal eager><p className="eyebrow"><span className="signal-dot" />{copy.hero.label}</p><p className="hero-alt">{copy.hero.alternateName}</p><h1>{copy.hero.name}</h1><p className="hero-headline">{copy.hero.headline}</p><p className="hero-description">{copy.hero.description}</p><div className="hero-actions"><a className="button-primary" href="#work" onPointerDown={pulseScene}>{copy.actions.projects}<span aria-hidden="true">↗</span></a><a className="button-text" href="#about">{copy.actions.about}<span aria-hidden="true">↘</span></a></div></Reveal>
           </div>
-          <div className="hero-diagram" aria-hidden="true"><div className="diagram-orbit orbit-one" /><div className="diagram-orbit orbit-two" /><span className="diagram-label diagram-label-a">A / ALGORITHMS</span><span className="diagram-label diagram-label-m">M / MATHEMATICS</span><span className="diagram-label diagram-label-i">I / INTELLIGENCE</span></div>
+          <div className="solar-invitation"><span className="solar-coordinate">SOL / 8 PLANETS / ∞ CURIOSITY</span><button className="explore-entry" type="button" onClick={openExplorer} disabled={available === false}><span className="explore-icon" aria-hidden="true">✺</span>{solar.explore}<span aria-hidden="true">↗</span></button><p>{available === false ? solar.unavailable : available === null ? solar.loading : solar.disclaimer}</p></div>
           <div className="hero-bottom"><span>TY / 2026</span><span>{copy.hero.scroll} <b aria-hidden="true">↓</b></span></div>
         </section>
 
@@ -142,6 +157,7 @@ function App() {
 
       <footer className="footer section" id="links"><div className="footer-main"><Reveal><p className="eyebrow">{copy.links.label}</p><h2>{copy.links.heading}</h2><p className="section-intro">{copy.links.description}</p></Reveal><div className="social-links"><a href={links.code}>{copy.links.code}<span aria-hidden="true">↗</span></a><ExternalLink href={links.github}>GitHub <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.luogu}>Luogu <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.cnblogs}>Cnblogs <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.csdn}>CSDN <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.bilibili}>Bilibili <span aria-hidden="true">↗</span></ExternalLink></div></div><div className="footer-bottom"><span>© 2026 {copy.hero.name}</span><a href="#home">{copy.actions.top} ↑</a></div></footer>
     </div>
+    {exploring && <SolarExplorer language={language} selected={selectedBody} paused={paused} onSelect={setSelectedBody} onPause={() => setPaused(value => !value)} onReset={() => { setSelectedBody(null); setSceneReset(value => value + 1) }} onZoom={direction => setSceneZoom(value => value + direction)} onClose={closeExplorer} onSurface={setSurface} />}
   </>
 }
 
