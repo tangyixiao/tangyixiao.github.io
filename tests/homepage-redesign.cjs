@@ -5,7 +5,13 @@ const path = require('node:path')
 const { chromium } = require('playwright')
 
 const root = path.resolve(__dirname, '..', 'dist')
-const browserPath = [process.env.CHROME_PATH, chromium.executablePath(), '/usr/bin/chromium'].find((candidate) => candidate && fs.existsSync(candidate))
+const browserPath = [
+  process.env.CHROME_PATH,
+  chromium.executablePath(),
+  '/usr/bin/chromium',
+  process.platform === 'win32' && process.env.PROGRAMFILES && path.join(process.env.PROGRAMFILES, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+  process.platform === 'win32' && process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+].filter(Boolean).find((candidate) => candidate && fs.existsSync(candidate))
 
 function serve() {
   const server = http.createServer((request, response) => {

@@ -59,7 +59,7 @@ async function main() {
     preview = spawn(process.execPath, [path.join(root, 'node_modules/vite/bin/vite.js'), 'preview', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { cwd: root, stdio: 'ignore' })
     await waitFor(async () => (await fetch(`http://127.0.0.1:${port}/`)).ok, 'Vite preview did not start')
     browser = await chromium.launch({ headless: true, executablePath: chromiumCandidates, args: ['--enable-webgl', '--use-angle=swiftshader'] })
-    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true })
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, locale: 'en-US' })
     await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'domcontentloaded' })
     await page.locator('[data-scene-root]').waitFor()
     assert.equal(await page.locator('[data-scene-canvas]').count(), 1, 'mobile renders exactly one scene canvas')

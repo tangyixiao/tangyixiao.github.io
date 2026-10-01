@@ -92,7 +92,7 @@ async function main() {
   })
   try {
     const consoleErrors = []
-    const desktop = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+    const desktop = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'en-US' })
     desktop.on('pageerror', (error) => consoleErrors.push(error.message))
     desktop.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()) })
     await desktop.goto(siteUrl, { waitUntil: 'domcontentloaded' })
@@ -113,7 +113,7 @@ async function main() {
     if (screenshotDirectory) await desktop.screenshot({ path: path.join(screenshotDirectory, 'homepage-fallback.png') })
     assert.deepEqual(consoleErrors, [], `scene fallback must not cause console errors: ${consoleErrors.join('\n')}`)
 
-    const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true })
+    const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, locale: 'en-US' })
     await mobile.goto(siteUrl, { waitUntil: 'domcontentloaded' })
     await mobile.locator('[data-scene-root]').waitFor()
     assert.equal(await mobile.locator('[data-scene-canvas]').count(), 1, 'mobile renders exactly one full scene canvas')
@@ -121,7 +121,7 @@ async function main() {
     assert.equal(await mobile.locator('[data-scene-root]').getAttribute('data-scene-particles'), '420', 'mobile uses the lighter particle field')
     if (screenshotDirectory) await mobile.screenshot({ path: path.join(screenshotDirectory, 'homepage-mobile.png'), fullPage: true })
 
-    const reduced = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+    const reduced = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'en-US' })
     await reduced.emulateMedia({ reducedMotion: 'reduce' })
     await reduced.addInitScript(() => {
       window.__homepageRafCalls = 0
