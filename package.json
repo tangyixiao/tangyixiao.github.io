@@ -6,7 +6,7 @@
   "scripts": {
     "build": "vite build && node scripts/copy-legacy.mjs && node scripts/verify-lazy-chunks.mjs",
     "test:unit": "node --experimental-strip-types --test tests/visual-lifecycle.test.mjs",
-    "test:browser": "node tests/homepage-smoke.mjs && node tests/homepage.smoke.cjs && node tests/homepage-redesign.cjs && node tests/solar-system.cjs"
+    "test:browser": "node tests/homepage-smoke.mjs && node tests/homepage.smoke.cjs && node tests/homepage-redesign.cjs && node tests/solar-system.cjs && node tests/solar-quality.cjs"
   },
   "dependencies": {
     "motion": "^13.1.1",

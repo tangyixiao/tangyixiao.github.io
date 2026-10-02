@@ -22,6 +22,7 @@ export default function UniverseCanvas(props: UniverseCanvasProps) {
     if (!canvas) return undefined
     let disposed = false
     let failed = false
+    const abort = new AbortController()
     appliedPulseRef.current = null
     setFallback(false)
     setControllerPhase('loading')
@@ -40,7 +41,7 @@ export default function UniverseCanvas(props: UniverseCanvasProps) {
     }
     const onRender = (count: number) => rootRef.current?.setAttribute('data-scene-render-count', String(count))
 
-    createUniverseController(canvas, latestRef.current, showFallback, onRender).then((controller) => {
+    createUniverseController(canvas, latestRef.current, showFallback, onRender, abort.signal).then((controller) => {
       if (disposed || failed) { controller.destroy(); return }
       controllerRef.current = controller
       const current = latestRef.current
@@ -65,6 +66,7 @@ export default function UniverseCanvas(props: UniverseCanvasProps) {
 
     return () => {
       disposed = true
+      abort.abort()
       controllerRef.current?.destroy()
       controllerRef.current = null
     }

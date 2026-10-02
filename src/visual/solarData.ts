@@ -16,3 +16,18 @@ export const solarCopy = {
   zh: { explore: '探索太阳系', title: '太阳系', subtitle: '一片可以亲手探索的星空。', disclaimer: '艺术化演示，大小、距离与速度非真实比例。', unavailable: '当前设备无法显示动态太阳系，可继续浏览主页。', loading: '正在点亮星空…', pause: '暂停', resume: '继续', reset: '重置视角', exit: '退出探索', zoomIn: '放大', zoomOut: '缩小', select: '选择', overview: '太阳与八大行星', hint: '拖动旋转 · 滚轮缩放 · 点选行星', touchHint: '单指旋转 · 双指缩放 · 轻触行星', tracking: '正在追踪', sceneLabel: '太阳系交互视图', rotateLeft: '向左旋转', rotateRight: '向右旋转' },
   en: { explore: 'Explore the solar system', title: 'Solar system', subtitle: 'A sky you can explore for yourself.', disclaimer: 'Artistic visualization. Sizes, distances and speeds are not to scale.', unavailable: 'Animated solar system unavailable on this device. You can still browse the homepage.', loading: 'Lighting up the sky…', pause: 'Pause', resume: 'Resume', reset: 'Reset view', exit: 'Exit exploration', zoomIn: 'Zoom in', zoomOut: 'Zoom out', select: 'Select', overview: 'The Sun and eight planets', hint: 'Drag to rotate · Scroll to zoom · Select a planet', touchHint: 'One finger to rotate · Pinch to zoom · Tap a planet', tracking: 'Following', sceneLabel: 'Interactive solar system view', rotateLeft: 'Rotate left', rotateRight: 'Rotate right' },
 }
+
+// Equatorial diameters and mean distances: NASA NSSDCA Planetary Fact Sheet.
+export const planetFacts: Record<BodyId, { diameter: string; distance: string; type: [string, string] }> = {
+  sun: { diameter: '1,391,400', distance: '—', type: ['G 型主序星', 'G-type main-sequence star'] },
+  mercury: { diameter: '4,879', distance: '57.9', type: ['岩石行星', 'Terrestrial planet'] },
+  venus: { diameter: '12,104', distance: '108.2', type: ['岩石行星', 'Terrestrial planet'] },
+  earth: { diameter: '12,756', distance: '149.6', type: ['岩石行星', 'Terrestrial planet'] },
+  mars: { diameter: '6,792', distance: '228.0', type: ['岩石行星', 'Terrestrial planet'] },
+  jupiter: { diameter: '142,984', distance: '778.5', type: ['气态巨行星', 'Gas giant'] },
+  saturn: { diameter: '120,536', distance: '1,432.0', type: ['气态巨行星', 'Gas giant'] },
+  uranus: { diameter: '51,118', distance: '2,867.0', type: ['冰巨星', 'Ice giant'] },
+  neptune: { diameter: '49,528', distance: '4,515.0', type: ['冰巨星', 'Ice giant'] },
+}
+
+export const surfaceFor = (id: BodyId) => `/assets/solar/${id === 'earth' ? 'earth_daymap' : id === 'venus' ? 'venus_atmosphere' : id}.webp`
