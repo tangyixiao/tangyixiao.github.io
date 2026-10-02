@@ -117,6 +117,7 @@ function App() {
 
   const nav = [
     { id: 'home', label: copy.nav.home }, { id: 'work', label: copy.nav.work },
+    { id: 'blog', label: language === 'zh' ? '博客' : 'Blog' },
     { id: 'focus', label: copy.nav.focus }, { id: 'about', label: copy.nav.about },
     { id: 'links', label: copy.nav.links },
   ]
@@ -128,7 +129,7 @@ function App() {
       <header className="site-header">
         <nav className="site-nav" aria-label={language === 'zh' ? '主导航' : 'Primary navigation'}>
           <a className="brand" href="#home" onClick={() => setMenuOpen(false)}><span className="brand-mark" aria-hidden="true">✳</span><span>{language === 'zh' ? '唐一潇' : 'Tang Yixiao'}</span></a>
-          <div className="nav-links" data-open={menuOpen}>{nav.map(({ id, label }) => <a href={`#${id}`} key={id} onClick={() => setMenuOpen(false)}>{label}</a>)}</div>
+          <div className="nav-links" data-open={menuOpen}>{nav.map(({ id, label }) => <a href={id === 'blog' ? '/blog/' : `#${id}`} key={id} onClick={() => setMenuOpen(false)}>{label}</a>)}</div>
           <div className="nav-actions">
             <button className="control language-control" type="button" onClick={switchLanguage} aria-label={copy.actions.language}>{language === 'zh' ? 'EN' : '中'}</button>
             <button className="control theme-control" type="button" onClick={switchTheme} aria-label={theme === 'dark' ? copy.actions.themeLight : copy.actions.themeDark}><span aria-hidden="true">{theme === 'dark' ? '☼' : '☾'}</span></button>
