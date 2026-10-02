@@ -12,4 +12,3 @@
 发布到 Sites 前运行 `node scripts/sync-blog-to-sites.mjs`，再在 `sites-blog/` 内运行 Sites 的正常发布流程。`.openai/hosting.json` 保存独立 Sites 身份；不要把个人主页仓库当成 Sites 的源仓库推送。
 
 两处使用同一份文章源码，属于手动同步，不是自动跨站更新。Sites 的初始访问范围为仅本人。
-

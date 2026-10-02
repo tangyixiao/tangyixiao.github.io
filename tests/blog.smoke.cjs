@@ -24,7 +24,8 @@ async function serverFor(root) {
 async function main() {
   assert.ok(chrome, 'A Chromium executable is required')
   const home = await serverFor(path.join(project, 'dist'))
-  const sites = await serverFor(path.join(project, 'sites-blog/dist'))
+  const standalone = path.join(project, 'sites-blog/dist')
+  const sites = await serverFor(fs.existsSync(standalone) ? standalone : path.join(project, 'public/blog'))
   const browser = await chromium.launch({ headless:true, executablePath:chrome, args:['--enable-webgl','--use-angle=swiftshader'] })
   try {
     for (const [host, base] of [[home, '/blog/'], [sites, '/']]) {
@@ -90,4 +91,3 @@ async function main() {
   }
 }
 main().catch(error => { console.error(error);process.exitCode=1 })
-

@@ -8,4 +8,3 @@ await readFile(new URL('index.html', source))
 await mkdir(target, { recursive: true })
 await cp(source, target, { recursive: true })
 console.log(`Synced blog to ${fileURLToPath(target)}`)
-
