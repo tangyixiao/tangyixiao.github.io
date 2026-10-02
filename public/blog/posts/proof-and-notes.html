@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#080b10">
+<meta name="description" content="一份数学笔记的价值，不只在于结论是否整齐，还在于过一段时间之后，能不能沿着记录重新走完那条推理。"><title>把推导写清楚，把理解留住 · 唐一潇</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23080b10'/%3E%3Cpath d='M16 5v22M5 16h22M8 8l16 16M8 24L24 8' stroke='%2384d5c8' stroke-width='2'/%3E%3C/svg%3E"><link rel="stylesheet" href="../assets/blog.css"><script src="../assets/blog.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">跳到主要内容</a>
+<header class="site-header wrap"><a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">✳</span><span>唐一潇 <small>JOURNAL</small></span></a><nav aria-label="主导航"><a href="../index.html#writing">全部文章</a><a class="home-link" href="https://tangyixiao.github.io/">个人主页 ↗</a><button class="theme-toggle" type="button" aria-label="切换到浅色模式" hidden>☼</button></nav></header>
+<main id="main" class="wrap">
+<nav class="breadcrumb" aria-label="面包屑"><a href="../index.html">博客</a><span aria-hidden="true">/</span><span>数学与学习</span></nav>
+<div class="article-layout"><article><header><div class="post-meta"><span class="tag">数学与学习</span><time datetime="2026-10-02">2026.10.02</time><span>约 3 分钟</span></div><h1 class="article-title">把推导写清楚，<br>把理解留住</h1><p class="article-lead">一份数学笔记的价值，不只在于结论是否整齐，还在于过一段时间之后，能不能沿着记录重新走完那条推理。</p></header>
+<div class="article-body">
+<h2 id="conditions">01 / 先写条件，再写结论</h2>
+<p>看到 (x² − 1) / (x − 1)，很容易想到因式分解，再约去相同的因子：</p><pre><code>(x² − 1) / (x − 1)
+= (x − 1)(x + 1) / (x − 1)
+= x + 1，条件：x ≠ 1</code></pre><p>最后这个条件不能丢。原式在 x = 1 时没有定义，而 x + 1 在这里有定义。因此，两者在原式的定义域内相等，却不能直接把原式当作一个在所有实数上都有定义的表达式。</p><p>写笔记时，把“对象是什么”“在哪个范围内讨论”“需要哪些前提”放在同一个位置。条件不是附注，而是结论的一部分。</p>
+<h2 id="steps">02 / 留下每一步的理由</h2>
+<p>公式变形的下一行，应该能回答“用了什么”。在上面的例子中，第一步用了平方差公式，第二步用了非零因子的约分。写下这些理由，能把看似顺手的操作拆成真正可以检查的推理。</p><p>不需要给每个加减乘除写长段说明，但应保留容易发生跳步的地方。例如不等式两边乘一个可能为负的数，开平方前判断符号，或者使用一个定理时检查其前提。</p><p>如果某一步还不明白，就把疑问写在旁边。“这里为什么能约分？”是一个清晰、可以继续处理的问题；仅写“没懂”则很难指导下一次复习。</p><blockquote>好的笔记不是假装每一步都已经懂了，而是把懂到哪里、疑问在哪里，一起留下来。</blockquote>
+<h2 id="review">03 / 让笔记能够重新使用</h2>
+<p>给每个知识点留下一个最小例子，再留下一个能暴露条件的例子。这里可以选 x = 2 检查等式，也可以选 x = 1 检查定义域。代入数值可以发现一些错误，但有限个例子不能代替对一般情形的证明。</p><p>复习时先遮住推导，仅看问题和条件，尝试自己补出过程。能够重新完成推导，比认得纸面上的公式更能说明理解是否稳固。如果再次卡在同一步，就把它作为下一次练习的重点。</p><p>最后给笔记一个能检索的标题，如“平方差分解与约分条件”，并关联相近内容：因式分解、分式定义域、等价变形。笔记之间的联系，会让一个小例子变成更大知识结构的入口。</p><p>数学资料与推导可以继续整理在 <a href="https://github.com/tangyixiao/HighSchoolMathematics" target="_blank" rel="noopener noreferrer">HighSchool Mathematics</a> 项目中；博客则留给这些理解逐步形成的过程。</p>
+</div><nav class="article-end" aria-label="文章导航"><a href="../index.html#writing">← 返回全部文章</a><a href="agent-experiment.html">下一篇：用一个小实验，理解智能体 →</a></nav>
+</article><aside class="toc" aria-label="文章目录"><p class="eyebrow">ON THIS PAGE</p><ol><li><a href="#conditions">01 / 先写条件，再写结论</a></li><li><a href="#steps">02 / 留下每一步的理由</a></li><li><a href="#review">03 / 让笔记能够重新使用</a></li></ol></aside></div>
+</main>
+<footer class="site-footer wrap"><div><span>© 2026 唐一潇</span><a href="https://tangyixiao.github.io/">个人主页 ↗</a></div></footer>
+</body></html>

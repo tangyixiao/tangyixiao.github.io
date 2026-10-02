@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#080b10">
+<meta name="description" content="可以先不追求复杂的系统。选一个边界清楚、结果可检查的小任务，观察模型如何选择工具、读取反馈，再决定下一步。"><title>用一个小实验，理解智能体 · 唐一潇</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23080b10'/%3E%3Cpath d='M16 5v22M5 16h22M8 8l16 16M8 24L24 8' stroke='%2384d5c8' stroke-width='2'/%3E%3C/svg%3E"><link rel="stylesheet" href="../assets/blog.css"><script src="../assets/blog.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">跳到主要内容</a>
+<header class="site-header wrap"><a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">✳</span><span>唐一潇 <small>JOURNAL</small></span></a><nav aria-label="主导航"><a href="../index.html#writing">全部文章</a><a class="home-link" href="https://tangyixiao.github.io/">个人主页 ↗</a><button class="theme-toggle" type="button" aria-label="切换到浅色模式" hidden>☼</button></nav></header>
+<main id="main" class="wrap">
+<nav class="breadcrumb" aria-label="面包屑"><a href="../index.html">博客</a><span aria-hidden="true">/</span><span>AI 与智能体</span></nav>
+<div class="article-layout"><article><header><div class="post-meta"><span class="tag">AI 与智能体</span><time datetime="2026-10-02">2026.10.02</time><span>约 3 分钟</span></div><h1 class="article-title">用一个小实验，<br>理解智能体</h1><p class="article-lead">可以先不追求复杂的系统。选一个边界清楚、结果可检查的小任务，观察模型如何选择工具、读取反馈，再决定下一步。</p></header>
+<div class="article-body">
+<h2 id="task">01 / 把任务缩到可以验证</h2>
+<p>设计一个实验：给定三份已经准备好的公开资料，整理成一张“标题、主题、来源”的表格。输入范围固定，不需要登录、不需要发送消息，也不让程序自行扩展到未知来源。</p><p>先写出完成标准：三份资料都出现；标题来自原文；主题有对应依据；每个来源都能回到提供的资料。遇到无法读取的内容，应标记缺失，而不是补出一个看似合理的答案。</p><p>这是一份实验设计，还不代表已经运行过测试。把计划、实际执行和最后结果分开记录，才能避免把“准备做什么”误当成“已经做到了什么”。</p>
+<h2 id="loop">02 / 观察工具与反馈的闭环</h2>
+<p>在这个实验里，智能体的过程可以按四步观察：</p><ol><li><strong>明确下一步。</strong>先确定需要读哪份资料，以及要提取哪些字段。</li><li><strong>调用工具。</strong>通过已有读取工具获得内容，保留工具的真实返回。</li><li><strong>读取反馈。</strong>检查是否读到完整内容，是否存在空白、错误或格式变化。</li><li><strong>核对结果。</strong>把表格中的每一行与原资料对照，再决定结束或补充读取。</li></ol><p>工具执行成功，不等于任务完成。例如读取工具返回了网页内容，但正文可能缺失；生成了表格文件，也不说明其中的标题一定正确。模型的判断需要用能被检查的证据支撑。</p><p>这组步骤只是一个小型任务的观察框架，并不表示所有智能体都必须按同一种结构实现。具体系统怎样组织记忆、规划与工具，应由任务需要来决定。</p>
+<h2 id="evidence">03 / 记录能说明问题的证据</h2>
+<p>一次实验至少保留：输入资料、任务说明、可用工具、执行记录、最终输出、逐项核对结果。如果限制了运行轮数或时间，也应写在记录里。</p><p>然后尝试一个失败场景：让其中一份资料无法读取。观察系统会不会明确报告缺失，会不会把未知内容伪装成确定事实，以及剩下两份资料是否仍然能正确处理。</p><blockquote>一次小实验的收获，往往不是“智能体很强”，而是更具体地知道：它在哪些条件下完成了什么，又在哪一步失去了可靠的依据。</blockquote><p>有了这样的记录，下一次修改任务说明或工具时，才有可以比较的起点。相关概念与学习资料可以继续归入 <a href="https://github.com/tangyixiao/Agent-Learning-Hub" target="_blank" rel="noopener noreferrer">Agent Learning Hub</a>，把实验与学习线索连接起来。</p>
+</div><nav class="article-end" aria-label="文章导航"><a href="../index.html#writing">← 返回全部文章</a><a href="problem-to-note.html">从第一篇继续阅读 →</a></nav>
+</article><aside class="toc" aria-label="文章目录"><p class="eyebrow">ON THIS PAGE</p><ol><li><a href="#task">01 / 把任务缩到可以验证</a></li><li><a href="#loop">02 / 观察工具与反馈的闭环</a></li><li><a href="#evidence">03 / 记录能说明问题的证据</a></li></ol></aside></div>
+</main>
+<footer class="site-footer wrap"><div><span>© 2026 唐一潇</span><a href="https://tangyixiao.github.io/">个人主页 ↗</a></div></footer>
+</body></html>
