@@ -1,6 +1,7 @@
 export type ScenePhase = 'hero' | 'projects' | 'focus' | 'about' | 'links'
 export type SceneTheme = 'light' | 'dark'
 export type SceneMode = 'browse' | 'explore'
+export type ScaleMode = 'artistic' | 'true'
 export type BodyId = 'sun' | 'mercury' | 'venus' | 'earth' | 'mars' | 'jupiter' | 'saturn' | 'uranus' | 'neptune'
 
 export interface UniverseCanvasProps {
@@ -9,6 +10,7 @@ export interface UniverseCanvasProps {
   pulse: number
   reducedMotion: boolean
   mode: SceneMode
+  scaleMode: ScaleMode
   selected: BodyId | null
   paused: boolean
   reset: number
@@ -23,6 +25,7 @@ export interface UniverseController {
   setTheme(theme: SceneTheme): void
   pulse(seed: number): void
   setMode(mode: SceneMode, element: HTMLElement | null): void
+  setScaleMode(mode: ScaleMode): void
   selectBody(body: BodyId | null): void
   setPaused(paused: boolean): void
   resetView(): void

@@ -3,7 +3,7 @@ import { createUniverseController, particleCountForWidth } from './createUnivers
 import type { ScenePhase, SceneTheme, UniverseCanvasProps, UniverseController } from './types'
 
 export default function UniverseCanvas(props: UniverseCanvasProps) {
-  const { phase, theme, pulse, reducedMotion, mode, selected, paused, reset, zoom, interactionElement, onAvailability } = props
+  const { phase, theme, pulse, reducedMotion, mode, scaleMode, selected, paused, reset, zoom, interactionElement, onAvailability } = props
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const controllerRef = useRef<UniverseController | null>(null)
@@ -50,6 +50,7 @@ export default function UniverseCanvas(props: UniverseCanvasProps) {
       controller.setMode(current.mode, current.interactionElement)
       controller.selectBody(current.selected)
       controller.setPaused(current.paused)
+      if (current.scaleMode !== 'artistic') controller.setScaleMode(current.scaleMode)
       appliedReset.current = current.reset
       if (current.zoom !== 0) for (let i = 0; i < Math.abs(current.zoom); i++) controller.zoomBy(current.zoom)
       appliedZoom.current = current.zoom
@@ -73,6 +74,7 @@ export default function UniverseCanvas(props: UniverseCanvasProps) {
   }, [reducedMotion])
 
   useEffect(() => { controllerRef.current?.setMode(mode, interactionElement); appliedZoom.current = zoom }, [mode, interactionElement])
+  useEffect(() => { controllerRef.current?.setScaleMode(scaleMode) }, [scaleMode])
   useEffect(() => { controllerRef.current?.selectBody(selected) }, [selected])
   useEffect(() => { controllerRef.current?.setPaused(paused) }, [paused])
   useEffect(() => {

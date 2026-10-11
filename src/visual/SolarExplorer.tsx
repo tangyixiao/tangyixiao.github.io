@@ -1,21 +1,23 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { bodies, planetFacts, solarCopy, surfaceFor } from './solarData'
 import type { Language } from '../site/content'
-import type { BodyId } from './types'
+import type { BodyId, ScaleMode } from './types'
 
 interface Props {
   language: Language
   selected: BodyId | null
   paused: boolean
+  scaleMode: ScaleMode
   onSelect: (body: BodyId) => void
   onPause: () => void
   onReset: () => void
   onZoom: (direction: number) => void
+  onScaleMode: () => void
   onClose: () => void
   onSurface: (element: HTMLDivElement | null) => void
 }
 
-export default function SolarExplorer({ language, selected, paused, onSelect, onPause, onReset, onZoom, onClose, onSurface }: Props) {
+export default function SolarExplorer({ language, selected, paused, scaleMode, onSelect, onPause, onReset, onZoom, onScaleMode, onClose, onSurface }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const [infoExpanded, setInfoExpanded] = useState(false)
@@ -52,12 +54,12 @@ export default function SolarExplorer({ language, selected, paused, onSelect, on
       {current && <button className="body-info-toggle" type="button" aria-expanded={infoExpanded} aria-controls="solar-body-info" onClick={() => setInfoExpanded(value => !value)}>{language === 'zh' ? '天体信息' : 'Body details'} <span aria-hidden="true">{infoExpanded ? '−' : '+'}</span></button>}
       <div id="solar-body-info" className="body-info-content">{current && <p>{current[language][1]}</p>}
       {facts && <dl className="body-facts"><div><dt>{current?.id === 'sun' ? language === 'zh' ? '平均直径' : 'Mean diameter' : language === 'zh' ? '赤道直径' : 'Equatorial diameter'}</dt><dd>{facts.diameter}<small>km</small></dd></div>{current?.id !== 'sun' && <div><dt>{language === 'zh' ? '平均日距' : 'Mean distance from Sun'}</dt><dd>{facts.distance}<small>{language === 'zh' ? '百万 km' : 'million km'}</small></dd></div>}</dl>}
-      <p className="explorer-disclaimer">{copy.disclaimer}</p>
+      <p className="explorer-disclaimer">{scaleMode === 'true' ? copy.trueDisclaimer : copy.disclaimer}</p>
       <a className="solar-credit" href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer">{language === 'zh' ? '表面贴图' : 'Surface maps'}: Solar System Scope · CC BY 4.0 ↗</a>
       </div>
     </aside>
     <div className="explorer-bottom"><div className="planet-picker" aria-label={copy.overview}>{bodies.map(body => <button type="button" key={body.id} data-body={body.id} aria-label={`${copy.select}${language === 'en' ? ' ' : ''}${body[language][0]}`} aria-pressed={selected === body.id} onClick={() => onSelect(body.id)}><span className={`planet-dot dot-${body.id}`} style={{ backgroundImage: `url(${surfaceFor(body.id)})` }} /><span>{body[language][0]}</span></button>)}</div>
-      <div className="explorer-toolbar"><a className="blackhole-entry" href="/blackhole.html"><span aria-hidden="true">◉</span>{copy.blackhole}<span aria-hidden="true">↗</span></a><p className="explorer-hint"><span className="desktop-hint">{copy.hint}</span><span className="touch-hint">{copy.touchHint}</span></p><div className="explorer-controls"><button type="button" onClick={onPause} aria-label={paused ? copy.resume : copy.pause} aria-pressed={paused}>{paused ? '▷' : 'Ⅱ'} <span>{paused ? copy.resume : copy.pause}</span></button><button type="button" aria-label={copy.zoomOut} onClick={() => onZoom(-1)}>−</button><button type="button" aria-label={copy.zoomIn} onClick={() => onZoom(1)}>+</button><button type="button" onClick={onReset} aria-label={copy.reset}>↺ <span>{copy.reset}</span></button></div></div>
+      <div className="explorer-toolbar"><button className="scale-toggle" type="button" aria-pressed={scaleMode === 'true'} onClick={onScaleMode}><span aria-hidden="true">{scaleMode === 'true' ? '✧' : '✦'}</span>{scaleMode === 'true' ? copy.artisticScale : copy.trueScale}</button><a className="blackhole-entry" href="/blackhole.html"><span aria-hidden="true">◉</span>{copy.blackhole}<span aria-hidden="true">↗</span></a><a className="blackhole-entry" href="/threebody.html"><span aria-hidden="true">✦</span>{copy.threebody}<span aria-hidden="true">↗</span></a><p className="explorer-hint"><span className="desktop-hint">{copy.hint}</span><span className="touch-hint">{copy.touchHint}</span></p><div className="explorer-controls"><button type="button" onClick={onPause} aria-label={paused ? copy.resume : copy.pause} aria-pressed={paused}>{paused ? '▷' : 'Ⅱ'} <span>{paused ? copy.resume : copy.pause}</span></button><button type="button" aria-label={copy.zoomOut} onClick={() => onZoom(-1)}>−</button><button type="button" aria-label={copy.zoomIn} onClick={() => onZoom(1)}>+</button><button type="button" onClick={onReset} aria-label={copy.reset}>↺ <span>{copy.reset}</span></button></div></div>
     </div>
   </div>
 }

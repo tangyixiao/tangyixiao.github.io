@@ -49,6 +49,34 @@ async function main() {
     await page.keyboard.press('Escape')
     await page.close()
 
+    // 真实比例模式：距离 1:1，全景相机拉远且八颗行星仍在画面内，切回艺术模式后恢复。
+    const scaled = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'zh-CN', colorScheme: 'dark' })
+    scaled.on('pageerror', error => errors.push(error.message))
+    const scaledScene = scaled.locator('[data-scene-root]')
+    try {
+      await scaled.goto(url)
+      await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneReady === 'true')
+      await scaled.getByRole('button', { name: '探索太阳系', exact: true }).click()
+      await scaled.waitForTimeout(400)
+      const baseDistance = Number(await scaledScene.getAttribute('data-scene-camera-distance'))
+      await scaled.getByRole('button', { name: '真实比例', exact: true }).click()
+      await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneScale === 'true')
+      await scaled.waitForTimeout(900)
+      assert.equal(await scaledScene.getAttribute('data-scene-outside-bodies'), 'none', 'true-scale overview still fits all eight planets')
+      const trueDistance = Number(await scaledScene.getAttribute('data-scene-camera-distance'))
+      assert.ok(trueDistance > baseDistance * 2.4, `true-scale camera pulls back (${baseDistance} -> ${trueDistance})`)
+      await scaled.getByRole('button', { name: '选择地球', exact: true }).click()
+      await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneSelected === 'earth')
+      await scaled.getByRole('button', { name: '艺术模式', exact: true }).click()
+      await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneScale === 'artistic')
+      assert.match(await scaled.locator('.body-detail').innerText(), /艺术化演示/, 'disclaimer swaps back with the scale mode')
+      await scaled.getByRole('button', { name: '真实比例', exact: true }).click()
+      await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneScale === 'true')
+      assert.match(await scaled.locator('.body-detail').innerText(), /1 AU ≈ 1\.55 单位/, 'true-scale disclaimer is shown')
+    } finally {
+      await scaled.close()
+    }
+
     // Actions issued while images are delayed must reach the eventual controller.
     const delayed = await browser.newPage({ locale: 'zh-CN' })
     let release
