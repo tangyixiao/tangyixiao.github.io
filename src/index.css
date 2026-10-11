@@ -144,6 +144,14 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
 .social-links a:hover { padding-left: 7px; color: var(--teal); }
 .social-links span { color: var(--gold); }
 .footer-bottom { display: flex; justify-content: space-between; max-width: 1400px; margin: auto; padding-top: 27px; border-top: 1px solid var(--line); color: var(--muted); font: 500 .64rem/1.5 'DejaVu Sans Mono', 'Noto Sans CJK SC', monospace; letter-spacing: .06em; }
+.footer-bottom a { color: inherit; }
+.footer-bottom a:hover { color: var(--ink); }
+/* 独立界面：路由区块单独占满一屏，去掉为滚动拼接准备的分隔线。 */
+.view { min-height: calc(100svh - 68px); border-top: 0; }
+.nav-links a[data-active='true'] { color: var(--teal); }
+.footer-slim { padding-top: 18px; border-top: 0; background: transparent; }
+.hero-bottom a { color: inherit; }
+.hero-bottom a:hover { color: var(--ink); }
 
 .universe-scene { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: var(--bg); pointer-events: none; }
 .universe-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
@@ -169,6 +177,8 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
 @media (max-width: 760px) {
   .site-header { inset-block-start: 12px; padding: 0 14px; }
   .site-nav { min-height: 58px; padding: 0 9px 0 13px; border-radius: 14px; }
+  .view { min-height: calc(100svh - 58px); }
+  .nav-links a[data-active='true'] { border-left: 2px solid var(--teal); }
   .brand { gap: 8px; font-size: .8rem; }
   .brand-mark { font-size: 1.1rem; }
   .nav-links { position: absolute; top: calc(100% + 8px); right: 14px; left: 14px; display: none; flex-direction: column; align-items: stretch; gap: 0; margin: 0; padding: 9px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface); box-shadow: 0 20px 50px var(--shadow); }

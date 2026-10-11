@@ -63,7 +63,7 @@ async function main() {
     await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'domcontentloaded' })
     await page.locator('[data-scene-root]').waitFor()
     assert.equal(await page.locator('[data-scene-canvas]').count(), 1, 'mobile renders exactly one scene canvas')
-    assert.equal(await page.locator('a[href="/Code/"]').count(), 3, 'homepage must expose exactly three CodeHub anchors')
+    assert.equal(await page.locator('#work').count(), 0, 'mobile homepage opens on the hero view alone')
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'mobile page must not overflow horizontally')
     assert.equal(await page.locator('h1').innerText(), 'Tang Yixiao', 'owner name remains readable on mobile')
     assert.equal(await page.title(), 'Tang Yixiao · Algorithms, Mathematics & Intelligent Systems')
@@ -73,8 +73,11 @@ async function main() {
     assert.equal(await page.getByRole('button', { name: 'Close navigation' }).getAttribute('aria-expanded'), 'true')
     await page.getByRole('link', { name: 'Work', exact: true }).click()
     assert.equal(await page.getByRole('button', { name: 'Open navigation' }).getAttribute('aria-expanded'), 'false')
-    for (const [selector, phase] of [['#home', 'hero'], ['#work', 'projects'], ['#focus', 'focus'], ['#about', 'about'], ['#links', 'links']]) {
-      await page.locator(selector).evaluate((element) => element.scrollIntoView({ behavior: 'instant', block: 'center' }))
+    assert.equal(await page.evaluate(() => window.location.hash), '#/work', 'nav switches to the work view')
+    assert.equal(await page.locator('#home').count(), 0, 'the hero is not rendered on the work view')
+    assert.equal(await page.locator('a[href="/Code/"]').count(), 1, 'work view exposes exactly one CodeHub anchor')
+    for (const [hash, phase] of [['#/', 'hero'], ['#/work', 'projects'], ['#/focus', 'focus'], ['#/about', 'about'], ['#/links', 'links']]) {
+      await page.evaluate((next) => { window.location.hash = next }, hash)
       await page.waitForFunction((nextPhase) => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === nextPhase, phase)
     }
     console.log('homepage mobile browser smoke passed')
