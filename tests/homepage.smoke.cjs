@@ -37,9 +37,15 @@ function serve() {
   return new Promise((resolve) => server.listen(18766, '127.0.0.1', () => resolve(server)))
 }
 
-async function expectPhase(page, selector, phase) {
-  await page.locator(selector).evaluate((element) => element.scrollIntoView({ behavior: 'instant', block: 'center' }))
+const ROUTE_PHASES = [['#/', 'hero'], ['#/work', 'projects'], ['#/focus', 'focus'], ['#/about', 'about'], ['#/links', 'links']]
+
+async function expectPhase(page, hash, phase) {
+  await page.evaluate((next) => { window.location.hash = next }, hash)
   await page.waitForFunction((nextPhase) => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === nextPhase, phase)
+  const viewId = hash === '#/' ? 'home' : hash.slice(2)
+  for (const other of ['home', 'work', 'focus', 'about', 'links'].filter((id) => id !== viewId)) {
+    assert.equal(await page.locator('#' + other).count(), 0, `${hash} renders its own view alone (no #${other})`)
+  }
 }
 
 async function expectDelayedControllerReplay(page, siteUrl) {
@@ -52,10 +58,10 @@ async function expectDelayedControllerReplay(page, siteUrl) {
   try {
     await page.goto(siteUrl, { waitUntil: 'domcontentloaded' })
     await page.locator('[data-scene-root]').waitFor()
-    await page.locator('#focus').evaluate((element) => element.scrollIntoView({ behavior: 'instant', block: 'center' }))
-    await page.waitForFunction(() => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === 'focus')
     await page.locator('.button-primary').dispatchEvent('pointerdown')
     await page.waitForFunction(() => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-pulse') !== '0.000')
+    await page.evaluate(() => { window.location.hash = '#/focus' })
+    await page.waitForFunction(() => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === 'focus')
     const expectedPulse = await page.locator('[data-scene-root]').getAttribute('data-scene-pulse')
     releaseThree()
     await page.waitForFunction(
@@ -101,12 +107,17 @@ async function main() {
     await desktop.locator('[data-scene-root]').waitFor()
     assert.equal(await desktop.locator('[data-scene-canvas]').count(), 1, 'desktop renders exactly one scene canvas')
     assert.equal(await desktop.locator('[data-scene-root]').getAttribute('data-scene-phase'), 'hero')
-    assert.equal(await desktop.locator('a[href="/Code/"]').count(), 3, 'homepage exposes exactly three CodeHub links')
+    assert.equal(await desktop.locator('#work').count(), 0, 'the homepage opens on the hero view alone')
     assert.equal(await desktop.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'desktop must not overflow horizontally')
-    await expectDelayedControllerReplay(desktop, siteUrl)
-    for (const [selector, phase] of [['#home', 'hero'], ['#work', 'projects'], ['#focus', 'focus'], ['#about', 'about'], ['#links', 'links']]) await expectPhase(desktop, selector, phase)
     if (screenshotDirectory) await desktop.screenshot({ path: path.join(screenshotDirectory, 'homepage-desktop.png'), fullPage: true })
-    await expectPhase(desktop, '#home', 'hero')
+    await expectDelayedControllerReplay(desktop, siteUrl)
+    for (const [hash, phase] of ROUTE_PHASES) await expectPhase(desktop, hash, phase)
+    assert.equal(await desktop.locator('a[href="/Code/"]').count(), 1, 'links view exposes its CodeHub entry')
+    await expectPhase(desktop, '#/work', 'projects')
+    assert.equal(await desktop.locator('a[href="/Code/"]').count(), 1, 'work view exposes its CodeHub entry')
+    await expectPhase(desktop, '#/focus', 'focus')
+    assert.equal(await desktop.locator('a[href="/Code/"]').count(), 1, 'focus view exposes its CodeHub entry')
+    await expectPhase(desktop, '#/', 'hero')
     await desktop.evaluate(() => document.querySelector('[data-scene-canvas]').dispatchEvent(new Event('webglcontextlost', { cancelable: true })))
     await desktop.waitForFunction(() => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-fallback') === 'active')
     await desktop.locator('.universe-fallback').waitFor({ state: 'visible' })

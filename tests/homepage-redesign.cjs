@@ -42,16 +42,30 @@ async function main() {
     assert.equal(await zh.locator('html').getAttribute('lang'), 'zh-CN', 'initial language follows the browser')
     assert.match(await zh.title(), /唐一潇.*算法、数学与智能系统/)
     assert.match(await zh.locator('meta[name="description"]').getAttribute('content'), /算法、数学、物理与智能系统/)
-    assert.match(await zh.locator('#about').innerText(), /C\+\+.*Python.*LaTeX/s, 'About describes documented tools')
     assert.doesNotMatch(await zh.locator('main').innerText(), /绍兴一中|1000 AC|2000 AC/, 'unconfirmed identity and counts stay off the homepage')
-    assert.equal(await zh.locator('a[href="/Code/"]').count(), 3, 'all three CodeHub paths remain discoverable')
+    assert.equal(await zh.locator('a[href="/Code/"]').count(), 0, 'the home view alone exposes no CodeHub anchor')
     await zh.locator('[data-scene-root]').waitFor()
     assert.equal(await zh.locator('[data-scene-theme]').count(), 1, 'the scene exposes its active palette')
     assert.equal(await zh.locator('[data-scene-root]').getAttribute('data-scene-theme'), 'dark')
-    for (const [selector, phase] of [['#home', 'hero'], ['#work', 'projects'], ['#focus', 'focus'], ['#about', 'about'], ['#links', 'links']]) {
-      await zh.locator(selector).evaluate((element) => element.scrollIntoView({ behavior: 'instant', block: 'center' }))
+    for (const [hash, phase] of [['#/', 'hero'], ['#/work', 'projects'], ['#/focus', 'focus'], ['#/about', 'about'], ['#/links', 'links']]) {
+      await zh.evaluate((next) => { window.location.hash = next }, hash)
       await zh.waitForFunction((expected) => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === expected, phase)
+      const viewId = hash === '#/' ? 'home' : hash.slice(2)
+      for (const other of ['home', 'work', 'focus', 'about', 'links'].filter((id) => id !== viewId)) {
+        assert.equal(await zh.locator('#' + other).count(), 0, `${hash} renders its own view alone (no #${other})`)
+      }
     }
+    await zh.evaluate(() => { window.location.hash = '#/about' })
+    await zh.locator('#about').waitFor()
+    assert.match(await zh.locator('#about').innerText(), /C\+\+.*Python.*LaTeX/s, 'About describes documented tools')
+    await zh.evaluate(() => { window.location.hash = '#/work' })
+    await zh.locator('#work').waitFor()
+    assert.equal(await zh.locator('a[href="/Code/"]').count(), 1, 'work view exposes exactly one CodeHub anchor')
+    await zh.evaluate(() => { window.location.hash = '#/links' })
+    await zh.locator('#links').waitFor()
+    assert.equal(await zh.locator('a[href="/Code/"]').count(), 1, 'links view exposes exactly one CodeHub anchor')
+    await zh.evaluate(() => { window.location.hash = '#/' })
+    await zh.locator('h1').waitFor()
 
     await zh.getByRole('button', { name: '切换到浅色模式' }).click()
     assert.equal(await zh.locator('html').getAttribute('data-theme'), 'light')

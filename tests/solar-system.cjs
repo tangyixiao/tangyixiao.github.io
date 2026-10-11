@@ -91,11 +91,12 @@ async function main() {
       assert.equal(await attr('selected'), 'none')
       await page.keyboard.press('Escape')
     }
-    for (const [id, phase] of [['home','hero'],['work','projects'],['focus','focus'],['about','about'],['links','links']]) {
-      await page.locator('#' + id).evaluate(el => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+    for (const [hash, phase] of [['#/', 'hero'], ['#/work', 'projects'], ['#/focus', 'focus'], ['#/about', 'about'], ['#/links', 'links']]) {
+      await page.evaluate((next) => { window.location.hash = next }, hash)
       await waitAttr('phase', phase)
     }
-    await page.locator('#home').evaluate(el => el.scrollIntoView({ behavior: 'instant' }))
+    await page.evaluate(() => { window.location.hash = '#/' })
+    await page.locator('#home').waitFor()
     await page.getByRole('button', { name: '探索太阳系', exact: true }).click()
     await dialog.getByRole('button', { name: '选择地球', exact: true }).click()
     await waitAttr('selected', 'earth')
