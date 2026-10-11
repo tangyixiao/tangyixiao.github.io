@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#050507" />
+  <meta name="description" content="黑洞：基于史瓦西度规的实时光线追踪模拟。引力透镜、吸积盘、光子环与多普勒增亮，可拖动环绕的深渊。" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="canonical" href="https://tangyixiao.github.io/blackhole.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://tangyixiao.github.io/blackhole.html" />
+  <meta property="og:site_name" content="唐一潇 · Tang Yixiao" />
+  <meta property="og:title" content="黑洞 · 实时光线追踪深渊" />
+  <meta property="og:description" content="基于史瓦西度规的实时黑洞模拟：引力透镜、吸积盘、光子环与多普勒增亮。" />
+  <meta property="og:image" content="https://tangyixiao.github.io/og-image.png" />
+  <meta property="og:locale" content="zh_CN" />
+  <title>黑洞 · Gargantua — 唐一潇</title>
+  <style>
+    :root {
+      --bg: #050507;
+      --surface: #101014;
+      --surface-raised: #1a1a21;
+      --ink: #f5f8fa;
+      --muted: #a8bdc9;
+      --teal: #6dd8d4;
+      --gold: #d5c29b;
+      --line: rgba(187, 218, 231, .15);
+      --glass: rgba(13, 13, 18, .74);
+      color-scheme: dark;
+      font-family: 'Source Han Sans CN', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); }
+    body { color: var(--ink); }
+    a { color: inherit; text-decoration: none; }
+    button { color: inherit; font-family: inherit; cursor: pointer; }
+    :where(a, button, summary):focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+
+    #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: var(--bg); cursor: grab; touch-action: none; }
+    #scene:active { cursor: grabbing; }
+
+    .back-link { position: fixed; top: max(20px, env(safe-area-inset-top)); left: clamp(16px, 3vw, 40px); z-index: 5; display: inline-flex; align-items: center; gap: 10px; padding: 10px 18px; border: 1px solid var(--line); border-radius: 6px; background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-size: .74rem; font-weight: 600; letter-spacing: .04em; transition: border-color .2s ease, color .2s ease; }
+    .back-link:hover { border-color: var(--teal); color: #fff; }
+    .back-link b { color: var(--gold); font-weight: 400; font-size: 1rem; line-height: 1; }
+
+    .masthead { position: fixed; top: clamp(74px, 12vh, 128px); left: clamp(18px, 4vw, 64px); z-index: 4; max-width: min(460px, 46vw); pointer-events: none; }
+    .masthead h1, .masthead .sub, .masthead .specs, .masthead .eyebrow { text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 0 2px 26px rgba(0, 0, 0, .75); }
+    .masthead .eyebrow { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; color: var(--teal); font: 600 .62rem/1.4 'DejaVu Sans Mono', 'SFMono-Regular', monospace; letter-spacing: .16em; }
+    .masthead .eyebrow i { width: 5px; height: 5px; flex: none; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 5px rgba(109, 216, 212, .13), 0 0 16px var(--teal); }
+    .masthead h1 { margin: 0 0 14px; font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', Georgia, serif; font-size: clamp(3rem, 6.4vw, 5.6rem); font-weight: 500; line-height: 1.1; letter-spacing: -.06em; }
+    .masthead h1 small { display: block; margin-top: 6px; color: var(--gold); font: 500 .62rem/1.5 'DejaVu Sans Mono', monospace; letter-spacing: .34em; }
+    .masthead .sub { margin: 0; max-width: 30em; color: var(--muted); font-size: clamp(.8rem, 1vw, .92rem); line-height: 1.9; }
+    .masthead .specs { margin: 16px 0 0; color: var(--gold); font: 500 .58rem/1.8 'DejaVu Sans Mono', 'Microsoft YaHei', monospace; letter-spacing: .1em; opacity: .85; }
+
+    .hud-controls { position: fixed; top: max(20px, env(safe-area-inset-top)); right: clamp(16px, 3vw, 40px); z-index: 5; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
+    .hud-controls .group { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 6px; background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); overflow: hidden; }
+    .hud-controls .group > button { padding: 10px 13px; border: 0; background: transparent; font-size: .68rem; font-weight: 600; letter-spacing: .05em; white-space: nowrap; transition: background .2s ease, color .2s ease; }
+    .hud-controls .group > button + button { border-left: 1px solid var(--line); }
+    .hud-controls .group > button:hover { background: rgba(255, 255, 255, .06); }
+    .hud-controls .group > button[aria-pressed='true'] { background: rgba(109, 216, 212, .14); color: var(--teal); }
+    .hud-controls .lone { padding: 10px 15px; border: 1px solid var(--line); border-radius: 6px; background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-size: .68rem; font-weight: 600; letter-spacing: .05em; white-space: nowrap; transition: border-color .2s ease; }
+    .hud-controls .lone:hover { border-color: var(--gold); }
+
+    .hint { position: fixed; bottom: calc(140px + env(safe-area-inset-bottom)); left: 0; right: 0; z-index: 4; margin: 0; text-align: center; color: var(--muted); font: 500 .6rem/1.6 'DejaVu Sans Mono', 'Microsoft YaHei', monospace; letter-spacing: .14em; pointer-events: none; opacity: .8; }
+
+    .panel { position: fixed; bottom: 0; left: 0; right: 0; z-index: 5; padding: 0 clamp(12px, 3vw, 40px) calc(14px + env(safe-area-inset-bottom)); pointer-events: none; }
+    .panel-inner { max-width: 1500px; margin: 0 auto; padding: 12px 14px 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 18px 60px rgba(0, 0, 0, .4); pointer-events: auto; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .panel-head p { margin: 0; color: var(--muted); font: 600 .6rem/1.4 'DejaVu Sans Mono', 'Microsoft YaHei', monospace; letter-spacing: .16em; }
+    .panel-toggle { padding: 6px 12px; border: 1px solid var(--line); border-radius: 6px; background: transparent; font-size: .64rem; font-weight: 600; letter-spacing: .08em; transition: border-color .2s ease; }
+    .panel-toggle:hover { border-color: var(--teal); }
+    .cards { display: flex; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: thin; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+    .cards li { flex: 1 1 0; min-width: 168px; scroll-snap-align: start; }
+    .cards details { height: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, .03); transition: border-color .25s ease, background .25s ease; }
+    .cards details:hover, .cards details[open] { border-color: color-mix(in srgb, var(--gold) 55%, transparent); background: rgba(255, 255, 255, .05); }
+    .cards summary { display: flex; align-items: baseline; gap: 8px; cursor: pointer; list-style: none; font-size: .78rem; font-weight: 650; white-space: nowrap; }
+    .cards summary::-webkit-details-marker { display: none; }
+    .cards summary::before { content: '+'; flex: none; color: var(--teal); font: 400 .95rem/1 'DejaVu Sans Mono', monospace; transition: transform .2s ease; }
+    .cards details[open] summary::before { content: '−'; }
+    .cards summary .en { color: var(--muted); font: 400 .52rem/1.4 'DejaVu Sans Mono', monospace; letter-spacing: .1em; overflow: hidden; text-overflow: ellipsis; }
+    .cards details p { margin: 9px 0 0; color: var(--muted); font-size: .66rem; line-height: 1.8; }
+    .disclaimer { margin: 11px 0 0; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: .55rem; line-height: 1.7; opacity: .8; }
+    .disclaimer a { text-decoration: underline; text-underline-offset: 3px; }
+
+    #boot { position: fixed; inset: 0; z-index: 9; display: grid; place-items: center; background: var(--bg); transition: opacity .8s ease; pointer-events: none; }
+    #boot p { color: var(--muted); font: 500 .66rem/1.6 'DejaVu Sans Mono', 'Microsoft YaHei', monospace; letter-spacing: .3em; animation: breathe 2.2s ease-in-out infinite; }
+    #boot.done { opacity: 0; pointer-events: none; }
+    @keyframes breathe { 0%, 100% { opacity: .35; } 50% { opacity: .9; } }
+
+    .fallback { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at 50% 45%, #14141c, var(--bg) 70%); }
+    .fallback[hidden] { display: none; }
+    .fallback > div { max-width: 420px; text-align: center; }
+    .fallback h2 { margin: 0 0 12px; font-family: 'Noto Serif CJK SC', 'Songti SC', Georgia, serif; font-size: 1.7rem; font-weight: 500; letter-spacing: -.03em; }
+    .fallback p { margin: 0 0 22px; color: var(--muted); font-size: .8rem; line-height: 1.9; }
+    .fallback a { display: inline-block; padding: 11px 22px; border: 1px solid var(--teal); border-radius: 40px; background: var(--teal); color: var(--bg); font-size: .78rem; font-weight: 700; }
+
+    noscript p { position: fixed; inset: auto 0 50%; text-align: center; color: var(--muted); }
+
+    @media (max-width: 900px) {
+      .masthead { max-width: min(420px, 74vw); }
+    }
+    @media (max-width: 760px) {
+      .masthead { top: max(70px, env(safe-area-inset-top)); left: 18px; right: 96px; }
+      .masthead h1 { font-size: 2.5rem; }
+      .masthead .specs { display: none; }
+      .hud-controls { left: 18px; right: 18px; justify-content: flex-start; top: max(16px, env(safe-area-inset-top)); }
+      .back-link { position: static; order: 5; }
+      .hud-controls { flex-wrap: wrap; }
+      .hint { display: none; }
+      .cards li { flex-basis: 200px; }
+      .panel { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="scene" aria-hidden="true"></canvas>
+
+  <a class="back-link" href="/"><b aria-hidden="true">←</b><span>返回太阳系</span></a>
+
+  <header class="masthead">
+    <p class="eyebrow"><i aria-hidden="true"></i>TY / OBSERVATORY · SGR A*</p>
+    <h1>黑洞<small>GARGANTUA · REAL-TIME RAY TRACER</small></h1>
+    <p class="sub">银河系的中心沉睡着人马座 A*——四百多万倍太阳的质量，坍缩进一个直径不足两千万公里的黑暗里。拖动视角绕深渊一圈，看光如何在它身边弯曲、盘旋、坠落。</p>
+    <p class="specs">质量 ≈ 4.15×10⁶ M☉ · 距离 ≈ 26,000 光年 · 视界直径 ≈ 2,400 万 km · EHT 2022 成像</p>
+  </header>
+
+  <div class="hud-controls" role="group" aria-label="渲染控制">
+    <div class="group" role="group" aria-label="画质">
+      <button type="button" data-quality="auto" aria-pressed="true">自动</button>
+      <button type="button" data-quality="low" aria-pressed="false">流畅</button>
+      <button type="button" data-quality="mid" aria-pressed="false">均衡</button>
+      <button type="button" data-quality="high" aria-pressed="false">精细</button>
+    </div>
+    <button class="lone" id="btn-pause" type="button" aria-pressed="false"><span aria-hidden="true">Ⅱ</span> 暂停</button>
+    <button class="lone" id="btn-reset" type="button">↺ 重置视角</button>
+  </div>
+
+  <p class="hint">拖动环绕 · 滚轮缩放 · 点按词条了解物理</p>
+
+  <section class="panel" aria-label="黑洞物理注解">
+    <div class="panel-inner">
+      <div class="panel-head">
+        <p>WHAT LIES INSIDE — 黑洞物理速览</p>
+        <button class="panel-toggle" id="panel-toggle" type="button" aria-expanded="true" aria-controls="panel-body">收起注解 −</button>
+      </div>
+      <div id="panel-body">
+        <ul class="cards">
+          <li><details><summary>事件视界<span class="en">EVENT HORIZON</span></summary><p>黑洞的边界。一旦越过，任何东西——包括光——都无法返回。画面中央的黑影并非实体，而是所有光线消失的方向。</p></details></li>
+          <li><details><summary>吸积盘<span class="en">ACCRETION DISK</span></summary><p>被引力俘获的物质在坠落前高速绕行，摩擦升温到数百万度，发出比整条旋臂更亮的光。盘内缘以近光速旋转。</p></details></li>
+          <li><details><summary>引力透镜<span class="en">GRAVITATIONAL LENSING</span></summary><p>强引力把身后传来的光线弯折过来，让本该被黑洞遮住的盘面上缘与下缘同时显形，绕成一道立体的光环。</p></details></li>
+          <li><details><summary>光子环<span class="en">PHOTON RING</span></summary><p>在 1.5 倍史瓦西半径附近，光可以绕黑洞转上好几圈才逃出，聚成一圈极细、极亮的光环，紧贴着黑影边缘。</p></details></li>
+          <li><details><summary>多普勒增亮<span class="en">DOPPLER BEAMING</span></summary><p>朝观察者转来的一侧被蓝移并增亮，远离的一侧红移并变暗——所以吸积盘永远一侧耀眼、一侧黯淡。</p></details></li>
+          <li><details><summary>时间膨胀<span class="en">TIME DILATION</span></summary><p>引力越强，时间走得越慢。在远处的观察者看来，坠向视界的时钟会越来越慢，最终冻结在边界上。</p></details></li>
+        </ul>
+        <p class="disclaimer">实时渲染：按史瓦西度规近似积分光子测地线，吸积盘湍流与配色为艺术化演绎，尺寸、亮度与速度非线性比例。星空底图：<a href="https://svs.gsfc.nasa.gov/4851/" target="_blank" rel="noopener noreferrer">NASA SVS Deep Star Maps 2020</a>（NASA/Goddard 科学可视化工作室，Gaia DR2: ESA/Gaia/DPAC，公有领域）。</p>
+      </div>
+    </div>
+  </section>
+
+  <div id="boot"><p>正在点亮深渊</p></div>
+
+  <div class="fallback" id="fallback" hidden>
+    <div>
+      <h2>无法点亮深渊</h2>
+      <p>当前设备或浏览器不支持 WebGL，无法渲染这个实时黑洞。可以回到太阳系，继续探索行星。</p>
+      <a href="/">返回主页</a>
+    </div>
+  </div>
+
+  <noscript><p>需要启用 JavaScript 才能渲染黑洞。</p></noscript>
+
+  <script>
+    (() => {
+      'use strict'
+      const canvas = document.getElementById('scene')
+      const boot = document.getElementById('boot')
+      const gl = canvas.getContext('webgl', { antialias: false, alpha: false, depth: false, stencil: false, powerPreference: 'high-performance' })
+        || canvas.getContext('experimental-webgl')
+      if (!gl) {
+        boot.remove()
+        document.getElementById('fallback').hidden = false
+        canvas.style.display = 'none'
+        return
+      }
+
+      const VERT = [
+        'attribute vec2 aPos;',
+        'void main() { gl_Position = vec4(aPos, 0.0, 1.0); }',
+      ].join('\n')
+
+      const FRAG = [
+        '#ifdef GL_FRAGMENT_PRECISION_HIGH',
+        'precision highp float;',
+        '#else',
+        'precision mediump float;',
+        '#endif',
+        'uniform vec2 uRes;',
+        'uniform float uTime;',
+        'uniform vec3 uCamPos;',
+        'uniform mat3 uCamMat;',
+        'uniform float uTanFov;',
+        'uniform float uSteps;',
+        'uniform float uExposure;',
+        'uniform float uSkyReady;',
+        'uniform sampler2D uSky;',
+        'const float PI = 3.141592653589793;',
+        'const float DISK_IN = 2.6;',
+        'const float DISK_OUT = 13.0;',
+
+        // 3 units around the disk = 12 sectors, so noise stays seamless across the atan seam.
+        'float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }',
+        'float hash13(vec3 p3) { p3 = fract(p3 * 0.1031); p3 += dot(p3, p3.zyx + 31.32); return fract((p3.x + p3.y) * p3.z); }',
+        'float pnoise(vec2 p, float per) {',
+        '  vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f);',
+        '  float x0 = mod(i.x, per), x1 = mod(i.x + 1.0, per);',
+        '  float a = hash12(vec2(x0, i.y)), b = hash12(vec2(x1, i.y));',
+        '  float c = hash12(vec2(x0, i.y + 1.0)), d = hash12(vec2(x1, i.y + 1.0));',
+        '  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);',
+        '}',
+        'float pfbm(vec2 p, float per) {',
+        '  float s = 0.0; float a = 0.55;',
+        '  for (int i = 0; i < 4; i++) { s += a * pnoise(p, per); p *= 2.0; per *= 2.0; a *= 0.5; }',
+        '  return s;',
+        '}',
+        'float vnoise(vec2 p) {',
+        '  vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f);',
+        '  return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), f.x), mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), f.x), f.y);',
+        '}',
+        'float fbm(vec2 p) {',
+        '  float s = 0.0; float a = 0.55;',
+        '  for (int i = 0; i < 4; i++) { s += a * vnoise(p); p = p * 2.13 + 19.7; a *= 0.5; }',
+        '  return s;',
+        '}',
+
+        'vec3 heat(float x) {',
+        '  x = clamp(x, 0.0, 1.0);',
+        '  vec3 c = mix(vec3(0.36, 0.05, 0.02), vec3(0.98, 0.33, 0.06), smoothstep(0.0, 0.38, x));',
+        '  c = mix(c, vec3(1.0, 0.62, 0.22), smoothstep(0.34, 0.62, x));',
+        '  c = mix(c, vec3(1.0, 0.9, 0.66), smoothstep(0.6, 0.85, x));',
+        '  c = mix(c, vec3(0.97, 0.97, 1.0), smoothstep(0.85, 1.0, x));',
+        '  return c;',
+        '}',
+
+        'vec3 skyColor(vec3 d) {',
+        '  if (uSkyReady > 0.5) {',
+        '    vec2 uv = vec2(atan(d.z, d.x) / (2.0 * PI) + 0.5, asin(clamp(d.y, -1.0, 1.0)) / PI + 0.5);',
+        '    vec3 s = texture2D(uSky, uv).rgb;',
+        '    return pow(s, vec3(1.25)) * 0.45;',
+        '  }',
+        '  float h = hash13(floor(d * 310.0));',
+        '  float star = smoothstep(0.9982, 1.0, h);',
+        '  float tw = 0.72 + 0.28 * sin(uTime * 1.7 + h * 61.0);',
+        '  vec3 col = vec3(star) * tw * mix(vec3(0.75, 0.85, 1.0), vec3(1.0, 0.9, 0.75), hash13(floor(d * 310.0) + 4.7));',
+        '  col += vec3(0.035, 0.045, 0.08) * fbm(vec2(atan(d.z, d.x) * 2.0, d.y * 4.0));',
+        '  return col;',
+        '}',
+
+        'vec4 diskSample(vec3 hp, vec3 rd) {',
+        '  float r = length(hp.xz);',
+        '  float ang = atan(hp.z, hp.x);',
+        // Differential (Keplerian) rotation shears the turbulence into streaks.
+        '  float a2 = ang - uTime * 6.0 * pow(r, -1.5);',
+        '  float base = pfbm(vec2(a2 / (2.0 * PI) * 12.0, r * 3.1), 12.0);',
+        '  float detail = pfbm(vec2(a2 / (2.0 * PI) * 48.0 + 3.7, r * 8.0), 48.0);',
+        '  float dens = 0.62 * base + 0.38 * detail;',
+        '  float edge = smoothstep(DISK_IN, DISK_IN + 0.55, r) * (1.0 - smoothstep(DISK_OUT - 4.6, DISK_OUT, r));',
+        '  dens = pow(max(dens * edge, 0.0), 1.45);',
+        '  float t = pow(clamp(1.0 - (r - DISK_IN) / (DISK_OUT - DISK_IN), 0.0, 1.0), 0.62);',
+        // Circular-orbit speed as a fraction of c around a Schwarzschild hole (r_s = 1).
+        '  vec3 orb = normalize(vec3(-hp.z, 0.0, hp.x));',
+        '  float speed = clamp(sqrt(0.5 / max(r - 1.0, 0.75)), 0.0, 0.85);',
+        '  float mu = dot(orb, -rd);',
+        '  float dopp = 1.0 / max(1.0 - speed * mu, 0.35);',
+        '  float boost = min(pow(dopp, 2.5), 3.2);',
+        '  float grav = sqrt(max(1.0 - 1.0 / r, 0.03));',
+        '  float temp = clamp(t * (0.6 + 0.55 * dopp), 0.0, 1.0);',
+        '  float lum = dens * boost * (0.4 + 0.6 * grav) * (0.45 + 1.35 * t);',
+        '  float alpha = clamp(dens * (1.5 - 0.55 * t), 0.0, 1.0);',
+        '  return vec4(heat(temp) * lum * 1.3, alpha);',
+        '}',
+
+        // Null geodesics around a Schwarzschild hole (r_s = 1): a = -1.5 h^2 p / r^5.
+        'vec3 trace(vec3 ro, vec3 rd) {',
+        '  vec3 p = ro;',
+        '  vec3 v = rd;',
+        '  vec3 hv = cross(p, v);',
+        '  float h2 = dot(hv, hv);',
+        '  vec3 col = vec3(0.0);',
+        '  float trans = 1.0;',
+        '  float rmin = 1e4;',
+        '  bool captured = false;',
+        '  for (int i = 0; i < 420; i++) {',
+        '    if (float(i) >= uSteps) break;',
+        '    float r2 = dot(p, p);',
+        '    float r = sqrt(r2);',
+        '    rmin = min(rmin, r);',
+        '    if (r < 1.0) { captured = true; break; }',
+        '    if (r > 34.0 && dot(p, v) > 0.0) break;',
+        '    float dt = clamp(0.028 * r2 / r, 0.02, 0.5);',
+        '    vec3 a = -1.5 * h2 * p / (r2 * r2 * r);',
+        '    v = normalize(v + a * dt);',
+        '    vec3 np = p + v * dt;',
+        '    if (p.y * np.y < 0.0) {',
+        '      float f = p.y / (p.y - np.y);',
+        '      vec3 hp = mix(p, np, f);',
+        '      float hr = length(hp.xz);',
+        '      if (hr > DISK_IN && hr < DISK_OUT) {',
+        '        vec4 dc = diskSample(hp, v);',
+        '        col += trans * dc.rgb;',
+        '        trans *= 1.0 - dc.a;',
+        '      }',
+        '    }',
+        '    p = np;',
+        '    if (trans < 0.03) { captured = true; break; }',
+        '  }',
+        '  if (!captured) {',
+        '    col += trans * skyColor(normalize(v));',
+        '    float ring = exp(-pow((rmin - 1.5) * 1.3, 2.0));',
+        '    col += trans * vec3(1.0, 0.72, 0.42) * ring * 0.14;',
+        '  }',
+        '  return col;',
+        '}',
+
+        'void main() {',
+        '  vec2 ndc = (gl_FragCoord.xy * 2.0 - uRes) / uRes.y;',
+        '  vec3 dir = normalize(uCamMat * vec3(ndc * uTanFov, 1.0));',
+        '  vec3 col = trace(uCamPos, dir);',
+        '  col *= uExposure;',
+        '  col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);',
+        '  vec2 vq = gl_FragCoord.xy / uRes - 0.5;',
+        '  col *= 1.0 - 0.55 * dot(vq, vq);',
+        '  col = pow(max(col, 0.0), vec3(0.4545));',
+        '  col += (hash12(gl_FragCoord.xy + fract(uTime) * 271.0) - 0.5) / 255.0;',
+        '  gl_FragColor = vec4(col, 1.0);',
+        '}',
+      ].join('\n')
+
+      function compileShader(type, src) {
+        const sh = gl.createShader(type)
+        gl.shaderSource(sh, src)
+        gl.compileShader(sh)
+        if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+          console.error(gl.getShaderInfoLog(sh))
+          return null
+        }
+        return sh
+      }
+
+      let prog = null
+      const U = {}
+      let firstFrame = true
+
+      function initGL() {
+        const vs = compileShader(gl.VERTEX_SHADER, VERT)
+        const fs = compileShader(gl.FRAGMENT_SHADER, FRAG)
+        if (!vs || !fs) { fail(); return false }
+        prog = gl.createProgram()
+        gl.attachShader(prog, vs)
+        gl.attachShader(prog, fs)
+        gl.linkProgram(prog)
+        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+          console.error(gl.getProgramInfoLog(prog))
+          fail()
+          return false
+        }
+        gl.useProgram(prog)
+        const buf = gl.createBuffer()
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf)
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
+        const loc = gl.getAttribLocation(prog, 'aPos')
+        gl.enableVertexAttribArray(loc)
+        gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
+        for (const name of ['uRes', 'uTime', 'uCamPos', 'uCamMat', 'uTanFov', 'uSteps', 'uExposure', 'uSkyReady', 'uSky']) {
+          U[name] = gl.getUniformLocation(prog, name)
+        }
+        return true
+      }
+
+      function fail() {
+        boot.remove()
+        document.getElementById('fallback').hidden = false
+        canvas.style.display = 'none'
+        document.querySelector('.hud-controls').style.display = 'none'
+      }
+
+      // The Milky Way backdrop is the one the solar system explorer already uses.
+      let skyTex = null
+      let skyReady = 0
+      function loadSky() {
+        const img = new Image()
+        img.onload = () => {
+          if (!prog) return
+          if (skyTex) gl.deleteTexture(skyTex)
+          skyTex = gl.createTexture()
+          gl.bindTexture(gl.TEXTURE_2D, skyTex)
+          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img)
+          const pot = (img.width & (img.width - 1)) === 0 && (img.height & (img.height - 1)) === 0
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, pot ? gl.REPEAT : gl.CLAMP_TO_EDGE)
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+          if (pot) {
+            gl.generateMipmap(gl.TEXTURE_2D)
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
+          } else {
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+          }
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false)
+          skyReady = 1
+        }
+        img.src = '/assets/solar/stars_deepstar.webp'
+      }
+
+      const QUALITY = {
+        auto: { steps: 260, scale: 0.66 },
+        low: { steps: 170, scale: 0.45 },
+        mid: { steps: 260, scale: 0.66 },
+        high: { steps: 380, scale: 0.92 },
+      }
+      let mode = 'auto'
+      let steps = QUALITY.auto.steps
+      let scale = QUALITY.auto.scale
+
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2)
+        const w = Math.max(2, Math.floor(canvas.clientWidth * dpr * scale))
+        const h = Math.max(2, Math.floor(canvas.clientHeight * dpr * scale))
+        if (canvas.width !== w || canvas.height !== h) {
+          canvas.width = w
+          canvas.height = h
+          gl.viewport(0, 0, w, h)
+        }
+      }
+      window.addEventListener('resize', resize)
+
+      // --- camera -------------------------------------------------------
+      const DEFAULT_VIEW = { az: -0.65, pol: 1.36, dist: 19 }
+      let az = DEFAULT_VIEW.az, pol = DEFAULT_VIEW.pol, dist = DEFAULT_VIEW.dist, tdist = dist
+      let vaz = 0, vpol = 0
+      // 全球面自由视角：只避开正上/正下两个数学上退化的极点。
+      const clampPol = (p) => Math.min(Math.PI - 0.02, Math.max(0.02, p))
+      const norm = (v) => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l] }
+      const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+
+      const pointers = new Map()
+      let lastPinch = 0
+      canvas.addEventListener('pointerdown', (e) => {
+        canvas.setPointerCapture(e.pointerId)
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+        vaz = 0; vpol = 0
+      })
+      canvas.addEventListener('pointermove', (e) => {
+        const p = pointers.get(e.pointerId)
+        if (!p) return
+        const dx = e.clientX - p.x, dy = e.clientY - p.y
+        p.x = e.clientX; p.y = e.clientY
+        if (pointers.size === 1) {
+          const k = 0.0042
+          az -= dx * k
+          pol = clampPol(pol - dy * k)
+          vaz = Math.max(-0.09, Math.min(0.09, -dx * k))
+          vpol = Math.max(-0.09, Math.min(0.09, -dy * k))
+        } else if (pointers.size === 2) {
+          const pts = [...pointers.values()]
+          const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)
+          if (lastPinch > 0) tdist = Math.min(30, Math.max(4.5, tdist * lastPinch / Math.max(d, 1)))
+          lastPinch = d
+        }
+      })
+      const endPointer = (e) => { pointers.delete(e.pointerId); lastPinch = 0 }
+      canvas.addEventListener('pointerup', endPointer)
+      canvas.addEventListener('pointercancel', endPointer)
+      canvas.addEventListener('wheel', (e) => {
+        e.preventDefault()
+        tdist = Math.min(30, Math.max(4.5, tdist * Math.exp(e.deltaY * 0.0012)))
+      }, { passive: false })
+
+      const reduceQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+      let reduced = reduceQuery.matches
+      reduceQuery.addEventListener?.('change', () => { reduced = reduceQuery.matches })
+
+      let paused = false
+      const pauseBtn = document.getElementById('btn-pause')
+      pauseBtn.addEventListener('click', () => {
+        paused = !paused
+        pauseBtn.setAttribute('aria-pressed', String(paused))
+        pauseBtn.innerHTML = paused ? '<span aria-hidden="true">▷</span> 继续' : '<span aria-hidden="true">Ⅱ</span> 暂停'
+      })
+      document.getElementById('btn-reset').addEventListener('click', () => {
+        az = DEFAULT_VIEW.az; pol = DEFAULT_VIEW.pol; tdist = DEFAULT_VIEW.dist; vaz = 0; vpol = 0
+      })
+      document.querySelectorAll('[data-quality]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          mode = btn.dataset.quality
+          document.querySelectorAll('[data-quality]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)))
+          scale = QUALITY[mode].scale
+          steps = QUALITY[mode].steps
+          resize()
+        })
+      })
+
+      const panelBody = document.getElementById('panel-body')
+      const panelToggle = document.getElementById('panel-toggle')
+      panelToggle.addEventListener('click', () => {
+        const open = panelToggle.getAttribute('aria-expanded') === 'true'
+        panelToggle.setAttribute('aria-expanded', String(!open))
+        panelBody.style.display = open ? 'none' : ''
+        panelToggle.textContent = open ? '展开注解 +' : '收起注解 −'
+      })
+
+      canvas.addEventListener('webglcontextlost', (e) => e.preventDefault())
+      canvas.addEventListener('webglcontextrestored', () => {
+        skyReady = 0
+        if (initGL()) { loadSky(); resize() }
+      })
+
+      if (!initGL()) return
+      loadSky()
+      resize()
+      // 兜底：即使标签页被挂起、rAF 停摆，遮罩也会自行退场，不挡交互。
+      const dismissBoot = () => {
+        if (!boot.isConnected) return
+        boot.classList.add('done')
+        setTimeout(() => boot.remove(), 900)
+      }
+      setTimeout(dismissBoot, 2500)
+
+      // --- render loop --------------------------------------------------
+      let simTime = 0
+      let last = performance.now()
+      let ema = 16
+      let frames = 0
+
+      function frame(now) {
+        const dt = Math.min((now - last) / 1000, 0.1)
+        last = now
+        ema = ema * 0.93 + dt * 1000 * 0.07
+
+        if (!paused) simTime += dt * (reduced ? 0.3 : 1)
+        if (pointers.size === 0) {
+          az += vaz
+          pol = clampPol(pol + vpol)
+          vaz *= Math.exp(-dt * 5)
+          vpol *= Math.exp(-dt * 5)
+        }
+        dist += (tdist - dist) * Math.min(1, dt * 7)
+
+        const sp = Math.sin(pol), cp = Math.cos(pol)
+        const cam = [dist * sp * Math.cos(az), dist * cp, dist * sp * Math.sin(az)]
+        const fwd = norm([-cam[0], -cam[1], -cam[2]])
+        const right = norm(cross(fwd, [0, 1, 0]))
+        const up = cross(right, fwd)
+
+        resize()
+        gl.uniform2f(U.uRes, canvas.width, canvas.height)
+        gl.uniform1f(U.uTime, simTime % 3600)
+        gl.uniform3f(U.uCamPos, cam[0], cam[1], cam[2])
+        gl.uniformMatrix3fv(U.uCamMat, false, [right[0], right[1], right[2], up[0], up[1], up[2], fwd[0], fwd[1], fwd[2]])
+        gl.uniform1f(U.uTanFov, 0.55)
+        gl.uniform1f(U.uSteps, steps)
+        gl.uniform1f(U.uExposure, 1.15)
+        gl.activeTexture(gl.TEXTURE0)
+        gl.bindTexture(gl.TEXTURE_2D, skyTex)
+        gl.uniform1i(U.uSky, 0)
+        gl.uniform1f(U.uSkyReady, skyReady)
+        gl.drawArrays(gl.TRIANGLES, 0, 3)
+
+        if (firstFrame) {
+          firstFrame = false
+          dismissBoot()
+        }
+
+        frames++
+        if (mode === 'auto' && frames % 90 === 0) {
+          if (ema > 26 && scale > 0.42) { scale = Math.max(0.42, scale - 0.08) }
+          else if (ema < 15 && scale < 0.86) { scale = Math.min(0.86, scale + 0.06) }
+        }
+        lastFrameAt = now
+      }
+
+      // 立即绘制第一帧；正常由 rAF 驱动，若 rAF 停摆（如被遮挡的内嵌窗口）则由低频定时器兜底。
+      let lastFrameAt = 0
+      frame(performance.now())
+      const loop = (now) => { frame(now); requestAnimationFrame(loop) }
+      requestAnimationFrame(loop)
+      setInterval(() => {
+        if (performance.now() - lastFrameAt > 240) frame(performance.now())
+      }, 66)
+    })()
+  </script>
+</body>
+</html>

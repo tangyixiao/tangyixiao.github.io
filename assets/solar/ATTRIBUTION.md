@@ -1,6 +1,7 @@
 # Solar surface and sky maps
 
-All 14 maps in this directory are by **Solar System Scope / INOVE**, licensed
+The 14 planet, moon and sky maps in this directory are by
+**Solar System Scope / INOVE**, licensed
 under [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/).
 
 Original collection: <https://www.solarsystemscope.com/textures/>
@@ -22,3 +23,16 @@ project-authored. Orbital sizes and speeds remain artistic, not NASA ephemerides
 Planet information uses the [NASA NSSDCA Planetary Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/).
 Solar diameter uses twice the mean radius in the [NASA Sun Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html).
 Interface inspiration: [NASA Eyes on the Solar System](https://eyes.nasa.gov/apps/solar-system/).
+
+## stars_deepstar.webp (black hole page backdrop)
+
+An additional, project-added map — **not** part of the Solar System Scope set:
+
+- Source: NASA SVS [Deep Star Maps 2020](https://svs.gsfc.nasa.gov/4851/),
+  `starmap_2020_8k.exr` (8192×4096, image/aces, 130,530,278 bytes).
+- Credit: **NASA/Goddard Space Flight Center Scientific Visualization Studio**.
+  Gaia DR2: ESA/Gaia/DPAC. NASA imagery is generally not copyrighted
+  (see [NASA Media Usage Guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/)).
+- Derived here: exposure +2.2 stops, sRGB-style tone curve and Lanczos downscale
+  to 4096×2048, encoded as WebP q88 with ffmpeg. SHA-256 of the derived file:
+  `28a488acea0794d386850c44c429127af36e2578d842769579736ea510e4857a` (see `sources.json`).

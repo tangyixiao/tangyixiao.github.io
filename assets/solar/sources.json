@@ -152,5 +152,17 @@
     "originalSha256": "225012ad4911730605c4e189ca2a3bf674fce50cc48aab4102b936b47d6991ac",
     "mirror": "https://media.githubusercontent.com/media/TanvirAhmedArnab/SolarSystem/a949159a0050484634ebaf4e5124cfd17376bc49/SourceAssets/ThirdParty/Textures/SolarSystemScope/2k_venus_atmosphere.jpg",
     "source": "https://www.solarsystemscope.com/textures/download/2k_venus_atmosphere.jpg"
+  },
+  {
+    "file": "stars_deepstar.webp",
+    "size": 4443750,
+    "dimensions": [
+      4096,
+      2048
+    ],
+    "derivedSha256": "28a488acea0794d386850c44c429127af36e2578d842769579736ea510e4857a",
+    "source": "https://svs.gsfc.nasa.gov/vis/a000000/a004800/a004851/starmap_2020_8k.exr",
+    "note": "Project-added NASA SVS Deep Star Maps 2020 (8k EXR, image/aces, 130530278 bytes); tone-mapped (+2.2 stops, sRGB-style curve) and downscaled to 4k via ffmpeg.",
+    "credit": "NASA/Goddard Space Flight Center Scientific Visualization Studio. Gaia DR2: ESA/Gaia/DPAC. Public domain (NASA media)."
   }
 ]

@@ -319,6 +319,14 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
 .dot-mars { width: 24px; height: 24px; margin: 3px 0; }
 .dot-saturn::after { inset: 7px -8px; border: 3px solid #baa78bcc; transform: rotate(-25deg); box-shadow: 0 0 0 1px #73675688; }
 .explorer-controls button { border-radius: 5px; background: color-mix(in srgb, var(--bg) 84%, transparent); }
+.blackhole-entry { display: inline-flex; gap: 9px; align-items: center; flex: none; min-height: 44px; padding: 0 15px; border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--bg) 84%, transparent); font-size: .74rem; font-weight: 600; white-space: nowrap; transition: border-color .2s, background .2s; }
+.blackhole-entry:hover { border-color: var(--teal); background: var(--surface-raised); }
+.blackhole-entry span:first-child { color: var(--teal); }
+.blackhole-entry span:last-child { color: var(--gold); }
+.explore-blackhole { display: flex; width: max-content; max-width: 100%; margin: 10px auto 0; border-color: color-mix(in srgb, var(--teal) 45%, transparent); }
+.explore-blackhole:hover { border-color: var(--teal); box-shadow: 0 14px 50px color-mix(in srgb, var(--teal) 20%, transparent); }
+.explore-blackhole .explore-icon { color: var(--teal); font-size: 1.25rem; }
+@media (max-width: 760px) { .explorer-toolbar { flex-wrap: wrap; row-gap: 10px; } }
 .universe-fallback .fallback-solar { position: absolute; inset: 0; overflow: hidden; }
 .universe-fallback .fallback-solar b { top: 48%; left: 73%; width: 45px; height: 45px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6b6, #ffac49 55%, #df5918); box-shadow: 0 0 50px 18px #f98b3733; }
 .universe-fallback .fallback-solar i { top: 50%; left: 75%; right: auto; width: calc(120px + var(--orbit) * 60px); height: calc(60px + var(--orbit) * 30px); aspect-ratio: auto; transform: translate(-50%, -50%) rotate(-24deg); border-color: color-mix(in srgb, var(--gold) 28%, transparent); }
