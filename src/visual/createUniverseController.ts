@@ -6,11 +6,11 @@ import type { BodyId, ScaleMode, SceneMode, ScenePhase, SceneTheme, UniverseCanv
 
 export const particleCountForWidth = (width: number) => width <= 760 ? 420 : 1100
 const profiles = {
-  hero: { x: 15, tilt: .68, turn: -.15, scale: .95, cameraZ: 60 },
-  projects: { x: 9, tilt: .48, turn: .35, scale: .7, cameraZ: 61 },
-  focus: { x: 8, tilt: 1.04, turn: -.3, scale: .65, cameraZ: 63 },
-  about: { x: -9, tilt: .57, turn: .6, scale: .64, cameraZ: 62 },
-  links: { x: 8, tilt: .8, turn: -.5, scale: .58, cameraZ: 66 },
+  hero: { x: 15, tilt: .68, turn: -.15, scale: .026, cameraZ: 60 },
+  projects: { x: 9, tilt: .48, turn: .35, scale: .021, cameraZ: 61 },
+  focus: { x: 8, tilt: 1.04, turn: -.3, scale: .02, cameraZ: 63 },
+  about: { x: -9, tilt: .57, turn: .6, scale: .019, cameraZ: 62 },
+  links: { x: 8, tilt: .8, turn: -.5, scale: .018, cameraZ: 66 },
 } as const
 
 export async function createUniverseController(canvas: HTMLCanvasElement, props: UniverseCanvasProps, onContextLost: () => void, onRender?: (count: number) => void, signal?: AbortSignal): Promise<UniverseController> {
@@ -33,7 +33,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
   scope.add(() => canvas.removeEventListener('webglcontextlost', onLost))
   try {
     renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05
-    const scene = new T.Scene(), camera = new T.PerspectiveCamera(42, 1, .03, 600)
+    const scene = new T.Scene(), camera = new T.PerspectiveCamera(42, 1, .02, 12000)
     const loadTimeout = window.setTimeout(() => assetAbort.abort(), 20000)
     scope.add(() => clearTimeout(loadTimeout))
     const solar = await createSolarSystem(T, scope, mobile, assetAbort.signal)
@@ -61,6 +61,11 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       transparent: true, depthWrite: false, blending: T.AdditiveBlending,
     }), m => m.dispose())
     const stars = new T.Points(starGeometry, starMaterial); stars.frustumCulled = false; scene.add(stars)
+    // 星空环境随当前模式的取景距离缩放，保证拉到最远时相机仍处于天球内部。
+    const frameEnvironment = () => {
+      const grow = solar.span() / Math.sin(T.MathUtils.degToRad(21)) * 1.65 * 1.08 / 210
+      sky.scale.setScalar(grow); stars.scale.setScalar(grow)
+    }
     const root = canvas.parentElement!
     const labels = bodies.map(body => {
       const label = document.createElement('div'); label.className = 'celestial-label'; label.dataset.body = body.id
@@ -94,9 +99,9 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       const p = profiles[phase]
       const compact = innerWidth <= 760 || innerWidth <= 1000 && innerHeight > innerWidth
       if (!compact) return { ...p, y: 0 }
-      const scale = Math.min(innerWidth * .85, 410) * 57 * Math.tan(T.MathUtils.degToRad(21)) / (17.8 * innerHeight)
+      const scale = Math.min(innerWidth * .85, 410) * 57 * Math.tan(T.MathUtils.degToRad(21)) / (600 * innerHeight)
       const y = (innerHeight * .5 - 195) * 2 * Math.tan(T.MathUtils.degToRad(21)) * 57 / innerHeight
-      return { ...p, x: 0, y: phase === 'hero' ? y : 0, tilt: phase === 'hero' ? .5 : p.tilt, scale: phase === 'hero' ? scale : .39, cameraZ: 57 }
+      return { ...p, x: 0, y: phase === 'hero' ? y : 0, tilt: phase === 'hero' ? .5 : p.tilt, scale: phase === 'hero' ? scale : .012, cameraZ: 57 }
     }
     const render = (time: number, immediate = false) => {
       if (destroyed) return
@@ -178,9 +183,10 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       if (controls) { controls.enableDamping = false; controls.update() }
       const halfFov = Math.min(T.MathUtils.degToRad(21), Math.atan(Math.tan(T.MathUtils.degToRad(21)) * camera.aspect))
       const distance = solar.span() / Math.sin(halfFov)
+      frameEnvironment()
       camera.position.set(0, .75, 1).normalize().multiplyScalar(distance)
       camera.lookAt(0, 0, 0)
-      if (controls) { controls.target.set(0, 0, 0); controls.minDistance = scaleMode === 'true' ? .017 : 4; controls.maxDistance = Math.min(distance * 1.65, scaleMode === 'true' ? 340 : 190); controls.update() }
+      if (controls) { controls.target.set(0, 0, 0); controls.minDistance = scaleMode === 'true' ? .017 : .05; controls.maxDistance = distance * 1.65; controls.update() }
       if (controls) controls.enableDamping = !props.reducedMotion
       previousTarget.set(0, 0, 0)
     }
@@ -257,6 +263,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       if (scaleMode === next) return
       scaleMode = next
       solar.setScaleMode(next)
+      frameEnvironment()
       diagnostic('scale', next)
       if (mode === 'explore') { if (selected) selectBody(selected, true); else overview() }
       else render(performance.now(), true)
@@ -273,7 +280,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     window.addEventListener('pointermove', onPointer, { passive: true }); scope.add(() => window.removeEventListener('pointermove', onPointer))
     document.addEventListener('visibilitychange', onVisibility); scope.add(() => document.removeEventListener('visibilitychange', onVisibility))
     scope.add(() => { releaseInteraction?.(); controls?.dispose() })
-    renderer.setClearColor(0x000000, 0); applyTheme(); resize(true); render(0, true); start()
+    renderer.setClearColor(0x000000, 0); applyTheme(); frameEnvironment(); resize(true); render(0, true); start()
     const destroy = () => { if (destroyed) return; destroyed = true; diagnostic('ready', 'false'); stop(); try { scope.cleanup() } catch { /* Release all resources even when a driver disposer fails. */ } }
     return { setPhase, setTheme, pulse, setMode, setScaleMode, selectBody, setPaused, resetView, zoomBy, destroy }
   } catch (error) { try { scope.cleanup() } catch { /* Preserve initialization error. */ } throw error }
