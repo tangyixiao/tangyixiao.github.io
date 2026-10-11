@@ -271,6 +271,24 @@
         margin-top: 20px;
         color: var(--text-secondary);
       }
+      /* GitHub 讨论区（giscus） */
+      .giscus-section {
+        margin-top: 40px;
+        border-top: 1px dashed var(--border-light);
+        padding-top: 28px;
+      }
+      .giscus-heading {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 650;
+        font-size: 1.4rem;
+        margin-bottom: 18px;
+        color: var(--text-primary);
+      }
+      .giscus-section iframe {
+        max-width: 100%;
+      }
     </style>
   </head>
   <body>
@@ -301,6 +319,14 @@
         <div class="empty-notes">
           <i class="fas fa-book-open"></i> 加载中...
         </div>
+      </div>
+
+      <!-- GitHub 讨论区（giscus） -->
+      <div class="giscus-section">
+        <h2 class="giscus-heading">
+          <i class="fas fa-comments" style="color: var(--accent)"></i> GitHub 讨论
+        </h2>
+        <div id="giscusContainer"></div>
       </div>
     </div>
 
@@ -577,6 +603,69 @@
             loadNotes();
           }
         });
+      })();
+    </script>
+    <script>
+      // giscus 评论（github.com/giscus/giscus，12k+ star，基于 GitHub Discussions）
+      // 启用步骤：
+      //   1. 本仓库 Settings → General → Discussions 勾选启用
+      //   2. 安装 giscus App：https://github.com/apps/giscus
+      //   3. 打开 https://giscus.app/zh-CN，选择本仓库与分类（建议 Announcements），
+      //      把生成的 repoId 和 categoryId 填到下面
+      ;(function () {
+        var REPO = "tangyixiao/tangyixiao.github.io";
+        var REPO_ID = ""; // ← 填这里
+        var CATEGORY = "Announcements";
+        var CATEGORY_ID = ""; // ← 填这里
+        if (!REPO_ID || !CATEGORY_ID) return;
+
+        var container = document.getElementById("giscusContainer");
+        function currentTheme() {
+          return document.body.classList.contains("dark")
+            ? "dark_dimmed"
+            : "light";
+        }
+        var s = document.createElement("script");
+        s.src = "https://giscus.app/client.js";
+        s.setAttribute("data-repo", REPO);
+        s.setAttribute("data-repo-id", REPO_ID);
+        s.setAttribute("data-category", CATEGORY);
+        s.setAttribute("data-category-id", CATEGORY_ID);
+        s.setAttribute("data-mapping", "pathname");
+        s.setAttribute("data-strict", "0");
+        s.setAttribute("data-reactions-enabled", "1");
+        s.setAttribute("data-emit-metadata", "0");
+        s.setAttribute("data-input-position", "top");
+        s.setAttribute("data-theme", currentTheme());
+        s.setAttribute("data-lang", "zh-CN");
+        s.setAttribute("data-loading", "lazy");
+        s.crossOrigin = "anonymous";
+        s.async = true;
+        container.appendChild(s);
+
+        // 跟随 body.dark 切换同步 giscus 主题
+        new MutationObserver(function () {
+          var iframe = document.querySelector("iframe.giscus-frame");
+          if (iframe) {
+            iframe.contentWindow.postMessage(
+              { giscus: { setConfig: { theme: currentTheme() } } },
+              "https://giscus.app"
+            );
+          }
+        }).observe(document.body, { attributes: true, attributeFilter: ["class"] });
+      })();
+    </script>
+    <script>
+      // GoatCounter 访问统计（github.com/zgoat/goatcounter）
+      // 到 https://www.goatcounter.com 注册后，把 site 改成你的统计端点
+      ;(function () {
+        var site = ""; // ← 填这里
+        if (!site) return;
+        var s = document.createElement("script");
+        s.setAttribute("data-goatcounter", site);
+        s.async = true;
+        s.src = "https://gc.zgo.at/count.js";
+        document.body.appendChild(s);
       })();
     </script>
   </body>

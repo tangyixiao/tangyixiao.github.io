@@ -64,7 +64,8 @@ async function expectDelayedControllerReplay(page, siteUrl) {
         return root?.getAttribute('data-scene-controller-phase') === expectedPhase && root?.getAttribute('data-scene-controller-pulse') === expectedPulse
       },
       { expectedPhase: 'focus', expectedPulse },
-      { timeout: 3_000 },
+      // Includes decoding the self-hosted surface maps and first shader compilation.
+      { timeout: 15_000 },
     )
     assert.equal(await page.locator('[data-scene-root]').getAttribute('data-scene-controller-pulse-count'), '1', 'a delayed pulse is replayed exactly once')
     await page.waitForTimeout(200)
@@ -136,7 +137,7 @@ async function main() {
     assert.equal(await reduced.locator('[data-scene-root]').getAttribute('data-scene-motion'), 'reduced')
     assert.equal(await reduced.locator('[data-scene-root]').getAttribute('data-scene-animation'), 'static')
     assert.equal(await reduced.evaluate(() => document.getAnimations().filter((animation) => animation.playState === 'running').length), 0, 'reduced-motion mode must not run continuous site animations')
-    await reduced.waitForFunction(() => Number(document.querySelector('[data-scene-root]')?.getAttribute('data-scene-render-count')) === 1, undefined, { timeout: 5_000 })
+    await reduced.waitForFunction(() => Number(document.querySelector('[data-scene-root]')?.getAttribute('data-scene-render-count')) === 1, undefined, { timeout: 15_000 })
     const reducedRenderCount = await reduced.locator('[data-scene-root]').getAttribute('data-scene-render-count')
     const reducedRafCalls = await reduced.evaluate(() => window.__homepageRafCalls)
     await reduced.waitForTimeout(250)

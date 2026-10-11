@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /login.html
+Disallow: /register.html
+
+Sitemap: https://tangyixiao.github.io/sitemap.xml
