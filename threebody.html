@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#050507" />
+  <meta name="description" content="三体：真实半人马座α三星系统的 N 体数值模拟。A、B 双星 79.8 年互绕，比邻星 51 万年长周期轨道，四阶辛积分器实时推演，可投放流浪行星体验三体混沌。" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="canonical" href="https://tangyixiao.github.io/threebody.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://tangyixiao.github.io/threebody.html" />
+  <meta property="og:site_name" content="唐一潇 · Tang Yixiao" />
+  <meta property="og:title" content="三体 · 半人马座α — 真实 N 体模拟" />
+  <meta property="og:description" content="离太阳最近的三颗恒星：A、B 每 79.8 年互绕一圈，比邻星以 51 万年的周期缓缓环绕。真实的质量、真实的轨道根数、实时的数值积分。" />
+  <meta property="og:image" content="https://tangyixiao.github.io/og-image.png" />
+  <meta property="og:locale" content="zh_CN" />
+  <title>三体 · 半人马座α — 唐一潇</title>
+  <style>
+    :root {
+      --bg: #050507;
+      --surface: #101014;
+      --surface-raised: #1a1a21;
+      --ink: #f5f8fa;
+      --muted: #a8bdc9;
+      --teal: #6dd8d4;
+      --gold: #d5c29b;
+      --line: rgba(187, 218, 231, .15);
+      --glass: rgba(13, 13, 18, .74);
+      color-scheme: dark;
+      font-family: 'Source Han Sans CN', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); }
+    body { color: var(--ink); }
+    a { color: inherit; text-decoration: none; }
+    button { color: inherit; font-family: inherit; cursor: pointer; }
+    :where(a, button, summary, input):focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+
+    #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: var(--bg); cursor: grab; touch-action: none; }
+    #scene:active { cursor: grabbing; }
+
+    .back-link { position: fixed; top: max(20px, env(safe-area-inset-top)); left: clamp(16px, 3vw, 40px); z-index: 5; display: inline-flex; align-items: center; gap: 10px; padding: 10px 18px; border: 1px solid var(--line); border-radius: 6px; background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-size: .74rem; font-weight: 600; letter-spacing: .04em; transition: border-color .2s ease, color .2s ease; }
+    .back-link:hover { border-color: var(--teal); color: #fff; }
+    .back-link b { color: var(--gold); font-weight: 400; font-size: 1rem; line-height: 1; }
+
+    .masthead { position: fixed; top: clamp(74px, 12vh, 128px); left: clamp(18px, 4vw, 64px); z-index: 4; max-width: min(460px, 46vw); pointer-events: none; }
+    .masthead h1, .masthead .sub, .masthead .specs, .masthead .eyebrow { text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 0 2px 26px rgba(0, 0, 0, .75); }
+    .masthead .eyebrow { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; color: var(--teal); font: 600 .62rem/1.4 'DejaVu Sans Mono', 'SFMono-Regular', monospace; letter-spacing: .16em; }
+    .masthead .eyebrow i { width: 5px; height: 5px; flex: none; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 5px rgba(109, 216, 212, .13), 0 0 16px var(--teal); }
+    .masthead h1 { margin: 0 0 14px; font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', Georgia, serif; font-size: clamp(3rem, 6.4vw, 5.6rem); font-weight: 500; line-height: 1.1; letter-spacing: -.06em; }
+    .masthead h1 small { display: block; margin-top: 6px; color: var(--gold); font: 500 .62rem/1.5 'DejaVu Sans Mono', monospace; letter-spacing: .34em; }
+    .masthead .sub { margin: 0; max-width: 30em; color: var(--muted); font-size: clamp(.8rem, 1vw, .92rem); line-height: 1.9; }
+    .masthead .specs { margin: 16px 0 0; color: var(--gold); font: 500 .58rem/1.8 'DejaVu Sans Mono', 'Microsoft YaHei', monospace; letter-spacing: .1em; opacity: .85; }
+
+    .readout { position: fixed; top: max(20px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 4; margin: 0; padding: 9px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); text-align: center; pointer-events: none; }
+    .readout p { margin: 0; color: var(--teal); font: 500 .6rem/1.7 'DejaVu Sans Mono', 'SFMono-Regular', 'Microsoft YaHei', monospace; letter-spacing: .12em; white-space: nowrap; }
+    .readout p.fate { color: var(--gold); min-height: 1.1em; }
+
+    .hud-controls { position: fixed; top: calc(max(20px, env(safe-area-inset-top)) + 68px); right: clamp(16px, 3vw, 40px); z-index: 5; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+    .hud-controls .row { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
+    .hud-controls .group { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 6px; background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); overflow: hidden; }
+    .hud-controls .group > button { padding: 10px 13px; border: 0; background: transparent; font-size: .68rem; font-weight: 600; letter-spacing: .05em; white-space: nowrap; transition: background .2s ease, color .2s ease; }
+    .hud-controls .group > button + button { border-left: 1px solid var(--line); }
+    .hud-controls .group > button:hover { background: rgba(255, 255, 255, .06); }
+    .hud-controls .group > button[aria-pressed='true'] { background: rgba(109, 216, 212, .14); color: var(--teal); }
+    .hud-controls .lone { padding: 10px 15px; border: 1px solid var(--line); border-radius: 6px; background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-size: .68rem; font-weight: 600; letter-spacing: .05em; white-space: nowrap; transition: border-color .2s ease; }
+    .hud-controls .lone:hover { border-color: var(--gold); }
+    .rate-group { gap: 10px !important; padding: 0 13px; }
+    .rate-group label { display: flex; align-items: center; gap: 10px; }
+    .rate-group input[type='range'] { width: 128px; accent-color: var(--teal); cursor: pointer; }
+    .rate-group output { min-width: 76px; text-align: right; color: var(--gold); font: 500 .6rem/1 'DejaVu Sans Mono', 'Microsoft YaHei', monospace; letter-spacing: .06em; white-space: nowrap; }
+
+    .hint { position: fixed; bottom: calc(140px + env(safe-area-inset-bottom)); left: 0; right: 0; z-index: 4; margin: 0; text-align: center; color: var(--muted); font: 500 .6rem/1.6 'DejaVu Sans Mono', 'Microsoft YaHei', monospace; letter-spacing: .14em; pointer-events: none; opacity: .8; }
+
+    .panel { position: fixed; bottom: 0; left: 0; right: 0; z-index: 5; padding: 0 clamp(12px, 3vw, 40px) calc(14px + env(safe-area-inset-bottom)); pointer-events: none; }
+    .panel-inner { max-width: 1500px; margin: 0 auto; padding: 12px 14px 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 18px 60px rgba(0, 0, 0, .4); pointer-events: auto; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .panel-head p { margin: 0; color: var(--muted); font: 600 .6rem/1.4 'DejaVu Sans Mono', 'Microsoft YaHei', monospace; letter-spacing: .16em; }
+    .panel-toggle { padding: 6px 12px; border: 1px solid var(--line); border-radius: 6px; background: transparent; font-size: .64rem; font-weight: 600; letter-spacing: .08em; transition: border-color .2s ease; }
+    .panel-toggle:hover { border-color: var(--teal); }
+    .cards { display: flex; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: thin; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+    .cards li { flex: 1 1 0; min-width: 168px; scroll-snap-align: start; }
+    .cards details { height: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, .03); transition: border-color .25s ease, background .25s ease; }
+    .cards details:hover, .cards details[open] { border-color: color-mix(in srgb, var(--gold) 55%, transparent); background: rgba(255, 255, 255, .05); }
+    .cards summary { display: flex; align-items: baseline; gap: 8px; cursor: pointer; list-style: none; font-size: .78rem; font-weight: 650; white-space: nowrap; }
+    .cards summary::-webkit-details-marker { display: none; }
+    .cards summary::before { content: '+'; flex: none; color: var(--teal); font: 400 .95rem/1 'DejaVu Sans Mono', monospace; transition: transform .2s ease; }
+    .cards details[open] summary::before { content: '−'; }
+    .cards summary .en { color: var(--muted); font: 400 .52rem/1.4 'DejaVu Sans Mono', monospace; letter-spacing: .1em; overflow: hidden; text-overflow: ellipsis; }
+    .cards details p { margin: 9px 0 0; color: var(--muted); font-size: .66rem; line-height: 1.8; }
+    .disclaimer { margin: 11px 0 0; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: .55rem; line-height: 1.7; opacity: .8; }
+    .disclaimer a { text-decoration: underline; text-underline-offset: 3px; }
+
+    #boot { position: fixed; inset: 0; z-index: 9; display: grid; place-items: center; background: var(--bg); transition: opacity .8s ease; pointer-events: none; }
+    #boot p { color: var(--muted); font: 500 .66rem/1.6 'DejaVu Sans Mono', 'Microsoft YaHei', monospace; letter-spacing: .3em; animation: breathe 2.2s ease-in-out infinite; }
+    #boot.done { opacity: 0; pointer-events: none; }
+    @keyframes breathe { 0%, 100% { opacity: .35; } 50% { opacity: .9; } }
+
+    .fallback { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at 50% 45%, #14141c, var(--bg) 70%); }
+    .fallback[hidden] { display: none; }
+    .fallback > div { max-width: 420px; text-align: center; }
+    .fallback h2 { margin: 0 0 12px; font-family: 'Noto Serif CJK SC', 'Songti SC', Georgia, serif; font-size: 1.7rem; font-weight: 500; letter-spacing: -.03em; }
+    .fallback p { margin: 0 0 22px; color: var(--muted); font-size: .8rem; line-height: 1.9; }
+    .fallback a { display: inline-block; padding: 11px 22px; border: 1px solid var(--teal); border-radius: 40px; background: var(--teal); color: var(--bg); font-size: .78rem; font-weight: 700; }
+
+    noscript p { position: fixed; inset: auto 0 50%; text-align: center; color: var(--muted); }
+
+    @media (max-width: 1100px) {
+      .readout { display: none; }
+    }
+    @media (max-width: 900px) {
+      .masthead { max-width: min(420px, 74vw); }
+    }
+    @media (max-width: 760px) {
+      .masthead { top: max(70px, env(safe-area-inset-top)); left: 18px; right: 96px; }
+      .masthead h1 { font-size: 2.5rem; }
+      .masthead .specs { display: none; }
+      .hud-controls { left: 18px; right: 18px; align-items: stretch; top: max(16px, env(safe-area-inset-top)); }
+      .hud-controls .row { justify-content: flex-start; }
+      .back-link { position: static; order: 5; }
+      .rate-group input[type='range'] { width: 96px; }
+      .hint { display: none; }
+      .cards li { flex-basis: 200px; }
+      .panel { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="scene" aria-hidden="true"></canvas>
+
+  <a class="back-link" href="/"><b aria-hidden="true">←</b><span>返回太阳系</span></a>
+
+  <header class="masthead">
+    <p class="eyebrow"><i aria-hidden="true"></i>TY / OBSERVATORY · α CENTAURI</p>
+    <h1>三体<small>ALPHA CENTAURI · REAL N-BODY · 4.37 LY</small></h1>
+    <p class="sub">离太阳最近的恒星系统：半人马座α。A、B 两颗恒星每 79.8 年互绕一圈，比邻星在三百倍开外以 51 万年的周期缓缓环绕。小说里的三体世界乱成一团，现实中的三体却稳如钟摆——差别只在「层级」。拖动视角、调快时间，看真实的三体如何起舞。</p>
+    <p class="specs">A 1.08 M☉ G2V · B 0.91 M☉ K1V · 比邻星 0.12 M☉ M5.5Ve · AB 轨道 23.3 AU · e ≈ 0.52 · Akeson+2021</p>
+  </header>
+
+  <div class="readout" aria-hidden="true">
+    <p id="readout-main">T +0.0 年</p>
+    <p class="fate" id="readout-fate"></p>
+  </div>
+
+  <div class="hud-controls" role="group" aria-label="模拟控制">
+    <div class="row">
+      <div class="group" role="group" aria-label="视角">
+        <button type="button" data-view="binary" aria-pressed="true">双星</button>
+        <button type="button" data-view="trinary" aria-pressed="false">全景</button>
+        <button type="button" data-view="proxima" aria-pressed="false">比邻星</button>
+      </div>
+      <button class="lone" id="btn-spawn" type="button">✦ 投放流浪行星</button>
+    </div>
+    <div class="row">
+      <div class="group rate-group">
+        <label for="rate">时间流速<input id="rate" type="range" min="0" max="100" value="28" step="1" aria-label="时间流速，对数刻度" /></label>
+        <output id="rate-label" for="rate">3.0 年/秒</output>
+      </div>
+    </div>
+    <div class="row">
+      <button class="lone" id="btn-pause" type="button" aria-pressed="false"><span aria-hidden="true">Ⅱ</span> 暂停</button>
+      <button class="lone" id="btn-reset" type="button">↺ 重置</button>
+    </div>
+  </div>
+
+  <p class="hint">拖动环绕 · 滚轮缩放 · 切换视角与时间流速 · 点按词条了解物理</p>
+
+  <section class="panel" aria-label="半人马座α注解">
+    <div class="panel-inner">
+      <div class="panel-head">
+        <p>THE NEAREST STARS — 半人马座α速览</p>
+        <button class="panel-toggle" id="panel-toggle" type="button" aria-expanded="true" aria-controls="panel-body">收起注解 −</button>
+      </div>
+      <div id="panel-body">
+        <ul class="cards">
+          <li><details><summary>最近的星系<span class="en">THE NEAREST SYSTEM</span></summary><p>半人马座α距太阳仅 4.37 光年。A、B 组成一对双星，互绕周期 79.8 年；比邻星在约 12,000 AU（0.2 光年）之外环绕整个 A–B 系统，是离太阳最近的一颗恒星。</p></details></li>
+          <li><details><summary>层级与稳定<span class="en">HIERARCHICAL TRIPLE</span></summary><p>现实的三体能长期稳定，因为尺度分层：A、B 在 11–36 AU 间互绕，比邻星在 4,100–12,300 AU 外环绕，两者相差三百倍，几乎互不干扰。小说中三颗恒星质量相近、距离相当，轨道才真正混沌。</p></details></li>
+          <li><details><summary>三体问题<span class="en">THREE-BODY PROBLEM</span></summary><p>二体轨道有解析解，三体没有。庞加莱在 1890 年证明三体轨道对初值极端敏感，长期行为无法用公式预言。本页因此逐步数值积分——四阶辛算法，误差以能量漂移 ΔE/E₀ 显示在顶部读数里。</p></details></li>
+          <li><details><summary>比邻星 b<span class="en">PROXIMA b</span></summary><p>2016 年发现：质量约 1.17 倍地球，11.2 天绕红矮星一周，恰好位于宜居带内；比邻星 c（周期 5.3 年）与 d（5.1 天）也已确认。现实中的三体世界，行星安然运转。</p></details></li>
+          <li><details><summary>投放流浪行星<span class="en">CHAOS LAB</span></summary><p>向 A、B 之间投放一颗行星试试：在双星引力弹弓下，大多数轨道会在几百年内被甩出系统——这就是三体混沌。切到「全景」并调快时间，可以看到比邻星那侧的真实尺度。</p></details></li>
+          <li><details><summary>恒星档案<span class="en">STAR FILES</span></summary><p>A：G2V 黄矮星，光度约 1.5 倍太阳；B：K1V 橙矮星，约 0.5 倍；比邻星：M5.5Ve 红矮星，光度仅太阳的 0.17%，是颗耀星。A 旁还存在一个未确认的行星候选体（2021 年发现，2024 年 JWST 再度探测）。</p></details></li>
+        </ul>
+        <p class="disclaimer">实时数值积分：四阶辛积分器（Yoshida），G = 4π²，单位 AU / 年 / 太阳质量。恒星质量与 A–B 轨道根数取自 <a href="https://iopscience.iop.org/article/10.3847/1538-3881/abfaff" target="_blank" rel="noopener noreferrer">Akeson et al. 2021</a>，比邻星轨道取自 Kervella et al. 2017（沿轨相位至今未测准，当前位置为示意）；比邻星行星按圆轨道近似。星空底图：<a href="https://svs.gsfc.nasa.gov/4851/" target="_blank" rel="noopener noreferrer">NASA SVS Deep Star Maps 2020</a>（NASA/Goddard 科学可视化工作室，Gaia DR2: ESA/Gaia/DPAC，公有领域）。</p>
+      </div>
+    </div>
+  </section>
+
+  <div id="boot"><p>正在点燃三颗恒星</p></div>
+
+  <div class="fallback" id="fallback" hidden>
+    <div>
+      <h2>无法点亮星系</h2>
+      <p>当前设备或浏览器不支持 WebGL，无法运行这场实时三体模拟。可以回到太阳系，继续探索行星。</p>
+      <a href="/">返回主页</a>
+    </div>
+  </div>
+
+  <noscript><p>需要启用 JavaScript 才能运行三体模拟。</p></noscript>
+
+  <script>
+    (() => {
+      'use strict'
+      const canvas = document.getElementById('scene')
+      const boot = document.getElementById('boot')
+      const gl = canvas.getContext('webgl', { antialias: true, alpha: false, depth: false, stencil: false, powerPreference: 'high-performance' })
+        || canvas.getContext('experimental-webgl')
+      if (!gl) {
+        boot.remove()
+        document.getElementById('fallback').hidden = false
+        canvas.style.display = 'none'
+        return
+      }
+
+      // ------------------------------------------------------------------
+      // 物理单位：长度 AU，时间 年，质量 太阳质量，G = 4π²。
+      // 轨道根数：Akeson et al. 2021 (AJ 162, 14)；比邻星：Kervella et al. 2017。
+      // ------------------------------------------------------------------
+      const TAU = Math.PI * 2
+      const G = TAU * TAU
+      const M_A = 1.0788, M_B = 0.9092, M_P = 0.1221
+      const M_AB = M_A + M_B, M_TOT = M_AB + M_P
+      const AU_KM = 1.495978707e8, YR_S = 3.15576e7
+      const AUKYR_KMS = AU_KM / YR_S // 1 AU/yr ≈ 4.740 km/s
+      const DEG = Math.PI / 180
+      const T0 = 2026.0
+      // AB 相对轨道（B 相对 A）。近星点历元 1875.66 + 2P ≈ 1955.42。
+      const AB = { a: 23.299, e: 0.51947, i: 79.243 * DEG, O: 205.073 * DEG, w: 231.519 * DEG, P: 79.762, T: 1955.422 }
+      // 比邻星轨道：半长轴/周期取 Akeson 2021（8,200 AU，51.1 万年），倾角与节点取 Kervella 2017；
+      // 近点角至今未测准，取近远星点之间的示意相位。
+      const PROX = { a: 8200, e: 0.5, i: 107.6 * DEG, O: 300 * DEG, w: 0, P: 511000, M0: 170 * DEG }
+      const CRASH = [0.02, 0.015, 0.01] // 坠毁判定半径（AU）
+      const ESCAPE_R = 60000
+
+      // 开普勒轨道 → 惯性系状态向量 [x,y,z,vx,vy,vz]
+      function keplerState(mu, el, t) {
+        const n = Math.sqrt(mu / (el.a * el.a * el.a))
+        let M = el.M0 !== undefined ? el.M0 + n * t : n * (t - el.T)
+        M %= TAU
+        let E = M
+        for (let k = 0; k < 16; k++) E -= (E - el.e * Math.sin(E) - M) / (1 - el.e * Math.cos(E))
+        const b = el.a * Math.sqrt(1 - el.e * el.e)
+        const px = el.a * (Math.cos(E) - el.e), py = b * Math.sin(E)
+        const den = 1 - el.e * Math.cos(E)
+        const vx = -el.a * n * Math.sin(E) / den, vy = b * n * Math.cos(E) / den
+        const cw = Math.cos(el.w), sw = Math.sin(el.w), ci = Math.cos(el.i), si = Math.sin(el.i)
+        const cO = Math.cos(el.O), sO = Math.sin(el.O)
+        // 近焦点系 → 惯性系：Rz(Ω)·Rx(i)·Rz(ω)
+        const X = cO * cw - sO * sw * ci, Y = -cO * sw - sO * cw * ci
+        const U = sO * cw + cO * sw * ci, V = -sO * sw + cO * cw * ci
+        const Z = sw * si, R = cw * si
+        return [X * px + Y * py, U * px + V * py, Z * px + R * py, X * vx + Y * vy, U * vx + V * vy, Z * vx + R * vy]
+      }
+
+      // 恒星状态：A、B 由 AB 相对轨道劈分到系统质心，比邻星绕原点（AB 质心）。
+      const stars = [
+        { m: M_A, name: '半人马座αA' },
+        { m: M_B, name: '半人马座αB' },
+        { m: M_P, name: '比邻星' },
+      ]
+      function systemEnergy() {
+        let ke = 0, pe = 0
+        for (let i = 0; i < 3; i++) {
+          const s = stars[i]
+          ke += .5 * s.m * (s.v[0] * s.v[0] + s.v[1] * s.v[1] + s.v[2] * s.v[2])
+          for (let j = i + 1; j < 3; j++) {
+            const o = stars[j]
+            const dx = s.p[0] - o.p[0], dy = s.p[1] - o.p[1], dz = s.p[2] - o.p[2]
+            pe -= G * s.m * o.m / Math.sqrt(dx * dx + dy * dy + dz * dz)
+          }
+        }
+        return ke + pe
+      }
+      function initSystem() {
+        const rel = keplerState(G * M_AB, AB, T0)
+        const fA = M_B / M_AB, fB = M_A / M_AB
+        stars[0].p = [-fA * rel[0], -fA * rel[1], -fA * rel[2]]
+        stars[0].v = [-fA * rel[3], -fA * rel[4], -fA * rel[5]]
+        stars[1].p = [fB * rel[0], fB * rel[1], fB * rel[2]]
+        stars[1].v = [fB * rel[3], fB * rel[4], fB * rel[5]]
+        const prox = keplerState(G * M_TOT, PROX, 0)
+        stars[2].p = [prox[0], prox[1], prox[2]]
+        stars[2].v = [prox[3], prox[4], prox[5]]
+        let px = 0, py = 0, pz = 0
+        for (const s of stars) { px += s.m * s.v[0]; py += s.m * s.v[1]; pz += s.m * s.v[2] }
+        for (const s of stars) { s.v[0] -= px / M_TOT; s.v[1] -= py / M_TOT; s.v[2] -= pz / M_TOT }
+        // 比邻星轨道平面基向量（行星 b/c/d 的近似共面圆轨道就在这个平面内解析推进）。
+        const r = stars[2].p, v = stars[2].v
+        let h = [r[1] * v[2] - r[2] * v[1], r[2] * v[0] - r[0] * v[2], r[0] * v[1] - r[1] * v[0]]
+        const hl = Math.hypot(h[0], h[1], h[2]) || 1
+        h = [h[0] / hl, h[1] / hl, h[2] / hl]
+        const e1l = Math.hypot(r[0], r[1], r[2]) || 1
+        proxPlane = {
+          n: h,
+          e1: [r[0] / e1l, r[1] / e1l, r[2] / e1l],
+          e2: [h[1] * r[2] / e1l - h[2] * r[1] / e1l, h[2] * r[0] / e1l - h[0] * r[2] / e1l, h[0] * r[1] / e1l - h[1] * r[0] / e1l],
+        }
+      }
+      let proxPlane = null
+      initSystem()
+
+      // 比邻星的三颗行星：圆轨道、质量忽略、解析推进（不参与数值积分）。
+      const planets = [
+        { name: 'b', a: 0.0485, phase: .5, col: [1.02, .66, .5], size: .09 },
+        { name: 'c', a: 1.49, phase: 2.1, col: [.74, .92, 1.09], size: .16 },
+        { name: 'd', a: 0.0289, phase: 4.4, col: [.86, .8, .72], size: .07 },
+      ]
+      for (const p of planets) p.n = Math.sqrt(G * M_P / (p.a * p.a * p.a))
+
+      // 流浪行星：质量忽略，随恒星一起数值积分。
+      let particles = [], spawnedTotal = 0
+      const MAX_PARTICLES = 12
+
+      // 四阶辛积分（Yoshida 组合的三次蛙跳），恒星与流浪行星一体推进。
+      const acc = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+      function accel() {
+        for (const a of acc) { a[0] = 0; a[1] = 0; a[2] = 0 }
+        for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) {
+          const s = stars[i], o = stars[j]
+          const dx = o.p[0] - s.p[0], dy = o.p[1] - s.p[1], dz = o.p[2] - s.p[2]
+          const r2 = dx * dx + dy * dy + dz * dz + 1e-12
+          const f = G / (r2 * Math.sqrt(r2))
+          acc[i][0] += o.m * f * dx; acc[i][1] += o.m * f * dy; acc[i][2] += o.m * f * dz
+          acc[j][0] -= s.m * f * dx; acc[j][1] -= s.m * f * dy; acc[j][2] -= s.m * f * dz
+        }
+        for (const pt of particles) {
+          pt.a = [0, 0, 0]
+          for (let i = 0; i < 3; i++) {
+            const s = stars[i]
+            const dx = s.p[0] - pt.p[0], dy = s.p[1] - pt.p[1], dz = s.p[2] - pt.p[2]
+            const r2 = dx * dx + dy * dy + dz * dz + 1e-12
+            const f = G * s.m / (r2 * Math.sqrt(r2))
+            pt.a[0] += f * dx; pt.a[1] += f * dy; pt.a[2] += f * dz
+          }
+        }
+      }
+      function drift(s) {
+        for (let i = 0; i < 3; i++) { const st = stars[i]; st.p[0] += st.v[0] * s / 2; st.p[1] += st.v[1] * s / 2; st.p[2] += st.v[2] * s / 2 }
+        for (const pt of particles) { pt.p[0] += pt.v[0] * s / 2; pt.p[1] += pt.v[1] * s / 2; pt.p[2] += pt.v[2] * s / 2 }
+      }
+      function kick(s) {
+        accel()
+        for (let i = 0; i < 3; i++) { const st = stars[i]; st.v[0] += acc[i][0] * s; st.v[1] += acc[i][1] * s; st.v[2] += acc[i][2] * s }
+        for (const pt of particles) { pt.v[0] += pt.a[0] * s; pt.v[1] += pt.a[1] * s; pt.v[2] += pt.a[2] * s }
+      }
+      function leapfrog(s) { drift(s); kick(s); drift(s) }
+      const W1 = 1 / (2 - Math.cbrt(2)), W0 = -Math.cbrt(2) * W1
+      function stepY4(dt) { leapfrog(W1 * dt); leapfrog(W0 * dt); leapfrog(W1 * dt) }
+
+      function abSeparation() {
+        const a = stars[0].p, b = stars[1].p
+        return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2])
+      }
+      let elapsed = 0, E0 = systemEnergy()
+      function advance(years) {
+        if (years <= 0) return
+        // 步长上限随 A–B 间距自适应（近星点附近自动加密），最多 3000 子步。
+        const dtCap = Math.min(.2, Math.max(.002, .01 * Math.sqrt(abSeparation() ** 3 / M_AB)))
+        const n = Math.min(3000, Math.max(1, Math.ceil(years / dtCap)))
+        const h = years / n
+        for (let k = 0; k < n; k++) stepY4(h)
+        elapsed += years
+        for (const p of planets) p.angle = p.phase + p.n * elapsed
+      }
+
+      // ------------------------------------------------------------------
+      // WebGL：天空盒（NASA Deep Star Maps）+ 引力导引椭圆 + 轨迹线 + 发光点。
+      // ------------------------------------------------------------------
+      const VERT = ['attribute vec2 aPos;', 'void main() { gl_Position = vec4(aPos, 0.0, 1.0); }'].join('\n')
+      const SKY_FRAG = [
+        '#ifdef GL_FRAGMENT_PRECISION_HIGH',
+        'precision highp float;',
+        '#else',
+        'precision mediump float;',
+        '#endif',
+        'uniform vec2 uRes;',
+        'uniform float uTime, uSkyReady, uTanFov;',
+        'uniform mat3 uCamMat;',
+        'uniform sampler2D uSky;',
+        'const float PI = 3.141592653589793;',
+        'float hash13(vec3 p3) { p3 = fract(p3 * 0.1031); p3 += dot(p3, p3.zyx + 31.32); return fract((p3.x + p3.y) * p3.z); }',
+        'float vnoise(vec2 p) {',
+        '  vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f);',
+        '  return mix(mix(hash13(vec3(i, 7.1)), hash13(vec3(i + vec2(1.0, 0.0), 7.1)), f.x), mix(hash13(vec3(i + vec2(0.0, 1.0), 7.1)), hash13(vec3(i + 1.0, 7.1)), f.x), f.y);',
+        '}',
+        'vec3 skyColor(vec3 d) {',
+        '  if (uSkyReady > 0.5) {',
+        '    vec2 uv = vec2(atan(d.z, d.x) / (2.0 * PI) + 0.5, asin(clamp(d.y, -1.0, 1.0)) / PI + 0.5);',
+        '    return pow(texture2D(uSky, uv).rgb, vec3(1.25)) * 0.5;',
+        '  }',
+        '  float h = hash13(floor(d * 310.0));',
+        '  float star = smoothstep(0.9982, 1.0, h);',
+        '  float tw = 0.72 + 0.28 * sin(uTime * 1.7 + h * 61.0);',
+        '  vec3 col = vec3(star) * tw * mix(vec3(0.75, 0.85, 1.0), vec3(1.0, 0.9, 0.75), hash13(floor(d * 310.0) + 4.7));',
+        '  col += vec3(0.035, 0.045, 0.08) * vnoise(vec2(atan(d.z, d.x) * 2.0, d.y * 4.0));',
+        '  return col;',
+        '}',
+        'void main() {',
+        '  vec2 ndc = (gl_FragCoord.xy * 2.0 - uRes) / uRes.y;',
+        '  vec3 dir = normalize(uCamMat * vec3(ndc * uTanFov, 1.0));',
+        '  gl_FragColor = vec4(skyColor(dir), 1.0);',
+        '}',
+      ].join('\n')
+      const LINE_VERT = [
+        'attribute vec3 aPos;',
+        'attribute vec4 aCol;',
+        'uniform mat4 uVP;',
+        'varying vec4 vCol;',
+        'void main() { gl_Position = uVP * vec4(aPos, 1.0); vCol = aCol; }',
+      ].join('\n')
+      const LINE_FRAG = [
+        '#ifdef GL_FRAGMENT_PRECISION_HIGH',
+        'precision highp float;',
+        '#else',
+        'precision mediump float;',
+        '#endif',
+        'varying vec4 vCol;',
+        'void main() { gl_FragColor = vec4(vCol.rgb * vCol.a, 1.0); }',
+      ].join('\n')
+      const POINT_VERT = [
+        'attribute vec3 aPos;',
+        'attribute vec3 aCol;',
+        'attribute vec2 aProp;', // x: 世界半径(AU) y: 光晕轮廓 0=硬质点 1=恒星辉光
+        'uniform mat4 uVP;',
+        'uniform float uPointScale;',
+        'varying vec3 vCol;',
+        'varying float vGlow;',
+        'void main() {',
+        '  vec4 clip = uVP * vec4(aPos, 1.0);',
+        '  if (clip.w < 0.0001) { gl_Position = vec4(0.0, 0.0, 2.0, 1.0); gl_PointSize = 0.0; vCol = vec3(0.0); vGlow = 0.0; return; }',
+        '  gl_Position = clip;',
+        '  gl_PointSize = clamp(uPointScale * aProp.x / clip.w, 2.6, 720.0);',
+        '  vCol = aCol; vGlow = aProp.y;',
+        '}',
+      ].join('\n')
+      const POINT_FRAG = [
+        '#ifdef GL_FRAGMENT_PRECISION_HIGH',
+        'precision highp float;',
+        '#else',
+        'precision mediump float;',
+        '#endif',
+        'varying vec3 vCol;',
+        'varying float vGlow;',
+        'void main() {',
+        '  float d = length(gl_PointCoord - 0.5) * 2.0;',
+        '  if (d > 1.0) discard;',
+        '  float core = exp(-d * d * 30.0);',
+        '  float a = mix(exp(-d * d * 70.0) * 1.6, core + exp(-d * d * 4.5) * 0.5, vGlow);',
+        '  vec3 tint = mix(vCol, vec3(1.0), core * vGlow * 0.55);',
+        '  gl_FragColor = vec4(tint * a, 1.0);',
+        '}',
+      ].join('\n')
+
+      function compileShader(type, src) {
+        const sh = gl.createShader(type)
+        gl.shaderSource(sh, src)
+        gl.compileShader(sh)
+        if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+          console.error(gl.getShaderInfoLog(sh))
+          return null
+        }
+        return sh
+      }
+      function program(vs, fs) {
+        const p = gl.createProgram()
+        gl.attachShader(p, vs); gl.attachShader(p, fs); gl.linkProgram(p)
+        if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(p)); return null }
+        return p
+      }
+
+      const vsh = compileShader(gl.VERTEX_SHADER, VERT)
+      const lineVsh = compileShader(gl.VERTEX_SHADER, LINE_VERT)
+      const pointVsh = compileShader(gl.VERTEX_SHADER, POINT_VERT)
+      const skyProg = vsh && program(vsh, compileShader(gl.FRAGMENT_SHADER, SKY_FRAG))
+      const lineProg = lineVsh && program(lineVsh, compileShader(gl.FRAGMENT_SHADER, LINE_FRAG))
+      const pointProg = pointVsh && program(pointVsh, compileShader(gl.FRAGMENT_SHADER, POINT_FRAG))
+      if (!skyProg || !lineProg || !pointProg) { fail(); return }
+      function fail() {
+        boot.remove()
+        document.getElementById('fallback').hidden = false
+        canvas.style.display = 'none'
+        document.querySelector('.hud-controls').style.display = 'none'
+      }
+
+      const U = {}, L = {}, P = {}
+      for (const name of ['uRes', 'uTime', 'uSkyReady', 'uTanFov', 'uCamMat', 'uSky']) U[name] = gl.getUniformLocation(skyProg, name)
+      for (const name of ['uVP']) L[name] = gl.getUniformLocation(lineProg, name)
+      for (const name of ['uVP', 'uPointScale']) P[name] = gl.getUniformLocation(pointProg, name)
+      const lineAPos = gl.getAttribLocation(lineProg, 'aPos'), lineACol = gl.getAttribLocation(lineProg, 'aCol')
+      const pointAPos = gl.getAttribLocation(pointProg, 'aPos'), pointACol = gl.getAttribLocation(pointProg, 'aCol'), pointAProp = gl.getAttribLocation(pointProg, 'aProp')
+
+      const quadBuf = gl.createBuffer()
+      gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf)
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
+      const skyPos = gl.getAttribLocation(skyProg, 'aPos')
+
+      let skyTex = null, skyReady = 0
+      ;(function loadSky() {
+        const img = new Image()
+        img.onload = () => {
+          skyTex = gl.createTexture()
+          gl.bindTexture(gl.TEXTURE_2D, skyTex)
+          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img)
+          const pot = (img.width & (img.width - 1)) === 0 && (img.height & (img.height - 1)) === 0
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, pot ? gl.REPEAT : gl.CLAMP_TO_EDGE)
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+          if (pot) { gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR) }
+          else gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false)
+          skyReady = 1
+        }
+        img.src = '/assets/solar/stars_deepstar.webp'
+      })()
+
+      // 引力导引椭圆：A、B 各自绕 AB 质心的开普勒椭圆（互为 180°），以及比邻星绕系统质心的大椭圆。
+      function ellipsePoints(el, scale, flip, count) {
+        const pts = []
+        for (let k = 0; k <= count; k++) {
+          const E = k / count * TAU
+          const px = el.a * (Math.cos(E) - el.e), py = el.a * Math.sqrt(1 - el.e * el.e) * Math.sin(E)
+          const cw = Math.cos(el.w), sw = Math.sin(el.w), ci = Math.cos(el.i), si = Math.sin(el.i)
+          const cO = Math.cos(el.O), sO = Math.sin(el.O)
+          const x = cO * cw - sO * sw * ci, y = -cO * sw - sO * cw * ci
+          const u = sO * cw + cO * sw * ci, v = -sO * sw + cO * cw * ci
+          const z = sw * si, r = cw * si
+          pts.push(scale * flip * (x * px + y * py), scale * flip * (u * px + v * py), scale * flip * (z * px + r * py))
+        }
+        return pts
+      }
+      const guides = [
+        { pts: ellipsePoints(AB, M_B / M_AB, -1, 180), col: [.55, .75, .78], alpha: .2 },
+        { pts: ellipsePoints(AB, M_A / M_AB, 1, 180), col: [.55, .75, .78], alpha: .2 },
+        { pts: ellipsePoints(PROX, 1, 1, 720), col: [1, .48, .36], alpha: .26 },
+      ]
+      for (const g of guides) { g.buf = gl.createBuffer(); g.cbuf = gl.createBuffer(); g.n = g.pts.length / 3 }
+
+      // 轨迹：环形缓冲，按相机距离自适应采样密度。
+      function makeTrail(cap, col) { return { pts: [], cap, col } }
+      const trailA = makeTrail(700, [1, .93, .8]), trailB = makeTrail(700, [1, .78, .55]), trailP = makeTrail(700, [1, .5, .36])
+      const circleGuides = planets.map((p) => ({ pts: new Array(65 * 3).fill(0), col: p.col, alpha: .25, n: 65 }))
+      function pushTrail(trail, p, minSep) {
+        const last = trail.pts[trail.pts.length - 1]
+        if (!last || Math.hypot(p[0] - last[0], p[1] - last[1], p[2] - last[2]) > minSep) {
+          trail.pts.push([p[0], p[1], p[2]])
+          if (trail.pts.length > trail.cap) trail.pts.shift()
+        }
+      }
+      function drawTrail(trail, alpha) {
+        const n = trail.pts.length
+        if (n < 2) return
+        if (!trail.posArr) { trail.posArr = new Float32Array(trail.cap * 3); trail.colArr = new Float32Array(trail.cap * 4) }
+        for (let i = 0; i < n; i++) {
+          const p = trail.pts[i], fade = Math.pow(i / (n - 1), 1.5) * alpha
+          trail.posArr[i * 3] = p[0]; trail.posArr[i * 3 + 1] = p[1]; trail.posArr[i * 3 + 2] = p[2]
+          trail.colArr[i * 4] = trail.col[0]; trail.colArr[i * 4 + 1] = trail.col[1]; trail.colArr[i * 4 + 2] = trail.col[2]; trail.colArr[i * 4 + 3] = fade
+        }
+        gl.bindBuffer(gl.ARRAY_BUFFER, trail.buf || (trail.buf = gl.createBuffer()))
+        gl.bufferData(gl.ARRAY_BUFFER, trail.posArr.subarray(0, n * 3), gl.DYNAMIC_DRAW)
+        gl.vertexAttribPointer(lineAPos, 3, gl.FLOAT, false, 0, 0)
+        gl.enableVertexAttribArray(lineAPos)
+        gl.bindBuffer(gl.ARRAY_BUFFER, trail.cbuf || (trail.cbuf = gl.createBuffer()))
+        gl.bufferData(gl.ARRAY_BUFFER, trail.colArr.subarray(0, n * 4), gl.DYNAMIC_DRAW)
+        gl.vertexAttribPointer(lineACol, 4, gl.FLOAT, false, 0, 0)
+        gl.enableVertexAttribArray(lineACol)
+        gl.drawArrays(gl.LINE_STRIP, 0, n)
+      }
+      function drawGuide(g) {
+        if (!g.buf) { g.buf = gl.createBuffer(); g.cbuf = gl.createBuffer() }
+        gl.bindBuffer(gl.ARRAY_BUFFER, g.buf)
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(g.pts), gl.DYNAMIC_DRAW)
+        gl.vertexAttribPointer(lineAPos, 3, gl.FLOAT, false, 0, 0)
+        gl.enableVertexAttribArray(lineAPos)
+        const cols = new Float32Array(g.n * 4)
+        for (let i = 0; i < g.n; i++) { cols[i * 4] = g.col[0]; cols[i * 4 + 1] = g.col[1]; cols[i * 4 + 2] = g.col[2]; cols[i * 4 + 3] = g.alpha }
+        gl.bindBuffer(gl.ARRAY_BUFFER, g.cbuf)
+        gl.bufferData(gl.ARRAY_BUFFER, cols, gl.DYNAMIC_DRAW)
+        gl.vertexAttribPointer(lineACol, 4, gl.FLOAT, false, 0, 0)
+        gl.enableVertexAttribArray(lineACol)
+        gl.drawArrays(gl.LINE_STRIP, 0, g.n)
+      }
+
+      const pointBuf = gl.createBuffer()
+      function drawPoints(list) {
+        // list: [x,y,z, r,g,b, worldRadius, glow]
+        const data = new Float32Array(list)
+        gl.useProgram(pointProg)
+        gl.uniformMatrix4fv(P.uVP, false, vp)
+        gl.uniform1f(P.uPointScale, canvas.height / (2 * Math.tan(21 * DEG)))
+        gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf)
+        gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW)
+        gl.vertexAttribPointer(pointAPos, 3, gl.FLOAT, false, 32, 0)
+        gl.enableVertexAttribArray(pointAPos)
+        gl.vertexAttribPointer(pointACol, 3, gl.FLOAT, false, 32, 12)
+        gl.enableVertexAttribArray(pointACol)
+        gl.vertexAttribPointer(pointAProp, 2, gl.FLOAT, false, 32, 24)
+        gl.enableVertexAttribArray(pointAProp)
+        gl.drawArrays(gl.POINTS, 0, data.length / 8)
+      }
+
+      // ------------------------------------------------------------------
+      // 相机与交互：全球面方位角/极角/距离，目标可跟随 AB 质心、全系统质心或比邻星。
+      // ------------------------------------------------------------------
+      const VIEWS = {
+        binary: { follow: 'ab', dist: 62, rate: 3, note: '双星视角 · 时间流速 3 年/秒' },
+        trinary: { follow: 'bary', dist: 26000, rate: 3000, note: '全景视角 · 时间流速 3,000 年/秒，看比邻星爬完它的 51 万年' },
+        proxima: { follow: 'prox', dist: 5.5, rate: 1, note: '比邻星视角 · 时间流速 1 年/秒，行星 b/c/d 开始清晰' },
+      }
+      let follow = 'ab', target = [0, 0, 0], tTarget = [0, 0, 0]
+      // 默认机位：与 AB 轨道面法向约成 38°，让 79.8 年的互绕舞步以 3/4 视角展开。
+      const DEFAULT_VIEW = { az: -2.35, pol: 1.55, dist: 62 }
+      let az = DEFAULT_VIEW.az, pol = DEFAULT_VIEW.pol, dist = DEFAULT_VIEW.dist, tdist = dist
+      let vaz = 0, vpol = 0
+      const clampPol = (p) => Math.min(Math.PI - .02, Math.max(.02, p))
+
+      const pointers = new Map()
+      let lastPinch = 0
+      canvas.addEventListener('pointerdown', (e) => {
+        canvas.setPointerCapture(e.pointerId)
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+        vaz = 0; vpol = 0
+      })
+      canvas.addEventListener('pointermove', (e) => {
+        const p = pointers.get(e.pointerId)
+        if (!p) return
+        const dx = e.clientX - p.x, dy = e.clientY - p.y
+        p.x = e.clientX; p.y = e.clientY
+        if (pointers.size === 1) {
+          const k = .0042
+          az -= dx * k
+          pol = clampPol(pol - dy * k)
+          vaz = Math.max(-.09, Math.min(.09, -dx * k))
+          vpol = Math.max(-.09, Math.min(.09, -dy * k))
+        } else if (pointers.size === 2) {
+          const pts = [...pointers.values()]
+          const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)
+          if (lastPinch > 0) tdist = Math.min(80000, Math.max(.8, tdist * lastPinch / Math.max(d, 1)))
+          lastPinch = d
+        }
+      })
+      const endPointer = (e) => { pointers.delete(e.pointerId); lastPinch = 0 }
+      canvas.addEventListener('pointerup', endPointer)
+      canvas.addEventListener('pointercancel', endPointer)
+      canvas.addEventListener('wheel', (e) => {
+        e.preventDefault()
+        tdist = Math.min(80000, Math.max(.8, tdist * Math.exp(e.deltaY * .0012)))
+      }, { passive: false })
+
+      // ------------------------------------------------------------------
+      // 控件：视角预设、时间流速（对数）、暂停、重置、投放流浪行星。
+      // ------------------------------------------------------------------
+      const rateInput = document.getElementById('rate')
+      const rateLabel = document.getElementById('rate-label')
+      const readoutMain = document.getElementById('readout-main')
+      const readoutFate = document.getElementById('readout-fate')
+      let rate = 3, paused = false
+      const reduceQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+      let reduced = reduceQuery.matches
+      reduceQuery.addEventListener?.('change', () => { reduced = reduceQuery.matches })
+      const fmt = (v, digits = 0) => v.toLocaleString('en-US', { maximumFractionDigits: digits, minimumFractionDigits: digits })
+      function rateFromSlider(v) { return Math.pow(10, -1 + (v / 100) * 5.301) }
+      function labelRate() { rateLabel.textContent = `${rate >= 1000 ? fmt(rate) : rate.toFixed(1)} 年/秒` }
+      rateInput.addEventListener('input', () => { rate = rateFromSlider(Number(rateInput.value)); labelRate() })
+
+      function setView(name) {
+        const view = VIEWS[name]
+        follow = view.follow
+        tdist = view.dist
+        rate = view.rate
+        rateInput.value = String(Math.round((Math.log10(rate) + 1) / 5.301 * 100))
+        labelRate()
+        readoutFate.textContent = view.note
+        document.querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === name)))
+      }
+      document.querySelectorAll('[data-view]').forEach((btn) => btn.addEventListener('click', () => setView(btn.dataset.view)))
+
+      const pauseBtn = document.getElementById('btn-pause')
+      pauseBtn.addEventListener('click', () => {
+        paused = !paused
+        pauseBtn.setAttribute('aria-pressed', String(paused))
+        pauseBtn.innerHTML = paused ? '<span aria-hidden="true">▷</span> 继续' : '<span aria-hidden="true">Ⅱ</span> 暂停'
+      })
+      document.getElementById('btn-reset').addEventListener('click', () => {
+        initSystem()
+        elapsed = 0; E0 = systemEnergy()
+        for (const p of planets) p.angle = p.phase
+        particles = []
+        for (const t of [trailA, trailB, trailP]) t.pts = []
+        az = DEFAULT_VIEW.az; pol = DEFAULT_VIEW.pol
+        setView('binary')
+        readoutFate.textContent = '已重置回 2026.0 历元'
+      })
+
+      function spawnParticle() {
+        if (particles.length >= MAX_PARTICLES) particles.shift()
+        spawnedTotal++
+        // 在 AB 轨道面附近随机投放，速度取当地圆轨道速度的 45%–95%（多数注定被弹射）。
+        const sep = abSeparation()
+        const a = stars[0].p, b = stars[1].p
+        const abC = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2]
+        let h = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+        const hl = Math.hypot(h[0], h[1], h[2]) || 1
+        h = [h[0] / hl, h[1] / hl, h[2] / hl]
+        const e1 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]]
+        const e1l = Math.hypot(...e1) || 1
+        e1[0] /= e1l; e1[1] /= e1l; e1[2] /= e1l
+        const e2 = [h[1] * e1[2] - h[2] * e1[1], h[2] * e1[0] - h[0] * e1[2], h[0] * e1[1] - h[1] * e1[0]]
+        const r = 5 + Math.random() * 35, th = Math.random() * TAU, z = (Math.random() - .5) * r * .3
+        const radial = [e1[0] * Math.cos(th) + e2[0] * Math.sin(th), e1[1] * Math.cos(th) + e2[1] * Math.sin(th), e1[2] * Math.cos(th) + e2[2] * Math.sin(th)]
+        const tangential = [h[1] * radial[2] - h[2] * radial[1], h[2] * radial[0] - h[0] * radial[2], h[0] * radial[1] - h[1] * radial[0]]
+        const speed = Math.sqrt(G * M_AB / r) * (.45 + .5 * Math.random()) * (Math.random() < .15 ? -1 : 1)
+        particles.push({
+          p: [abC[0] + radial[0] * r + h[0] * z, abC[1] + radial[1] * r + h[1] * z, abC[2] + radial[2] * r + h[2] * z],
+          v: [tangential[0] * speed, tangential[1] * speed, tangential[2] * speed],
+          trail: makeTrail(450, [.56, .85, .82]),
+          born: elapsed, index: spawnedTotal,
+        })
+        readoutFate.textContent = particles.length >= MAX_PARTICLES
+          ? `第 ${spawnedTotal} 颗流浪行星已投放（最早的已移出画面）`
+          : `第 ${spawnedTotal} 颗流浪行星已投放`
+      }
+      document.getElementById('btn-spawn').addEventListener('click', spawnParticle)
+
+      const panelBody = document.getElementById('panel-body')
+      const panelToggle = document.getElementById('panel-toggle')
+      panelToggle.addEventListener('click', () => {
+        const open = panelToggle.getAttribute('aria-expanded') === 'true'
+        panelToggle.setAttribute('aria-expanded', String(!open))
+        panelBody.style.display = open ? 'none' : ''
+        panelToggle.textContent = open ? '展开注解 +' : '收起注解 −'
+      })
+
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2)
+        const w = Math.max(2, Math.floor(canvas.clientWidth * dpr))
+        const h = Math.max(2, Math.floor(canvas.clientHeight * dpr))
+        if (canvas.width !== w || canvas.height !== h) {
+          canvas.width = w
+          canvas.height = h
+          gl.viewport(0, 0, w, h)
+        }
+      }
+      window.addEventListener('resize', resize)
+      // 上下文丢失后整套 GL 状态不可复用，直接引导刷新。
+      canvas.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault()
+        boot.remove()
+        const fb = document.getElementById('fallback')
+        fb.hidden = false
+        fb.querySelector('p').textContent = '图形上下文已丢失，请刷新页面重新点亮星系。'
+        canvas.style.display = 'none'
+        document.querySelector('.hud-controls').style.display = 'none'
+      })
+
+      // 矩阵：透视投影 × lookAt（列主序，直接喂给 uniformMatrix4fv）。
+      function mat4Perspective(fovy, aspect, near, far) {
+        const f = 1 / Math.tan(fovy / 2), nf = 1 / (near - far)
+        return [f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, 2 * far * near * nf, 0]
+      }
+      function mat4Multiply(a, b) {
+        const o = new Array(16)
+        for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+          o[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3]
+        }
+        return o
+      }
+      let vp = null
+
+      function followTarget() {
+        if (follow === 'prox') return stars[2].p
+        const a = stars[0].p, b = stars[1].p
+        const abC = [(M_A * a[0] + M_B * b[0]) / M_AB, (M_A * a[1] + M_B * b[1]) / M_AB, (M_A * a[2] + M_B * b[2]) / M_AB]
+        if (follow === 'ab') return abC
+        return [(M_AB * abC[0] + M_P * stars[2].p[0]) / M_TOT, (M_AB * abC[1] + M_P * stars[2].p[1]) / M_TOT, (M_AB * abC[2] + M_P * stars[2].p[2]) / M_TOT]
+      }
+
+      function checkFates() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const pt = particles[i]
+          const r = Math.hypot(...pt.p)
+          let dead = false
+          for (let s = 0; s < 3; s++) {
+            const d = Math.hypot(pt.p[0] - stars[s].p[0], pt.p[1] - stars[s].p[1], pt.p[2] - stars[s].p[2])
+            if (d < CRASH[s]) {
+              readoutFate.textContent = `第 ${pt.index} 颗 · 模拟第 ${fmt(elapsed)} 年坠入${stars[s].name}`
+              dead = true; break
+            }
+          }
+          if (!dead && r > ESCAPE_R) {
+            const vDotR = pt.p[0] * pt.v[0] + pt.p[1] * pt.v[1] + pt.p[2] * pt.v[2]
+            if (vDotR > 0) {
+              const kms = Math.hypot(...pt.v) * AUKYR_KMS
+              readoutFate.textContent = `第 ${pt.index} 颗 · 模拟第 ${fmt(elapsed)} 年以 ${kms.toFixed(1)} km/s 逃出系统`
+              dead = true
+            }
+          }
+          if (dead) particles.splice(i, 1)
+        }
+      }
+
+      // ------------------------------------------------------------------
+      // 渲染主循环
+      // ------------------------------------------------------------------
+      resize()
+      let simTime = 0, last = performance.now(), frames = 0
+      const dismissBoot = () => {
+        if (!boot.isConnected) return
+        boot.classList.add('done')
+        setTimeout(() => boot.remove(), 900)
+      }
+      setTimeout(dismissBoot, 2000)
+
+      function frame(now) {
+        const dt = Math.min((now - last) / 1000, .1)
+        last = now
+        if (!paused) {
+          const years = rate * dt * (reduced ? .3 : 1)
+          advance(years)
+          simTime += dt
+          checkFates()
+        }
+        if (pointers.size === 0) {
+          az += vaz
+          pol = clampPol(pol + vpol)
+          vaz *= Math.exp(-dt * 5)
+          vpol *= Math.exp(-dt * 5)
+        }
+        dist += (tdist - dist) * Math.min(1, dt * 7)
+
+        // 跟随目标：平滑逼近所选质心。
+        const ft = followTarget()
+        const k = Math.min(1, dt * 6)
+        for (let i = 0; i < 3; i++) tTarget[i] += (ft[i] - tTarget[i]) * k
+        target = [...tTarget]
+
+        const sp = Math.sin(pol), cp = Math.cos(pol)
+        const cam = [target[0] + dist * sp * Math.cos(az), target[1] + dist * cp, target[2] + dist * sp * Math.sin(az)]
+        let fwd = [target[0] - cam[0], target[1] - cam[1], target[2] - cam[2]]
+        const fl = Math.hypot(...fwd) || 1
+        fwd = [fwd[0] / fl, fwd[1] / fl, fwd[2] / fl]
+        let right = [fwd[1] * 0 - fwd[2] * 1, fwd[2] * 0 - fwd[0] * 0, fwd[0] * 1 - fwd[1] * 0] // cross(fwd, up0)
+        const rl = Math.hypot(...right) || 1
+        right = [right[0] / rl, right[1] / rl, right[2] / rl]
+        const up = [right[1] * fwd[2] - right[2] * fwd[1], right[2] * fwd[0] - right[0] * fwd[2], right[0] * fwd[1] - right[1] * fwd[0]]
+
+        resize()
+        const aspect = canvas.width / canvas.height
+        const proj = mat4Perspective(42 * DEG, aspect, dist > 1000 ? 1 : .02, 500000)
+        // lookAt 视图矩阵
+        const zAxis = [-fwd[0], -fwd[1], -fwd[2]]
+        const view = [
+          right[0], up[0], zAxis[0], 0,
+          right[1], up[1], zAxis[1], 0,
+          right[2], up[2], zAxis[2], 0,
+          -(right[0] * cam[0] + right[1] * cam[1] + right[2] * cam[2]),
+          -(up[0] * cam[0] + up[1] * cam[1] + up[2] * cam[2]),
+          -(zAxis[0] * cam[0] + zAxis[1] * cam[1] + zAxis[2] * cam[2]),
+          1,
+        ]
+        vp = mat4Multiply(proj, view)
+
+        gl.disable(gl.DEPTH_TEST)
+        gl.clearColor(.02, .02, .028, 1)
+        gl.clear(gl.COLOR_BUFFER_BIT)
+
+        // 1) 天空
+        gl.useProgram(skyProg)
+        gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf)
+        gl.vertexAttribPointer(skyPos, 2, gl.FLOAT, false, 0, 0)
+        gl.enableVertexAttribArray(skyPos)
+        gl.uniform2f(U.uRes, canvas.width, canvas.height)
+        gl.uniform1f(U.uTime, simTime % 3600)
+        gl.uniform1f(U.uSkyReady, skyReady)
+        gl.uniform1f(U.uTanFov, Math.tan(21 * DEG))
+        gl.uniformMatrix3fv(U.uCamMat, false, [right[0], right[1], right[2], up[0], up[1], up[2], fwd[0], fwd[1], fwd[2]])
+        gl.activeTexture(gl.TEXTURE0)
+        gl.bindTexture(gl.TEXTURE_2D, skyTex)
+        gl.uniform1i(U.uSky, 0)
+        gl.disable(gl.BLEND)
+        gl.drawArrays(gl.TRIANGLES, 0, 3)
+
+        // 2) 导引椭圆 + 轨迹（加色混合）
+        gl.enable(gl.BLEND)
+        gl.blendFunc(gl.ONE, gl.ONE)
+        gl.useProgram(lineProg)
+        gl.uniformMatrix4fv(L.uVP, false, vp)
+        for (const g of guides) drawGuide(g)
+        const minSep = Math.max(dist * .004, 1e-4)
+        pushTrail(trailA, stars[0].p, minSep)
+        pushTrail(trailB, stars[1].p, minSep)
+        pushTrail(trailP, stars[2].p, minSep)
+        drawTrail(trailA, .8); drawTrail(trailB, .8); drawTrail(trailP, .55)
+        for (const pt of particles) {
+          pushTrail(pt.trail, pt.p, minSep)
+          drawTrail(pt.trail, .7)
+        }
+        // 比邻星行星导引圈（仅在足够近时值得画）
+        if (dist < 60 && follow === 'prox') {
+          const pr = stars[2].p
+          for (let pi = 0; pi < planets.length; pi++) {
+            const p = planets[pi]
+            const circle = circleGuides[pi]
+            for (let i = 0; i <= 64; i++) {
+              const th = i / 64 * TAU
+              circle.pts[i * 3] = pr[0] + (proxPlane.e1[0] * Math.cos(th) + proxPlane.e2[0] * Math.sin(th)) * p.a
+              circle.pts[i * 3 + 1] = pr[1] + (proxPlane.e1[1] * Math.cos(th) + proxPlane.e2[1] * Math.sin(th)) * p.a
+              circle.pts[i * 3 + 2] = pr[2] + (proxPlane.e1[2] * Math.cos(th) + proxPlane.e2[2] * Math.sin(th)) * p.a
+            }
+            drawGuide(circle)
+          }
+        }
+
+        // 3) 发光点：三颗恒星 + 三颗行星 + 流浪行星
+        const list = []
+        const starLooks = [
+          { col: [1.05, .95, .8], size: 2 },
+          { col: [1.05, .8, .58], size: 1.6 },
+          { col: [1.1, .52, .38], size: .34 },
+        ]
+        stars.forEach((s, i) => list.push(s.p[0], s.p[1], s.p[2], ...starLooks[i].col, starLooks[i].size, 1))
+        for (const p of planets) {
+          const th = p.angle ?? p.phase
+          const e1 = proxPlane.e1, e2 = proxPlane.e2
+          list.push(
+            stars[2].p[0] + (e1[0] * Math.cos(th) + e2[0] * Math.sin(th)) * p.a,
+            stars[2].p[1] + (e1[1] * Math.cos(th) + e2[1] * Math.sin(th)) * p.a,
+            stars[2].p[2] + (e1[2] * Math.cos(th) + e2[2] * Math.sin(th)) * p.a,
+            ...p.col, p.size, 0,
+          )
+        }
+        for (const pt of particles) list.push(pt.p[0], pt.p[1], pt.p[2], .56, .9, .88, .09, .35)
+        drawPoints(list)
+
+        frames++
+        if (frames % 4 === 0) {
+          const abDist = abSeparation()
+          const proxR = Math.hypot(stars[2].p[0], stars[2].p[1], stars[2].p[2])
+          const drift = (systemEnergy() - E0) / Math.abs(E0)
+          readoutMain.textContent = `T +${fmt(elapsed, elapsed < 100 ? 1 : 0)} 年 · A–B ${abDist.toFixed(1)} AU · 比邻星 ${fmt(proxR)} AU · ΔE/E₀ ${drift === 0 ? '0' : drift.toExponential(1)}`
+        }
+        lastFrameAt = now
+        dismissBoot()
+      }
+      let lastFrameAt = 0
+      frame(performance.now())
+      const loop = (now) => { frame(now); requestAnimationFrame(loop) }
+      requestAnimationFrame(loop)
+      setInterval(() => {
+        if (performance.now() - lastFrameAt > 240) frame(performance.now())
+      }, 66)
+    })()
+  </script>
+</body>
+</html>

@@ -323,9 +323,16 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
 .blackhole-entry:hover { border-color: var(--teal); background: var(--surface-raised); }
 .blackhole-entry span:first-child { color: var(--teal); }
 .blackhole-entry span:last-child { color: var(--gold); }
+.scale-toggle { display: inline-flex; gap: 9px; align-items: center; flex: none; min-height: 44px; padding: 0 15px; border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--bg) 84%, transparent); font: inherit; font-size: .74rem; font-weight: 600; white-space: nowrap; cursor: pointer; color: inherit; transition: border-color .2s, background .2s; }
+.scale-toggle:hover { border-color: var(--teal); background: var(--surface-raised); }
+.scale-toggle span:first-child { color: var(--gold); }
+.scale-toggle[aria-pressed='true'] { border-color: color-mix(in srgb, var(--teal) 55%, transparent); color: var(--teal); }
 .explore-blackhole { display: flex; width: max-content; max-width: 100%; margin: 10px auto 0; border-color: color-mix(in srgb, var(--teal) 45%, transparent); }
 .explore-blackhole:hover { border-color: var(--teal); box-shadow: 0 14px 50px color-mix(in srgb, var(--teal) 20%, transparent); }
 .explore-blackhole .explore-icon { color: var(--teal); font-size: 1.25rem; }
+.explore-threebody { display: flex; width: max-content; max-width: 100%; margin: 10px auto 0; border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
+.explore-threebody:hover { border-color: var(--gold); box-shadow: 0 14px 50px color-mix(in srgb, var(--gold) 20%, transparent); }
+.explore-threebody .explore-icon { color: var(--gold); font-size: 1.25rem; }
 @media (max-width: 760px) { .explorer-toolbar { flex-wrap: wrap; row-gap: 10px; } }
 .universe-fallback .fallback-solar { position: absolute; inset: 0; overflow: hidden; }
 .universe-fallback .fallback-solar b { top: 48%; left: 73%; width: 45px; height: 45px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6b6, #ffac49 55%, #df5918); box-shadow: 0 0 50px 18px #f98b3733; }

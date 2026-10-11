@@ -2,7 +2,7 @@ import type { OrbitControls as OrbitControlsType } from 'three/addons/controls/O
 import { createResourceScope } from './resourceScope'
 import { createSolarSystem } from './createSolarSystem'
 import { bodies } from './solarData'
-import type { BodyId, SceneMode, ScenePhase, SceneTheme, UniverseCanvasProps, UniverseController } from './types'
+import type { BodyId, ScaleMode, SceneMode, ScenePhase, SceneTheme, UniverseCanvasProps, UniverseController } from './types'
 
 export const particleCountForWidth = (width: number) => width <= 760 ? 420 : 1100
 const profiles = {
@@ -72,6 +72,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     const projected = new T.Vector3(), projectionOffset = new T.Vector3()
     let destroyed = false, animationFrame = 0, renderCount = 0, simulationTime = 0, lastTime: number | null = null
     let phase: ScenePhase = props.phase, theme: SceneTheme = props.theme, mode: SceneMode = 'browse', paused = props.paused
+    let scaleMode: ScaleMode = 'artistic'
     let selected: BodyId | null = null, hovered: BodyId | null = null, pulseEnergy = 0
     let flight: { fromPosition: import('three').Vector3; fromTarget: import('three').Vector3; offset: import('three').Vector3; progress: number } | null = null
     let controls: OrbitControlsType | null = null, releaseInteraction: (() => void) | null = null, interactionElement: HTMLElement | null = null
@@ -80,7 +81,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     const diagnostic = (key: string, value: string) => root.setAttribute('data-scene-' + key, value)
     diagnostic('bodies', String(solar.planets.size)); diagnostic('planets', '8'); diagnostic('moon', 'true'); diagnostic('saturn-rings', 'true')
     diagnostic('textures', String(solar.textureCount))
-    diagnostic('ready', 'true'); diagnostic('mode', 'browse'); diagnostic('selected', 'none'); diagnostic('paused', String(paused))
+    diagnostic('ready', 'true'); diagnostic('mode', 'browse'); diagnostic('selected', 'none'); diagnostic('paused', String(paused)); diagnostic('scale', 'artistic')
 
     const applyTheme = () => {
       solar.setTheme(theme)
@@ -136,9 +137,9 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
         const distance = camera.position.distanceTo(projected)
         const radiusPixels = body.radius * solar.world.scale.x / distance * innerHeight / (2 * Math.tan(T.MathUtils.degToRad(21)))
         projected.project(camera)
-        if (solar.planets.get(body.id)!.anchor.visible && (Math.abs(projected.x) > 1 || Math.abs(projected.y) > 1 || projected.z < -1 || projected.z > 1)) outside.push(body.id)
+        if (Math.abs(projected.x) > 1 || Math.abs(projected.y) > 1 || projected.z < -1 || projected.z > 1) outside.push(body.id)
         const x = (projected.x * .5 + .5) * innerWidth, y = (-projected.y * .5 + .5) * innerHeight
-        const shown = projected.z > -1 && projected.z < 1 && x > 10 && x < innerWidth - 100 && y > 85 && y < innerHeight - (mode === 'explore' ? 185 : 220) && (mode === 'explore' ? !selected : phase === 'hero' && innerWidth > 760 && x > innerWidth * .48)
+        const shown = projected.z > -1 && projected.z < 1 && x > 10 && x < innerWidth - 100 && y > 85 && y < innerHeight - (mode === 'explore' ? 185 : 220) && (mode === 'explore' || phase === 'hero' && innerWidth > 760 && x > innerWidth * .48)
         label.hidden = !shown
         if (shown) label.style.transform = `translate(${(x + radiusPixels + 10).toFixed(1)}px,${(y - 5).toFixed(1)}px)`
       })
@@ -173,14 +174,13 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     }
     const overview = () => {
       flight = null
-      solar.setFocus(null)
       selected = null; hovered = null; diagnostic('selected', 'none'); solar.highlight(null)
       if (controls) { controls.enableDamping = false; controls.update() }
       const halfFov = Math.min(T.MathUtils.degToRad(21), Math.atan(Math.tan(T.MathUtils.degToRad(21)) * camera.aspect))
-      const distance = 19 / Math.sin(halfFov)
+      const distance = solar.span() / Math.sin(halfFov)
       camera.position.set(0, .75, 1).normalize().multiplyScalar(distance)
       camera.lookAt(0, 0, 0)
-      if (controls) { controls.target.set(0, 0, 0); controls.minDistance = 4; controls.maxDistance = Math.min(distance * 1.65, 190); controls.update() }
+      if (controls) { controls.target.set(0, 0, 0); controls.minDistance = scaleMode === 'true' ? .017 : 4; controls.maxDistance = Math.min(distance * 1.65, scaleMode === 'true' ? 340 : 190); controls.update() }
       if (controls) controls.enableDamping = !props.reducedMotion
       previousTarget.set(0, 0, 0)
     }
@@ -188,14 +188,13 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       if (mode !== 'explore') return
       if (!id) { overview(); invalidate(); return }
       selected = id; diagnostic('selected', id); solar.highlight(id)
-      solar.setFocus(id)
       solar.world.updateMatrixWorld(true)
       solar.planets.get(id)!.anchor.getWorldPosition(targetPosition)
-      const radius = bodies.find(body => body.id === id)!.radius
+      const radius = solar.metrics(id).radius
       const direction = preserveDirection ? (flight?.offset.clone() ?? camera.position.clone().sub(controls?.target ?? targetPosition)).normalize() : id === 'sun' ? new T.Vector3(0, .3, 1).normalize() : targetPosition.clone().negate().normalize().applyAxisAngle(new T.Vector3(0, 1, 0), id === 'saturn' ? -.65 : .7)
       if (!preserveDirection) direction.y = id === 'saturn' ? .65 : .35
       direction.normalize()
-      const framingRadius = id === 'saturn' ? 1.75 : radius
+      const framingRadius = id === 'saturn' ? radius * 2.46 : radius
       const halfFov = Math.min(T.MathUtils.degToRad(21), Math.atan(Math.tan(T.MathUtils.degToRad(21)) * camera.aspect))
       const landscape = innerHeight <= 500 && innerWidth > 760
       const baseFraming = innerWidth <= 760 ? 1.5 : id === 'saturn' ? 1.4 : 1.85
@@ -212,7 +211,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       const bounds = canvas.getBoundingClientRect()
       const point = new T.Vector2((event.clientX - bounds.left) / bounds.width * 2 - 1, -(event.clientY - bounds.top) / bounds.height * 2 + 1)
       scene.updateMatrixWorld(true); camera.updateMatrixWorld(true); raycaster.setFromCamera(point, camera)
-      const hit = raycaster.intersectObjects(Array.from(solar.planets.values()).filter(body => body.anchor.visible).map(body => body.mesh), false)[0]
+      const hit = raycaster.intersectObjects(Array.from(solar.planets.values()).map(body => body.mesh), false)[0]
       return hit ? hit.object.userData.bodyId as BodyId : null
     }
     const setMode = (next: SceneMode, element: HTMLElement | null) => {
@@ -247,12 +246,22 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
         controls.addEventListener('start', () => { flight = null })
         releaseInteraction = () => { element.removeEventListener('pointerdown', onDown); element.removeEventListener('pointermove', onMove); element.removeEventListener('pointerup', onUp); element.removeEventListener('pointercancel', onCancel); element.removeEventListener('pointerleave', onLeave); element.removeEventListener('keydown', onKey) }
       } else {
-        flight = null; selected = null; diagnostic('selected', 'none'); solar.highlight(null); solar.setFocus(null); render(performance.now(), true)
+        flight = null; selected = null; diagnostic('selected', 'none'); solar.highlight(null); render(performance.now(), true)
       }
       invalidate()
     }
     const setPhase = (next: ScenePhase) => { if (phase === next) return; phase = next; invalidate() }
     const setTheme = (next: SceneTheme) => { if (theme === next) return; theme = next; applyTheme(); invalidate() }
+    // 真实比例切换后，探索模式需要重新取景：选中天体就地重飞，否则回到全景。
+    const setScaleMode = (next: ScaleMode) => {
+      if (scaleMode === next) return
+      scaleMode = next
+      solar.setScaleMode(next)
+      diagnostic('scale', next)
+      if (mode === 'explore') { if (selected) selectBody(selected, true); else overview() }
+      else render(performance.now(), true)
+      invalidate()
+    }
     const pulse = (seed: number) => { pulseEnergy = Number.isFinite(seed) ? 1 + Math.sin(seed) * .1 : 0; invalidate() }
     const setPaused = (next: boolean) => { if (paused === next) return; paused = next; diagnostic('paused', String(paused)); invalidate() }
     const resetView = () => { if (mode === 'explore') { overview(); invalidate() } }
@@ -266,6 +275,6 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     scope.add(() => { releaseInteraction?.(); controls?.dispose() })
     renderer.setClearColor(0x000000, 0); applyTheme(); resize(true); render(0, true); start()
     const destroy = () => { if (destroyed) return; destroyed = true; diagnostic('ready', 'false'); stop(); try { scope.cleanup() } catch { /* Release all resources even when a driver disposer fails. */ } }
-    return { setPhase, setTheme, pulse, setMode, selectBody, setPaused, resetView, zoomBy, destroy }
+    return { setPhase, setTheme, pulse, setMode, setScaleMode, selectBody, setPaused, resetView, zoomBy, destroy }
   } catch (error) { try { scope.cleanup() } catch { /* Preserve initialization error. */ } throw error }
 }

@@ -1,7 +1,7 @@
 import type * as Three from 'three'
 import type { ResourceScope } from './resourceScope'
-import { bodies } from './solarData'
-import type { BodyId, SceneTheme } from './types'
+import { bodies, ellipsePoint, keplerE, meanAnomaly, orbitFrame, scaleValue, TRUE_SCALE, type OrbitFrame } from './solarData'
+import type { BodyId, ScaleMode, SceneTheme } from './types'
 
 const maps = ['sun', 'mercury', 'venus_atmosphere', 'earth_daymap', 'earth_nightmap', 'earth_clouds', 'mars', 'jupiter', 'saturn', 'saturn_ring_alpha', 'uranus', 'neptune', 'moon', 'stars_milky_way'] as const
 const vertex = `
@@ -82,9 +82,15 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   const atlas = Object.fromEntries(loaded) as Record<typeof maps[number], Three.Texture>
   const world = new T.Group()
   const planets = new Map<BodyId, { anchor: Three.Group; mesh: Three.Mesh; halo: Three.Mesh }>()
+  const orbitLines = new Map<BodyId, Three.LineLoop>()
   const orbits: Three.LineLoop[] = [], trails: Three.Line[] = []
   const sunPosition = new T.Vector3()
   const ambient = { value: .045 }, clock = { value: 0 }, cloudOffset = { value: 0 }
+  let scaleMode: ScaleMode = 'artistic'
+  const live = new Map<BodyId, { orbit: number; radius: number; speed: number }>()
+  for (const body of bodies) live.set(body.id, scaleValue(body, scaleMode))
+  const frames = new Map<BodyId, OrbitFrame>()
+  for (const body of bodies) frames.set(body.id, orbitFrame(body))
   const sphere = geometry(new T.SphereGeometry(1, mobile ? 40 : 80, mobile ? 28 : 56))
   const glowCanvas = document.createElement('canvas'); glowCanvas.width = glowCanvas.height = 256
   const gc = glowCanvas.getContext('2d')!
@@ -114,7 +120,7 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
       uniforms: { surfaceMap: { value: atlas[name] }, nightMap: { value: atlas.earth_nightmap }, cloudMap: { value: atlas.earth_clouds }, sunPosition: { value: sunPosition }, isEarth: { value: body.id === 'earth' ? 1 : 0 }, relief: { value: body.kind === 'rock' ? 2.5 : 0 }, ambient, cloudOffset, ...ringUniforms, hasRing: { value: body.id === 'saturn' ? 1 : 0 } },
       vertexShader: vertex, fragmentShader: surfaceFragment,
     }))
-    const mesh = new T.Mesh(sphere, surface); mesh.scale.setScalar(body.radius); mesh.userData.bodyId = body.id
+    const mesh = new T.Mesh(sphere, surface); mesh.scale.setScalar(live.get(body.id)!.radius); mesh.userData.bodyId = body.id
     const anchor = new T.Group(); anchor.add(mesh); world.add(anchor)
     const atmosphere = body.id === 'earth' ? '#479eff' : body.id === 'venus' ? '#eccb91' : body.id === 'neptune' ? '#3656e3' : body.color
     const halo = new T.Mesh(sphere, material(new T.ShaderMaterial({
@@ -127,12 +133,16 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
         }`,
       transparent: true, side: T.BackSide, depthWrite: false, blending: T.AdditiveBlending,
     })))
-    halo.scale.setScalar(body.radius * (body.id === 'sun' ? 1.16 : 1.035)); anchor.add(halo)
+    halo.scale.setScalar(live.get(body.id)!.radius * (body.id === 'sun' ? 1.16 : 1.035)); anchor.add(halo)
     planets.set(body.id, { anchor, mesh, halo })
     if (body.orbit) {
-      const points = Array.from({ length: 256 }, (_, j) => new T.Vector3(Math.cos(j / 256 * Math.PI * 2) * body.orbit, 0, Math.sin(j / 256 * Math.PI * 2) * body.orbit))
+      const frame = frames.get(body.id)!
+      const points = Array.from({ length: 256 }, (_, j) => {
+        const p = ellipsePoint(live.get(body.id)!.orbit, body.ecc, frame, j / 256 * Math.PI * 2, [0, 0, 0])
+        return new T.Vector3(p[0], p[1], p[2])
+      })
       const orbit = new T.LineLoop(geometry(new T.BufferGeometry().setFromPoints(points)), material(new T.LineBasicMaterial({ color: body.color, transparent: true, opacity: .14, depthWrite: false })))
-      world.add(orbit); orbits.push(orbit)
+      world.add(orbit); orbits.push(orbit); orbitLines.set(body.id, orbit)
       const trailGeometry = geometry(new T.BufferGeometry())
       trailGeometry.setAttribute('position', new T.BufferAttribute(new Float32Array(64 * 3), 3))
       const colors = new Float32Array(64 * 3)
@@ -179,11 +189,21 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   const asteroidCount = mobile ? 180 : 900
   const asteroids = new T.InstancedMesh(geometry(new T.IcosahedronGeometry(.025, 0)), material(new T.MeshStandardMaterial({ color: '#807970', roughness: 1 })), asteroidCount)
   const dummy = new T.Object3D()
-  for (let j = 0; j < asteroidCount; j++) {
-    const angle = j * 2.399963, radius = 8.1 + Math.sin(j * 13.3) * .5
-    dummy.position.set(Math.cos(angle) * radius, Math.sin(j * 7.6) * .12, Math.sin(angle) * radius)
-    dummy.rotation.set(j, j * .7, j * .4); dummy.scale.set(.5 + j % 7 / 5, .45 + j % 3 / 3, .6 + j % 5 / 4); dummy.updateMatrix(); asteroids.setMatrixAt(j, dummy.matrix)
+  // 每颗小行星躺在自己的倾斜圆轨道上（倾角最大约 11°）；绕 Y 的整体旋转使它沿此圆运转。
+  const placeAsteroids = (mode: ScaleMode) => {
+    const mid = mode === 'true' ? (2.1 + 3.3) / 2 * TRUE_SCALE.AU : 8.1
+    const spread = mode === 'true' ? (3.3 - 2.1) / 2 * TRUE_SCALE.AU : .5
+    for (let j = 0; j < asteroidCount; j++) {
+      const angle = j * 2.399963, radius = mid + Math.sin(j * 13.3) * spread
+      const incl = .19 * ((j * .618034) % 1), node = j * 1.9
+      const si = Math.sin(incl), ci = Math.cos(incl), cn = Math.cos(node), sn = Math.sin(node)
+      const px = Math.cos(angle) * radius, pz = Math.sin(angle) * radius
+      dummy.position.set(px * cn + pz * ci * sn, -pz * si, -px * sn + pz * ci * cn)
+      dummy.rotation.set(j, j * .7, j * .4); dummy.scale.set(.5 + j % 7 / 5, .45 + j % 3 / 3, .6 + j % 5 / 4); dummy.updateMatrix(); asteroids.setMatrixAt(j, dummy.matrix)
+    }
+    asteroids.instanceMatrix.needsUpdate = true
   }
+  placeAsteroids(scaleMode)
   scope.add(() => asteroids.dispose()); world.add(asteroids)
   const highlight = (id: BodyId | null) => planets.forEach((planet, key) => {
     const natural = key === 'sun' ? 0 : key === 'earth' ? .55 : key === 'venus' || key === 'neptune' || key === 'uranus' ? .25 : .015
@@ -192,21 +212,32 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   const update = (time: number, energy: number) => {
     clock.value = time; cloudOffset.value = time * .003 / (Math.PI * 2)
     for (const [index, body] of bodies.entries()) {
-      const planet = planets.get(body.id)!, angle = body.angle + time * body.speed
-      planet.anchor.position.set(Math.cos(angle) * body.orbit, 0, Math.sin(angle) * body.orbit)
+      const planet = planets.get(body.id)!, metrics = live.get(body.id)!
       planet.mesh.rotation.y = time * (body.id === 'venus' ? -.06 : body.id === 'sun' ? .025 : .12) + (body.id === 'earth' ? 2.4 : .25)
+      if (!body.orbit) continue
+      // 真实三维开普勒轨道：倾角、升交点与离心率取 J2000 值，近日点处可见加速。
+      const frame = frames.get(body.id)!
+      const M = meanAnomaly(body, metrics.speed, time)
+      const E = keplerE(body.ecc, M)
+      const px = metrics.orbit * (Math.cos(E) - body.ecc), py = metrics.orbit * Math.sqrt(1 - body.ecc * body.ecc) * Math.sin(E)
+      planet.anchor.position.set(frame.X * px + frame.Y * py, frame.U * px + frame.V * py, frame.Z * px + frame.R * py)
       if (index) {
         const positions = trails[index - 1].geometry.getAttribute('position')
-        for (let j = 0; j < 64; j++) { const a = angle - (63 - j) * .012; positions.setXYZ(j, Math.cos(a) * body.orbit, 0, Math.sin(a) * body.orbit) }
+        for (let j = 0; j < 64; j++) {
+          const Ej = keplerE(body.ecc, M - (63 - j) * .012)
+          const tx = metrics.orbit * (Math.cos(Ej) - body.ecc), ty = metrics.orbit * Math.sqrt(1 - body.ecc * body.ecc) * Math.sin(Ej)
+          positions.setXYZ(j, frame.X * tx + frame.Y * ty, frame.U * tx + frame.V * ty, frame.Z * tx + frame.R * ty)
+        }
         positions.needsUpdate = true
       }
     }
     if (clouds) clouds.rotation.y = time * .123 + 2.4
-    moon.position.set(Math.cos(time * .7) * .78, .06, Math.sin(time * .7) * .78); moon.rotation.y = time * .7
+    // 月球轨道对黄道倾斜 5.1°。
+    moon.position.set(Math.cos(time * .7) * .78, -Math.sin(time * .7) * .78 * .0897, Math.sin(time * .7) * .78 * .996); moon.rotation.y = time * .7
     asteroids.rotation.y = time * .013
-    glow.scale.setScalar(10.5 + Math.sin(time * .3) * .15 + energy * .3)
+    glow.scale.setScalar((10.5 + Math.sin(time * .3) * .15 + energy * .3) * (scaleMode === 'true' ? .143 : 1))
     world.updateMatrixWorld(true); world.getWorldPosition(sunPosition)
-    planets.get('saturn')!.anchor.getWorldPosition(ringCenter); ringRadius.value = .71 * world.scale.x
+    planets.get('saturn')!.anchor.getWorldPosition(ringCenter); ringRadius.value = live.get('saturn')!.radius * world.scale.x
     systemScale.value = world.scale.x
     if (saturnRing) ringNormal.set(0, 0, 1).transformDirection(saturnRing.matrixWorld)
   }
@@ -216,11 +247,33 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
     ;(glow.material as Three.SpriteMaterial).blending = theme === 'dark' ? T.AdditiveBlending : T.NormalBlending
     ;(glow.material as Three.SpriteMaterial).opacity = theme === 'dark' ? .7 : .45
   }
-  const setFocus = (id: BodyId | null) => {
-    planets.forEach((planet, key) => { planet.anchor.visible = !id || key === id })
-    orbits.forEach(orbit => { orbit.visible = !id }); trails.forEach(trail => { trail.visible = !id })
-    asteroids.visible = !id; glow.visible = !id || id === 'sun'
+  // 真实比例：距离 1:1、行星间大小比例严格保持（太阳 20 倍 / 行星 160 倍放大以保可见）、速度遵循开普勒第三定律。
+  const setScaleMode = (mode: ScaleMode) => {
+    if (scaleMode === mode) return
+    scaleMode = mode
+    for (const body of bodies) {
+      const metrics = scaleValue(body, mode)
+      live.set(body.id, metrics)
+      const planet = planets.get(body.id)!
+      planet.mesh.scale.setScalar(metrics.radius)
+      planet.halo.scale.setScalar(metrics.radius * (body.id === 'sun' ? 1.16 : 1.035))
+      const line = orbitLines.get(body.id)
+      if (line) {
+        const positions = line.geometry.getAttribute('position')
+        const frame = frames.get(body.id)!
+        const scratch: [number, number, number] = [0, 0, 0]
+        for (let j = 0; j < positions.count; j++) {
+          ellipsePoint(metrics.orbit, body.ecc, frame, j / positions.count * Math.PI * 2, scratch)
+          positions.setXYZ(j, scratch[0], scratch[1], scratch[2])
+        }
+        positions.needsUpdate = true
+      }
+    }
+    if (clouds) clouds.scale.setScalar(live.get('earth')!.radius * 1.009)
+    moon.visible = mode === 'artistic'
+    if (saturnRing) saturnRing.scale.setScalar(live.get('saturn')!.radius / .71)
+    placeAsteroids(mode)
   }
   update(0, 0); highlight(null)
-  return { world, planets, update, highlight, setTheme, setFocus, skyMap: atlas.stars_milky_way, textureCount: loaded.length }
+  return { world, planets, update, highlight, setTheme, setScaleMode, metrics: (id: BodyId) => live.get(id)!, span: () => scaleMode === 'true' ? 51 : 19, scaleMode: () => scaleMode, skyMap: atlas.stars_milky_way, textureCount: loaded.length }
 }
