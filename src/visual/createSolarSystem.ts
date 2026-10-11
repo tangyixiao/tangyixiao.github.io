@@ -80,10 +80,15 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
     return [name, map] as const
   }))
   const atlas = Object.fromEntries(loaded) as Record<typeof maps[number], Three.Texture>
-  // world 供浏览/探索模式取景缩放；内层 galaxy 承载整个系统绕银心公转的缓慢旋转。
+  // world 供浏览/探索模式取景缩放。system 是黄道面上的太阳系本体；
+  // galaxy 以约 60° 夹角承载银道面：银心标记与太阳的公转轨道环，太阳带着整个系统沿环前行。
   const world = new T.Group()
   const galaxy = new T.Group()
-  world.add(galaxy)
+  galaxy.rotation.set(GALAXY.tilt, 0, GALAXY.sway)
+  const galacticDisc = new T.Group()
+  galaxy.add(galacticDisc)
+  const system = new T.Group()
+  world.add(galaxy); world.add(system)
   const planets = new Map<BodyId, { anchor: Three.Group; mesh: Three.Mesh; halo: Three.Mesh }>()
   const orbitLines = new Map<BodyId, Three.LineLoop>()
   const orbits: Three.LineLoop[] = [], trails: Three.Line[] = []
@@ -101,8 +106,23 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   gradient.addColorStop(0, '#fff5cc'); gradient.addColorStop(.12, '#ffde91cc'); gradient.addColorStop(.25, '#ffb34a50'); gradient.addColorStop(.55, '#f7771312'); gradient.addColorStop(1, '#ff7b0000')
   gc.fillStyle = gradient; gc.fillRect(0, 0, 256, 256)
   const glow = new T.Sprite(material(new T.SpriteMaterial({ map: texture(new T.CanvasTexture(glowCanvas)), transparent: true, blending: T.AdditiveBlending, depthWrite: false, opacity: .7, toneMapped: false })))
-  glow.scale.set(75, 75, 1); glow.renderOrder = -1; galaxy.add(glow)
-  galaxy.add(new T.PointLight('#fff4df', 12, 0, 1), new T.AmbientLight('#b4c4dd', .2))
+  glow.scale.set(75, 75, 1); glow.renderOrder = -1; system.add(glow)
+  system.add(new T.PointLight('#fff4df', 12, 0, 1), new T.AmbientLight('#b4c4dd', .2))
+  // 银心公转的轨道环与银心标记：环在银道面内（与黄道面夹角约 60°），半径远大于海王星轨道，
+  // 环上一点始终是太阳——银心标记绕日缓行，等价于太阳绕银心公转。
+  const ringPoints = Array.from({ length: 512 }, (_, j) => {
+    const a = j / 512 * Math.PI * 2
+    return new T.Vector3(Math.cos(a) * GALAXY.radius, 0, Math.sin(a) * GALAXY.radius)
+  })
+  const galacticRing = new T.LineLoop(geometry(new T.BufferGeometry().setFromPoints(ringPoints)), material(new T.LineBasicMaterial({ color: '#d5c29b', transparent: true, opacity: .22, depthWrite: false })))
+  const centerCanvas = document.createElement('canvas'); centerCanvas.width = centerCanvas.height = 128
+  const cc = centerCanvas.getContext('2d')!
+  const centerGradient = cc.createRadialGradient(64, 64, 0, 64, 64, 64)
+  centerGradient.addColorStop(0, '#fff8ea'); centerGradient.addColorStop(.18, '#ffe3aecc'); centerGradient.addColorStop(.5, '#f7c76e33'); centerGradient.addColorStop(1, '#f7c76e00')
+  cc.fillStyle = centerGradient; cc.fillRect(0, 0, 128, 128)
+  const galacticCenter = new T.Sprite(material(new T.SpriteMaterial({ map: texture(new T.CanvasTexture(centerCanvas)), transparent: true, blending: T.AdditiveBlending, depthWrite: false, toneMapped: false })))
+  galacticCenter.scale.set(120, 120, 1)
+  galacticDisc.add(galacticRing); galacticDisc.add(galacticCenter)
   let clouds: Three.Mesh | null = null
   const ringCenter = new T.Vector3(), ringNormal = new T.Vector3(0, 1, 0), ringRadius = { value: .71 }, systemScale = { value: 1 }
   let saturnRing: Three.Mesh | null = null
@@ -124,7 +144,7 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
       vertexShader: vertex, fragmentShader: surfaceFragment,
     }))
     const mesh = new T.Mesh(sphere, surface); mesh.scale.setScalar(live.get(body.id)!.radius); mesh.userData.bodyId = body.id
-    const anchor = new T.Group(); anchor.add(mesh); galaxy.add(anchor)
+    const anchor = new T.Group(); anchor.add(mesh); system.add(anchor)
     const atmosphere = body.id === 'earth' ? '#479eff' : body.id === 'venus' ? '#eccb91' : body.id === 'neptune' ? '#3656e3' : body.color
     const halo = new T.Mesh(sphere, material(new T.ShaderMaterial({
       uniforms: { glowColor: { value: new T.Color(atmosphere) }, sunPosition: { value: sunPosition }, intensity: { value: 0 }, solar: { value: body.id === 'sun' ? 1 : 0 } }, vertexShader: vertex,
@@ -145,14 +165,14 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
         return new T.Vector3(p[0], p[1], p[2])
       })
       const orbit = new T.LineLoop(geometry(new T.BufferGeometry().setFromPoints(points)), material(new T.LineBasicMaterial({ color: body.color, transparent: true, opacity: .14, depthWrite: false })))
-      galaxy.add(orbit); orbits.push(orbit); orbitLines.set(body.id, orbit)
+      system.add(orbit); orbits.push(orbit); orbitLines.set(body.id, orbit)
       const trailGeometry = geometry(new T.BufferGeometry())
       trailGeometry.setAttribute('position', new T.BufferAttribute(new Float32Array(64 * 3), 3))
       const colors = new Float32Array(64 * 3)
       for (let j = 0; j < 64; j++) new T.Color(body.color).multiplyScalar(Math.pow(j / 64, 2)).toArray(colors, j * 3)
       trailGeometry.setAttribute('color', new T.BufferAttribute(colors, 3))
       const trail = new T.Line(trailGeometry, material(new T.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: .6, blending: T.AdditiveBlending, depthWrite: false })))
-      galaxy.add(trail); trails.push(trail)    }
+      system.add(trail); trails.push(trail)    }
     if (body.id === 'earth') {
       mesh.rotation.z = .409
       clouds = new T.Mesh(sphere, material(new T.ShaderMaterial({
@@ -188,16 +208,21 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
     uniforms: { surfaceMap: { value: atlas.moon }, nightMap: { value: atlas.earth_nightmap }, cloudMap: { value: atlas.earth_clouds }, sunPosition: { value: sunPosition }, isEarth: { value: 0 }, relief: { value: 3 }, ambient, cloudOffset, ...ringUniforms, hasRing: { value: 0 } }, vertexShader: vertex, fragmentShader: surfaceFragment,
   })))
   planets.get('earth')!.anchor.add(moon)
-  const asteroidCount = mobile ? 180 : 900
+  const asteroidCount = mobile ? 500 : 1600
   const asteroids = new T.InstancedMesh(geometry(new T.IcosahedronGeometry(.025, 0)), material(new T.MeshStandardMaterial({ color: '#807970', roughness: 1 })), asteroidCount)
   const dummy = new T.Object3D()
-  // 每颗小行星有确定性的轨道半径（主带 2.1–3.35 AU，位于火星与木星之间）、相位、
-  // 倾角（≤10°，带来真实的带厚）与升交点，并按开普勒定律差速公转（内快外慢）——
-  // 不再是正弦散布加刚体旋转。
+  // 每颗小行星有确定性的轨道半径（主带 2.1–3.35 AU，避开木星共振清空的 Kirkwood 空隙）、
+  // 相位、倾角（≤10°，带来真实的带厚）与升交点，按开普勒定律差速公转（内快外慢），
+  // 粒径与反照率按幂律分布——多数是小块，少数更大更亮。
   const asteroidOrbits = Array.from({ length: asteroidCount }, (_, j) => {
     const rand = (n: number) => { const s = Math.sin(j * 127.1 + n * 311.7) * 43758.5453; return s - Math.floor(s) }
-    return { au: BELT.innerAU + rand(1) * (BELT.outerAU - BELT.innerAU), phase: rand(2) * Math.PI * 2, incl: rand(3) * BELT.tilt, node: rand(4) * Math.PI * 2, size: .55 + rand(5) * 1.15, tumble: rand(6) * Math.PI * 2 }
+    let au = BELT.innerAU + rand(1) * (BELT.outerAU - BELT.innerAU)
+    for (let k = 0; k < 8 && BELT.gaps.some(gap => Math.abs(au - gap[0]) < gap[1]); k++) au = BELT.innerAU + rand(k + 9) * (BELT.outerAU - BELT.innerAU)
+    return { au, phase: rand(2) * Math.PI * 2, incl: rand(3) * BELT.tilt, node: rand(4) * Math.PI * 2, size: .35 + rand(5) ** 2.2 * 1.85, tumble: rand(6) * Math.PI * 2, shade: .55 + rand(7) * .6 }
   })
+  const tone = new T.Color()
+  for (let j = 0; j < asteroidCount; j++) { tone.setScalar(asteroidOrbits[j].shade); asteroids.setColorAt(j, tone) }
+  if (asteroids.instanceColor) asteroids.instanceColor.needsUpdate = true
   const placeAsteroids = (mode: ScaleMode, time: number) => {
     for (let j = 0; j < asteroidCount; j++) {
       const a = asteroidOrbits[j]
@@ -206,18 +231,70 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
       const si = Math.sin(a.incl), ci = Math.cos(a.incl), cn = Math.cos(a.node), sn = Math.sin(a.node)
       const px = Math.cos(angle) * radius, pz = Math.sin(angle) * radius
       dummy.position.set(px * cn + pz * ci * sn, -pz * si, -px * sn + pz * ci * cn)
-      dummy.rotation.set(a.tumble, a.tumble * .7, a.tumble * .4); dummy.scale.set(a.size, a.size * .9, a.size * 1.1); dummy.updateMatrix(); asteroids.setMatrixAt(j, dummy.matrix)
+      dummy.rotation.set(a.tumble + time * .1, a.tumble * .7, a.tumble * .4); dummy.scale.set(a.size, a.size * .9, a.size * 1.1); dummy.updateMatrix(); asteroids.setMatrixAt(j, dummy.matrix)
     }
     asteroids.instanceMatrix.needsUpdate = true
   }
-  scope.add(() => asteroids.dispose()); galaxy.add(asteroids)
+  scope.add(() => asteroids.dispose()); system.add(asteroids)
+  // 远景尘埃层：与岩粒同带同速（顶点着色器内按开普勒差速推进，CPU 零开销），
+  // 点径随距离钳制——全景里聚成一条可感知的尘带，飞近时也不会糊成大点。
+  const dustCount = mobile ? 900 : 2600
+  const dustAU = new Float32Array(dustCount), dustPhase = new Float32Array(dustCount), dustIncl = new Float32Array(dustCount), dustNode = new Float32Array(dustCount), dustShade = new Float32Array(dustCount)
+  for (let j = 0; j < dustCount; j++) {
+    const rand = (n: number) => { const s = Math.sin(j * 91.7 + n * 413.3) * 24634.6345; return s - Math.floor(s) }
+    let au = BELT.innerAU + rand(1) * (BELT.outerAU - BELT.innerAU)
+    for (let k = 0; k < 8 && BELT.gaps.some(gap => Math.abs(au - gap[0]) < gap[1]); k++) au = BELT.innerAU + rand(k + 9) * (BELT.outerAU - BELT.innerAU)
+    dustAU[j] = au; dustPhase[j] = rand(2) * Math.PI * 2; dustIncl[j] = rand(3) * BELT.tilt; dustNode[j] = rand(4) * Math.PI * 2; dustShade[j] = .35 + rand(5) * .65
+  }
+  const dustGeometry = geometry(new T.BufferGeometry())
+  dustGeometry.setAttribute('position', new T.BufferAttribute(new Float32Array(dustCount * 3), 3))
+  dustGeometry.setAttribute('aAU', new T.BufferAttribute(dustAU, 1))
+  dustGeometry.setAttribute('aPhase', new T.BufferAttribute(dustPhase, 1))
+  dustGeometry.setAttribute('aIncl', new T.BufferAttribute(dustIncl, 1))
+  dustGeometry.setAttribute('aNode', new T.BufferAttribute(dustNode, 1))
+  dustGeometry.setAttribute('aShade', new T.BufferAttribute(dustShade, 1))
+  const dustMaterial = material(new T.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uEarth: { value: TRUE_SCALE.earthSpeed }, uArtBase: { value: 88 }, uArtPow: { value: .55 }, uTrueMix: { value: 0 }, uPixel: { value: mobile ? 1.35 : 1.6 }, uOpacity: { value: .5 } },
+    vertexShader: `attribute float aAU;
+attribute float aPhase;
+attribute float aIncl;
+attribute float aNode;
+attribute float aShade;
+uniform float uTime, uEarth, uArtBase, uArtPow, uTrueMix, uPixel;
+varying float vShade;
+void main() {
+  float r = mix(uArtBase * pow(aAU, uArtPow), aAU * 1.55, uTrueMix);
+  float angle = aPhase + uTime * uEarth / pow(aAU, 1.5);
+  vec3 plane = vec3(cos(angle) * r, 0.0, sin(angle) * r);
+  float si = sin(aIncl), ci = cos(aIncl), cn = cos(aNode), sn = sin(aNode);
+  vec3 pos = vec3(plane.x * cn + plane.z * ci * sn, -plane.z * si, -plane.x * sn + plane.z * ci * cn);
+  vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+  gl_PointSize = clamp(uPixel * 380.0 / max(-mv.z, 1.0), 1.0, 2.8);
+  vShade = aShade;
+  gl_Position = projectionMatrix * mv;
+}`,
+    fragmentShader: `varying float vShade;
+uniform float uOpacity;
+void main() {
+  float d = length(gl_PointCoord - .5);
+  float a = exp(-d * d * 16.) * (1. - smoothstep(.36, .5, d)) * uOpacity * vShade;
+  gl_FragColor = vec4(vec3(.85, .8, .72) * vShade, a);
+  #include <colorspace_fragment>
+}`,
+    transparent: true, depthWrite: false, blending: T.AdditiveBlending,
+  }))
+  const dust = new T.Points(dustGeometry, dustMaterial); dust.frustumCulled = false
+  system.add(dust)
   const highlight = (id: BodyId | null) => planets.forEach((planet, key) => {
     const natural = key === 'sun' ? 0 : key === 'earth' ? .55 : key === 'venus' || key === 'neptune' || key === 'uranus' ? .25 : .015
     ;(planet.halo.material as Three.ShaderMaterial).uniforms.intensity.value = natural + (key === id && key !== 'sun' ? .12 : 0)
   })
   const update = (time: number, energy: number) => {
     clock.value = time; cloudOffset.value = time * .003 / (Math.PI * 2)
-    galaxy.rotation.y = time * GALAXY.omega
+    // 太阳绕银心公转：银心标记与轨道环随之绕行（环上一点始终是太阳），等价于系统沿环前行。
+    const galacticAngle = time * GALAXY.omega
+    galacticDisc.position.set(-Math.cos(galacticAngle) * GALAXY.radius, 0, -Math.sin(galacticAngle) * GALAXY.radius)
+    dustMaterial.uniforms.uTime.value = time
     for (const [index, body] of bodies.entries()) {
       const planet = planets.get(body.id)!, metrics = live.get(body.id)!
       // 自转周期按真实比例（金星/天王星逆行自转），只有整体时间标尺被放慢到可观赏。
@@ -282,7 +359,8 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
     if (clouds) clouds.scale.setScalar(live.get('earth')!.radius * 1.009)
     moon.visible = mode === 'artistic'
     if (saturnRing) saturnRing.scale.setScalar(live.get('saturn')!.radius / .71)
+    dustMaterial.uniforms.uTrueMix.value = mode === 'true' ? 1 : 0
   }
   update(0, 0); highlight(null)
-  return { world, planets, update, highlight, setTheme, setScaleMode, metrics: (id: BodyId) => live.get(id)!, span: () => scaleMode === 'true' ? 51 : 600, scaleMode: () => scaleMode, skyMap: atlas.stars_milky_way, textureCount: loaded.length }
+  return { world, planets, update, highlight, setTheme, setScaleMode, metrics: (id: BodyId) => live.get(id)!, span: () => scaleMode === 'true' ? 51 : 600, scaleMode: () => scaleMode, skyMap: atlas.stars_milky_way, textureCount: loaded.length, galacticAnchor: galacticDisc }
 }

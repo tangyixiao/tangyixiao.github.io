@@ -29,7 +29,7 @@ async function main() {
     assert.equal(await scene.getAttribute('data-scene-textures'), '14', 'all planet, cloud, night, ring and sky maps decoded')
     assert.equal(loaded.size, 14, 'textures are self-hosted and loaded after the scene chunk')
     await page.getByRole('button', { name: '探索太阳系', exact: true }).click()
-    assert.equal(await page.locator('.celestial-label').count(), 9)
+    assert.equal(await page.locator('.celestial-label').count(), 10, 'eight planets, the Sun and the galactic centre label')
     await page.getByRole('button', { name: '选择地球', exact: true }).click()
     await page.waitForFunction(() => { const value = Number(document.querySelector('[data-scene-root]')?.dataset.sceneFlightProgress); return value > .15 && value < .75 })
     const intermediate = Number(await scene.getAttribute('data-scene-camera-distance'))

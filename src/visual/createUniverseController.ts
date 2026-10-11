@@ -74,6 +74,10 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       label.append(zh, en); label.style.setProperty('--body-color', body.color); root.append(label); scope.add(() => label.remove())
       return label
     })
+    const gcLabel = document.createElement('div'); gcLabel.className = 'celestial-label'; gcLabel.dataset.body = 'galactic-center'
+    const gcZh = document.createElement('span'); gcZh.className = 'label-zh'; gcZh.textContent = '银心'
+    const gcEn = document.createElement('span'); gcEn.className = 'label-en'; gcEn.textContent = 'GALACTIC CENTER'
+    gcLabel.append(gcZh, gcEn); gcLabel.style.setProperty('--body-color', '#d5c29b'); root.append(gcLabel); scope.add(() => gcLabel.remove())
     const projected = new T.Vector3(), projectionOffset = new T.Vector3()
     let destroyed = false, animationFrame = 0, renderCount = 0, simulationTime = 0, lastTime: number | null = null
     let phase: ScenePhase = props.phase, theme: SceneTheme = props.theme, mode: SceneMode = 'browse', paused = props.paused
@@ -149,6 +153,13 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
         if (shown) label.style.transform = `translate(${(x + radiusPixels + 10).toFixed(1)}px,${(y - 5).toFixed(1)}px)`
       })
       diagnostic('outside-bodies', outside.join(',') || 'none')
+      // 银心标签：只在探索模式显示，跟随银心标记的投影位置。
+      solar.galacticAnchor.getWorldPosition(projected)
+      projected.project(camera)
+      const gcX = (projected.x * .5 + .5) * innerWidth, gcY = (-projected.y * .5 + .5) * innerHeight
+      const gcShown = mode === 'explore' && projected.z > -1 && projected.z < 1 && gcX > 10 && gcX < innerWidth - 10 && gcY > 85 && gcY < innerHeight - 150
+      gcLabel.hidden = !gcShown
+      if (gcShown) gcLabel.style.transform = `translate(${gcX.toFixed(1)}px,${(gcY - 5).toFixed(1)}px)`
       renderCount++; onRender?.(renderCount)
       diagnostic('time', simulationTime.toFixed(4)); diagnostic('camera', camera.position.toArray().map(v => v.toFixed(3)).join(','))
       diagnostic('camera-distance', controls ? controls.getDistance().toFixed(3) : camera.position.length().toFixed(3))
