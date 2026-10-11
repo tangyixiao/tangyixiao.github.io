@@ -74,6 +74,7 @@ async function main() {
     await page.getByRole('link', { name: 'Work', exact: true }).click()
     assert.equal(await page.getByRole('button', { name: 'Open navigation' }).getAttribute('aria-expanded'), 'false')
     assert.equal(await page.evaluate(() => window.location.hash), '#/work', 'nav switches to the work view')
+    await page.locator('#work').waitFor()
     assert.equal(await page.locator('#home').count(), 0, 'the hero is not rendered on the work view')
     assert.equal(await page.locator('a[href="/Code/"]').count(), 1, 'work view exposes exactly one CodeHub anchor')
     for (const [hash, phase] of [['#/', 'hero'], ['#/work', 'projects'], ['#/focus', 'focus'], ['#/about', 'about'], ['#/links', 'links']]) {
