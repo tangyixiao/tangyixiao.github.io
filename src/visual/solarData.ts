@@ -19,8 +19,8 @@ export const bodies: Array<{ id: BodyId; radius: number; orbit: number; speed: n
 ]
 
 export const solarCopy = {
-  zh: { explore: '探索太阳系', title: '太阳系', subtitle: '一片可以亲手探索的星空。', disclaimer: '天体大小按真实比例（太阳直径 = 109 个地球）；公转与自转周期均按真实相对比例推进，距离经艺术化压缩。金色轨道环是太阳绕银河系中心的公转路径（真实一周约 2.3 亿年，演示约 25 分钟），与黄道面夹角约 60°——太阳系并不在银道面上。', trueScale: '真实比例', artisticScale: '艺术模式', trueDisclaimer: '距离按 1:1 真实比例（1 AU ≈ 1.55 单位），公转速度遵循开普勒第三定律，轨道倾角与离心率为真实值。太阳放大 20 倍、行星放大 160 倍以保持可见——按真实尺寸，地球在这幅全景里不足 0.01 像素。', threebody: '三体', threebodyCta: '探访半人马座α', unavailable: '当前设备无法显示动态太阳系，可继续浏览主页。', loading: '正在点亮星空…', pause: '暂停', resume: '继续', reset: '重置视角', exit: '退出探索', zoomIn: '放大', zoomOut: '缩小', select: '选择', overview: '太阳与八大行星', hint: '拖动旋转 · 滚轮缩放 · 点选行星', touchHint: '单指旋转 · 双指缩放 · 轻触行星', tracking: '正在追踪', sceneLabel: '太阳系交互视图', rotateLeft: '向左旋转', rotateRight: '向右旋转', blackhole: '黑洞', blackholeCta: '跃迁至黑洞' },
-  en: { explore: 'Explore the solar system', title: 'Solar system', subtitle: 'A sky you can explore for yourself.', disclaimer: 'Body sizes are in true proportion (the Sun spans 109 Earths); orbital and rotation periods keep their real ratios, distances are compressed for legibility. The golden ring is the Sun\'s orbit around the galactic centre (230 million years in reality, ~25 minutes here), tilted ~60° to the ecliptic — the solar system is not part of the galactic plane.', trueScale: 'True scale', artisticScale: 'Artistic', trueDisclaimer: 'Distances are 1:1 to reality (1 AU ≈ 1.55 units), orbital speeds follow Kepler\'s third law, and inclinations and eccentricities are real. The Sun is enlarged 20× and planets 160× to stay visible — at true size, Earth would be under 0.01 pixels in this panorama.', threebody: 'Three-body', threebodyCta: 'Visit Alpha Centauri', unavailable: 'Animated solar system unavailable on this device. You can still browse the homepage.', loading: 'Lighting up the sky…', pause: 'Pause', resume: 'Resume', reset: 'Reset view', exit: 'Exit exploration', zoomIn: 'Zoom in', zoomOut: 'Zoom out', select: 'Select', overview: 'The Sun and eight planets', hint: 'Drag to rotate · Scroll to zoom · Select a planet', touchHint: 'One finger to rotate · Pinch to zoom · Tap a planet', tracking: 'Following', sceneLabel: 'Interactive solar system view', rotateLeft: 'Rotate left', rotateRight: 'Rotate right', blackhole: 'Black hole', blackholeCta: 'Enter the black hole' },
+  zh: { explore: '探索太阳系', title: '太阳系', subtitle: '一片可以亲手探索的星空。', disclaimer: '天体大小按真实比例（太阳直径 = 109 个地球）；公转与自转周期均按真实相对比例推进，距离经艺术化压缩。金色轨道环是太阳绕银河系中心的公转路径（真实一周约 2.3 亿年，演示约 25 分钟）：银道面与黄道面夹角 60.19°，太阳带着整个太阳系沿银道面朝银经 90°（天鹅座方向）前进，背景里的银河就铺在同一个银道面上。', trueScale: '真实比例', artisticScale: '艺术模式', trueDisclaimer: '距离按 1:1 真实比例（1 AU ≈ 1.55 单位），公转速度遵循开普勒第三定律，轨道倾角与离心率为真实值。太阳放大 20 倍、行星放大 160 倍以保持可见——按真实尺寸，地球在这幅全景里不足 0.01 像素。', threebody: '三体', threebodyCta: '探访半人马座α', unavailable: '当前设备无法显示动态太阳系，可继续浏览主页。', loading: '正在点亮星空…', pause: '暂停', resume: '继续', reset: '重置视角', exit: '退出探索', zoomIn: '放大', zoomOut: '缩小', select: '选择', overview: '太阳与八大行星', hint: '拖动旋转 · 滚轮缩放 · 点选行星', touchHint: '单指旋转 · 双指缩放 · 轻触行星', tracking: '正在追踪', sceneLabel: '太阳系交互视图', rotateLeft: '向左旋转', rotateRight: '向右旋转', blackhole: '黑洞', blackholeCta: '跃迁至黑洞' },
+  en: { explore: 'Explore the solar system', title: 'Solar system', subtitle: 'A sky you can explore for yourself.', disclaimer: 'Body sizes are in true proportion (the Sun spans 109 Earths); orbital and rotation periods keep their real ratios, distances are compressed for legibility. The golden ring is the Sun\'s orbit around the galactic centre (230 million years in reality, ~25 minutes here): the galactic plane meets the ecliptic at 60.19°, and the Sun carries the solar system along that plane toward galactic longitude 90° (Cygnus). The Milky Way in the background lies in the very same plane.', trueScale: 'True scale', artisticScale: 'Artistic', trueDisclaimer: 'Distances are 1:1 to reality (1 AU ≈ 1.55 units), orbital speeds follow Kepler\'s third law, and inclinations and eccentricities are real. The Sun is enlarged 20× and planets 160× to stay visible — at true size, Earth would be under 0.01 pixels in this panorama.', threebody: 'Three-body', threebodyCta: 'Visit Alpha Centauri', unavailable: 'Animated solar system unavailable on this device. You can still browse the homepage.', loading: 'Lighting up the sky…', pause: 'Pause', resume: 'Resume', reset: 'Reset view', exit: 'Exit exploration', zoomIn: 'Zoom in', zoomOut: 'Zoom out', select: 'Select', overview: 'The Sun and eight planets', hint: 'Drag to rotate · Scroll to zoom · Select a planet', touchHint: 'One finger to rotate · Pinch to zoom · Tap a planet', tracking: 'Following', sceneLabel: 'Interactive solar system view', rotateLeft: 'Rotate left', rotateRight: 'Rotate right', blackhole: 'Black hole', blackholeCta: 'Enter the black hole' },
 }
 
 // Equatorial diameters and mean distances: NASA NSSDCA Planetary Fact Sheet.
@@ -47,12 +47,42 @@ export const artisticOrbit = (au: number) => 88 * au ** .55
 // 自转：spin 为真实自转周期（地球日），1 个地球日 ≈ 10 秒演示时间。
 export const SPIN = { daySeconds: 10 } as const
 export const spinRate = (body: { spin: number }) => Math.PI * 2 / (body.spin * SPIN.daySeconds)
-// 银心公转：太阳带着整个系统绕银河系中心约 2.3 亿年一圈（倾角约 60°，黄道面不在银道面上）。
-// 真实速率在演示里不可感知，这里以 25 分钟一圈的艺术化速率呈现这一运动。
-export const GALAXY = { omega: Math.PI * 2 / 1500, radius: 2200, tilt: 1.05, sway: .35 } as const
-// 主小行星带（火星与木星之间 2.1–3.3 AU）、真实倾角量级（多数 < 11°）
-// 与 Kirkwood 空隙（木星轨道共振清空的环缝：3:1、5:1、2:1 共振）。
-export const BELT = { innerAU: 2.1, outerAU: 3.35, tilt: .17, gaps: [[2.5, .045], [2.82, .04], [2.955, .035]] as Array<[number, number]> } as const
+// 银道坐标系在黄道坐标系（也是场景坐标系：+x 为黄经 0°、+y 为黄经 90°、+z 为黄北极）中的基向量，
+// 由 J2000 北银极（β = +29.8114°）与银心（β = −5.5363°，λ = 266.8396°）换算：
+// centre = 太阳指向银心的单位向量，l90 = 银经 90° 方向（天鹅座，即太阳公转速度方向），
+// pole = 北银极。三者是右手正交基，因此黄道面与银道面的夹角 = 90° − 29.8114° = 60.19°。
+// 用基向量而不是欧拉角，是因为欧拉角（旧代码的 tilt/sway）无法表达 IAU 的银道节点，
+// 实测旧朝向把夹角做成了 29.8°，与界面文案宣称的 60° 不符。
+export const GALACTIC = {
+  centre: [-0.054873959, -0.993821478, -0.096476517],
+  l90: [0.494109477, -0.110989843, 0.862285962],
+  pole: [-0.867666149, -0.000351590, 0.497147192],
+} as const
+
+// 银心公转：太阳带着整个系统绕银河系中心约 2.3 亿年一圈（真实速率在演示里不可感知，
+// 这里以 25 分钟一圈的艺术化速率呈现这一运动）。
+// radiusRatio = 示意轨道环半径 / 全景跨度：真实 8.277 kpc 与真实比例下 51 单位的太阳系相差
+// 8 个数量级，无法同框，故半径只能取示意值；但环面（银道面）、环心（银心标记）与前进方向
+// 都取真实值——环必然穿过太阳，银心标记在真实的银心方向上行进，太阳则沿环朝银经 90° 前进。
+// 太阳离银道面只有 17.4 pc / 8277 pc ≈ 0.2%，在画面上不足一个像素，故不再单独偏移。
+// radiusRatio = .97：环必须落在海王星轨道之外、又在全景取景半径之内。艺术模式下海王星在
+// 572/600 = .953，真实模式下在 46.6/51 = .914，取 .97 两种模式都在环内且贴边可见。
+export const GALAXY = { omega: Math.PI * 2 / 1500, radiusRatio: .97 } as const
+
+// 月球轨道：对黄道倾斜 5.145°，升交点每 18.6 年沿黄道退行一周（都是真实值）。
+export const MOON = { incl: 5.145 * DEG, nodeYears: 18.6, periodDays: 27.32 } as const
+
+// 主小行星带：内缘 2.065 AU（木星 4:1 共振）、外缘 3.279 AU（2:1 共振，Hecuba 空隙），
+// 中间是木星共振清空的 Kirkwood 空隙（3:1 / 5:2 / 7:3，半径为真实共振位置，缝宽为示意值）。
+// 倾角用双成分 Rayleigh 近似观测分布：主体低倾角（峰值在 4° 以下、多数 < 10°），
+// 另有少量高倾角成员形成晕——观测文献给出的是分布形状，并没有单一的均值/标准差可引用。
+// 偏心率同样取真实量级（主带平均 e ≈ 0.14，峰值约 0.07）。
+export const BELT = {
+  innerAU: 2.065, outerAU: 3.279,
+  gaps: [[2.502, .045], [2.825, .040], [2.958, .035]] as Array<[number, number]>,
+  coreFraction: .72, coreSigma: 4.5, haloSigma: 11.5,
+  eccBase: .04, eccSpread: .18,
+} as const
 
 export const trueOrbit = (body: { orbitAU: number }) => body.orbitAU * TRUE_SCALE.AU
 export const trueRadius = (body: { id: BodyId; radiusEarth: number }) => body.id === 'sun'
@@ -94,3 +124,28 @@ export const ellipsePoint = (a: number, ecc: number, f: OrbitFrame, E: number, o
 
 // 平近点角：angle 为 t=0 时的平黄经，speed 为平近点角速率。
 export const meanAnomaly = (body: (typeof bodies)[number], speed: number, time: number) => body.angle + speed * time - body.peri * DEG
+
+// 小行星带与尘埃必须和行星共用同一个参考面：黄道面 = 场景 XY 平面，轨道法线 = +z。
+// 旧实现把带子建在 XZ 平面上（法线 +y、倾角加到 y 上），于是整条带子与所有行星轨道
+// 垂直——这就是用户看到的「小行星带垂直」。这里给出与 orbitFrame/ellipsePoint 完全一致的
+// 显式公式（近日点幅角取 0），倾角 i 与升交点 Ω 用弧度，与行星轨道逐项对齐：
+//   X = cosΩ, Y = −sinΩ cos i, U = sinΩ, V = cosΩ cos i, Z = 0, R = sin i
+// 因此 inc = 0 时 out[2] 严格为 0（带子落在黄道面内），inc ≠ 0 时轨道法线恰好偏离
+// 黄道法线 inc 角。
+export const beltPoint = (a: number, ecc: number, E: number, inc: number, node: number, out: [number, number, number]) => {
+  const px = a * (Math.cos(E) - ecc), py = a * Math.sqrt(1 - ecc * ecc) * Math.sin(E)
+  const ci = Math.cos(inc), si = Math.sin(inc)
+  const cO = Math.cos(node), sO = Math.sin(node)
+  out[0] = cO * px - sO * py * ci
+  out[1] = sO * px + cO * py * ci
+  out[2] = py * si
+  return out
+}
+
+// 一阶偏近点角展开（E ≈ M + e·sin M，主带 e ≲ 0.2 时相对误差 < 2%），
+// 让每颗小行星每帧只多一次三角函数，却保留了离心率带来的径向散布。
+export const beltEccentricAnomaly = (M: number, ecc: number) => M + ecc * Math.sin(M)
+
+// 瑞利分布逆变换抽样：Rayleigh(σ) 的峰值在 σ、均值 σ√(π/2)，用于小行星带倾角——
+// 观测上主带倾角就是这种形状（多数 < 10°，另有高倾角晕），而不是均匀分布。
+export const rayleigh = (u: number, sigma: number) => sigma * Math.sqrt(-2 * Math.log(Math.max(1e-9, 1 - u)))

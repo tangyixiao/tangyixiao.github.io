@@ -42,7 +42,9 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     scene.add(solar.world)
     const skyGeometry = scope.track(new T.SphereGeometry(280, 48, 32), g => g.dispose())
     const skyMaterial = scope.track(new T.MeshBasicMaterial({ map: solar.skyMap, side: T.BackSide, transparent: true, opacity: .2, depthWrite: false, toneMapped: false }), m => m.dispose())
-    const sky = new T.Mesh(skyGeometry, skyMaterial); sky.rotation.set(.45, .6, .2); scene.add(sky)
+    // 天球用与银道环同一个四元数：Milky Way 因此横贯真正的银道面，与金色轨道环共面。
+    // 旧代码 sky.rotation.set(.45,.6,.2) 是手调欧拉角，银河的朝向与计算出来的银道面无关。
+    const sky = new T.Mesh(skyGeometry, skyMaterial); sky.quaternion.copy(solar.skyQuaternion); scene.add(sky)
     const starGeometry = scope.track(new T.BufferGeometry(), g => g.dispose())
     const positions = new Float32Array(1100 * 3)
     const colors = new Float32Array(1100 * 3)
@@ -122,6 +124,11 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
         camera.position.lerp(new T.Vector3(0, 0, p.cameraZ), rate); camera.lookAt(0, 0, 0)
       }
       solar.update(simulationTime, pulseEnergy)
+      // 天球跟随 world 一起旋转：黄道面与银道面的夹角是固定的物理事实，浏览模式为了构图
+      // 会旋转整个模型，此时银河必须同步倾斜，否则会和金色银道环错开一个 profile 的倾角。
+      // 只同步朝向与位置、不同步缩放——天球的缩放是"相机始终保持在天球内部"的取景参数。
+      sky.position.copy(solar.world.position)
+      sky.quaternion.copy(solar.world.quaternion).multiply(solar.skyQuaternion)
       if (mode === 'explore' && controls) {
         if (selected) {
           solar.world.updateMatrixWorld(true)
