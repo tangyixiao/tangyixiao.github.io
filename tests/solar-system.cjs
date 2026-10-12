@@ -110,6 +110,12 @@ async function main() {
     await page.getByRole('dialog').getByRole('button', { name: 'Select Neptune', exact: true }).click()
     assert.match(await page.locator('.body-detail').innerText(), /Neptune/)
     await page.keyboard.press('Escape')
+    // 这台 CI runner 用 swiftshader 软渲染，每个还活着的页面都在跑 WebGL 渲染循环。
+    // 桌面页此时跑过最重的流程（暂停/继续、切英文、选中土星与海王星），若继续开着，
+    // 后面 mobile 与 reduced-motion 两页初始化会被拖慢一个数量级（实测 1.0s → 10.8s），
+    // 在共享 runner 上足以撑爆 30s 超时。这里先关掉桌面页，最后的 webglcontextlost
+    // 断言另开一个新页面——它只需要场景是活的，不需要之前的历史。
+    await page.close()
     const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'zh-CN' })
     await mobile.goto(url)
     await mobile.waitForFunction(() => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-ready') === 'true')
@@ -181,9 +187,15 @@ async function main() {
     assert.equal(await unsupported.getByRole('button', { name: '探索太阳系', exact: true }).isDisabled(), true)
     assert.equal(await unsupported.locator('.fallback-solar i').count(), 8)
     await unsupported.close()
-    await page.evaluate(() => document.querySelector('canvas').dispatchEvent(new Event('webglcontextlost', { cancelable: true })))
-    await waitAttr('fallback', 'active')
-    assert.equal(await page.getByRole('button', { name: 'Explore the solar system', exact: true }).isDisabled(), true)
+    // 重新开一个干净的英文页面来验证 webglcontextlost 回退（前面的桌面页已关闭）。
+    const contextLost = await browser.newPage({ locale: 'zh-CN' })
+    await contextLost.goto(url)
+    await contextLost.waitForFunction(() => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-ready') === 'true')
+    await contextLost.getByRole('button', { name: 'Switch to English' }).click()
+    await contextLost.evaluate(() => document.querySelector('canvas').dispatchEvent(new Event('webglcontextlost', { cancelable: true })))
+    await contextLost.waitForFunction(() => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-fallback') === 'active')
+    assert.equal(await contextLost.getByRole('button', { name: 'Explore the solar system', exact: true }).isDisabled(), true)
+    await contextLost.close()
     assert.deepEqual(errors, [])
     console.log('solar system exploration passed')
   } finally {
