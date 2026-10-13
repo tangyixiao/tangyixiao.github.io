@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { focusIds, links, projectIds, siteContent, type FocusId, type Language, type ProjectId, type Theme } from './site/content'
-import type { BodyId, ScaleMode, UniverseCanvasProps } from './visual/types'
+import type { BodyId, ScaleMode, TimeScale, UniverseCanvasProps } from './visual/types'
 import { solarCopy } from './visual/solarData'
 import SolarExplorer from './visual/SolarExplorer'
 import { useSpatialCards } from './visual/useSpatialCards'
@@ -71,6 +71,8 @@ function App() {
   const [selectedBody, setSelectedBody] = useState<BodyId | null>(null)
   const [paused, setPaused] = useState(false)
   const [scaleMode, setScaleMode] = useState<ScaleMode>('artistic')
+  const [timeScale, setTimeScale] = useState<TimeScale>(1)
+  const [galacticRing, setGalacticRing] = useState(false)
   const [sceneReset, setSceneReset] = useState(0)
   const [sceneZoom, setSceneZoom] = useState(0)
   const [surface, setSurface] = useState<HTMLDivElement | null>(null)
@@ -83,7 +85,7 @@ function App() {
   const copy = siteContent[language]
   const solar = solarCopy[language]
   useSpatialCards(reduce || exploring)
-  const closeExplorer = useCallback(() => { setExploring(false); setSelectedBody(null); setPaused(false); setScaleMode('artistic') }, [])
+  const closeExplorer = useCallback(() => { setExploring(false); setSelectedBody(null); setPaused(false); setScaleMode('artistic'); setTimeScale(1) }, [])
   const openExplorer = () => { setSelectedBody(null); setPaused(false); setSceneZoom(0); setMenuOpen(false); setExploring(true) }
   useEffect(() => { if (available === false) closeExplorer() }, [available, closeExplorer])
 
@@ -126,7 +128,7 @@ function App() {
 
   return <>
     <a className="skip-link" href="#main">{language === 'zh' ? '跳到主要内容' : 'Skip to main content'}</a>
-    <SceneLayer phase={phase} theme={theme} pulse={pulse} reducedMotion={reduce} mode={exploring ? 'explore' : 'browse'} scaleMode={scaleMode} selected={selectedBody} paused={paused} reset={sceneReset} zoom={sceneZoom} interactionElement={surface} onSelect={setSelectedBody} onAvailability={setAvailable} />
+    <SceneLayer phase={phase} theme={theme} pulse={pulse} reducedMotion={reduce} mode={exploring ? 'explore' : 'browse'} scaleMode={scaleMode} selected={selectedBody} paused={paused} reset={sceneReset} zoom={sceneZoom} timeScale={timeScale} galacticRing={galacticRing} interactionElement={surface} onSelect={setSelectedBody} onAvailability={setAvailable} />
     <div className="site-shell">
       <header className="site-header">
         <nav className="site-nav" aria-label={language === 'zh' ? '主导航' : 'Primary navigation'}>
@@ -163,7 +165,7 @@ function App() {
       {route === 'links' ? <footer className="footer section view" id="links"><div className="footer-main"><Reveal><p className="eyebrow">{copy.links.label}</p><h2>{copy.links.heading}</h2><p className="section-intro">{copy.links.description}</p></Reveal><div className="social-links"><a href={links.code}>{copy.links.code}<span aria-hidden="true">↗</span></a><ExternalLink href={links.github}>GitHub <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.luogu}>Luogu <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.cnblogs}>Cnblogs <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.csdn}>CSDN <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.bilibili}>Bilibili <span aria-hidden="true">↗</span></ExternalLink></div></div><div className="footer-bottom"><span>© 2026 {copy.hero.name}</span><a href="#/">{copy.actions.top} ↑</a></div></footer>
       : <footer className="footer footer-slim"><div className="footer-bottom"><span>© 2026 {copy.hero.name}</span><a href="#/links">{copy.nav.links} <span aria-hidden="true">↗</span></a></div></footer>}
     </div>
-    {exploring && <SolarExplorer language={language} selected={selectedBody} paused={paused} scaleMode={scaleMode} onSelect={setSelectedBody} onPause={() => setPaused(value => !value)} onReset={() => { setSelectedBody(null); setSceneReset(value => value + 1) }} onZoom={direction => setSceneZoom(value => value + direction)} onScaleMode={() => setScaleMode(value => value === 'artistic' ? 'true' : 'artistic')} onClose={closeExplorer} onSurface={setSurface} />}
+    {exploring && <SolarExplorer language={language} selected={selectedBody} paused={paused} scaleMode={scaleMode} timeScale={timeScale} galacticRing={galacticRing} onSelect={setSelectedBody} onPause={() => setPaused(value => !value)} onReset={() => { setSelectedBody(null); setSceneReset(value => value + 1) }} onZoom={direction => setSceneZoom(value => value + direction)} onScaleMode={() => setScaleMode(value => value === 'artistic' ? 'true' : 'artistic')} onTimeScale={setTimeScale} onGalacticRing={setGalacticRing} onClose={closeExplorer} onSurface={setSurface} />}
   </>
 }
 

@@ -1,6 +1,6 @@
 import type * as Three from 'three'
 import type { ResourceScope } from './resourceScope'
-import { artisticOrbit, BELT, beltEccentricAnomaly, beltPoint, bodies, ellipsePoint, GALACTIC, GALAXY, keplerE, meanAnomaly, MOON, orbitFrame, rayleigh, scaleValue, SPIN, spinRate, TRUE_SCALE, type OrbitFrame } from './solarData'
+import { artisticOrbit, BELT, beltEccentricAnomaly, beltPoint, bodies, ellipsePoint, GALACTIC, GALAXY, keplerE, meanAnomaly, MOON, orbitFrame, rayleigh, scaleValue, SPIN, spinRate, TROJANS, TRUE_SCALE, type OrbitFrame } from './solarData'
 import type { BodyId, ScaleMode, SceneTheme } from './types'
 
 const maps = ['sun', 'mercury', 'venus_atmosphere', 'earth_daymap', 'earth_nightmap', 'earth_clouds', 'mars', 'jupiter', 'saturn', 'saturn_ring_alpha', 'uranus', 'neptune', 'moon', 'stars_milky_way'] as const
@@ -64,6 +64,26 @@ void main() {
   #include <colorspace_fragment>
 }`
 
+// 没有贴图文件的天体（冥王星/谷神星/智神星/阋神星/哈雷彗星与除月球外的卫星）走程序化表面：
+// assets/solar 里只有 15 张贴图且都不描绘这些天体，用噪声起伏代替贴图既不必新增图片
+// （贴图数断言保持 14），也不会凭空编造一张"看起来像"的照片。ambient 与 surfaceFragment
+// 共用同一个 uniform 对象，两者的明暗基准因此严格一致。
+const proceduralFragment = `
+uniform vec3 baseColor; uniform vec3 sunPosition; uniform float ambient; uniform float mottle;
+varying vec2 vUv; varying vec3 vPosition,vNormal;
+float hash(vec3 p){ return fract(sin(dot(p, vec3(127.1,311.7,74.7)))*43758.5453); }
+float noise(vec3 p){ vec3 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
+  return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
+             mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z); }
+void main(){ vec3 n=normalize(vNormal);
+  float shade=noise(normalize(vPosition)*4.5)*.55 + noise(normalize(vPosition)*11.)*.3;
+  vec3 base=baseColor*(.72+shade*mottle);
+  float daylight=max(dot(n, normalize(sunPosition-vPosition)),0.);
+  gl_FragColor=vec4(base*(ambient+1.65*daylight),1.);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+}`
+
 export async function createSolarSystem(T: typeof Three, scope: ResourceScope, mobile: boolean, signal: AbortSignal) {
   const geometry = <G extends Three.BufferGeometry>(g: G) => scope.track(g, g => g.dispose())
   const material = <M extends Three.Material>(m: M) => scope.track(m, m => m.dispose())
@@ -99,7 +119,9 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   world.add(galaxy); world.add(system)
   const planets = new Map<BodyId, { anchor: Three.Group; mesh: Three.Mesh; halo: Three.Mesh }>()
   const orbitLines = new Map<BodyId, Three.LineLoop>()
-  const orbits: Three.LineLoop[] = [], trails: Three.Line[] = []
+  // 轨道线与拖尾都按天体 id 索引：新天体加入后「太阳之后每个天体都有一条拖尾」这个下标假设
+  // 不再成立（无轨道的太阳、只有日心轨道的彗星、绕母天体的卫星各自缺项），下标会整体错位。
+  const orbits = new Map<BodyId, Three.LineLoop>(), trails = new Map<BodyId, Three.Line>()
   const sunPosition = new T.Vector3()
   const ambient = { value: .045 }, clock = { value: 0 }, cloudOffset = { value: 0 }
   let scaleMode: ScaleMode = 'artistic'
@@ -116,35 +138,36 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   const glow = new T.Sprite(material(new T.SpriteMaterial({ map: texture(new T.CanvasTexture(glowCanvas)), transparent: true, blending: T.AdditiveBlending, depthWrite: false, opacity: .7, toneMapped: false })))
   glow.scale.set(75, 75, 1); glow.renderOrder = -1; system.add(glow)
   system.add(new T.PointLight('#fff4df', 12, 0, 1), new T.AmbientLight('#b4c4dd', .2))
-  // 银心公转的轨道环与银心标记：环在银道面内（与黄道面夹角严格等于 60.19°），半径略大于海王星
-  // 轨道、小于全景取景半径，因此环、银心标记与整个太阳系能同框。环心在银心方向上、半径为 R，
-  // 所以环必然经过原点上的太阳——银心标记绕日缓行，等价于太阳沿银道面绕银心公转。
+  // 太阳绕银心公转的轨道环：环在银道面内（与黄道面夹角严格等于 60.19°），半径略大于海王星
+  // 轨道、小于全景取景半径，因此环与整个太阳系能同框。环静止、环心固定在世界空间的 R·centre，
+  // 环半径也是 R，所以环必然穿过世界原点——也就是太阳零位移时的位置。太阳（连同整个系统）
+  // 沿这条环前进，环就是那条可见的轨道。
   // 真实尺度下 8.277 kpc 与 51 单位相差 8 个数量级，半径只能是示意值，但环面与前进方向是真实值。
   const ringPoints = Array.from({ length: 512 }, (_, j) => {
     const a = j / 512 * Math.PI * 2
     return new T.Vector3(Math.cos(a), 0, Math.sin(a))
   })
   const galacticRing = new T.LineLoop(geometry(new T.BufferGeometry().setFromPoints(ringPoints)), material(new T.LineBasicMaterial({ color: '#d5c29b', transparent: true, opacity: .22, depthWrite: false })))
-  const centerCanvas = document.createElement('canvas'); centerCanvas.width = centerCanvas.height = 128
-  const cc = centerCanvas.getContext('2d')!
-  const centerGradient = cc.createRadialGradient(64, 64, 0, 64, 64, 64)
-  centerGradient.addColorStop(0, '#fff8ea'); centerGradient.addColorStop(.18, '#ffe3aecc'); centerGradient.addColorStop(.5, '#f7c76e33'); centerGradient.addColorStop(1, '#f7c76e00')
-  cc.fillStyle = centerGradient; cc.fillRect(0, 0, 128, 128)
-  const galacticCenter = new T.Sprite(material(new T.SpriteMaterial({ map: texture(new T.CanvasTexture(centerCanvas)), transparent: true, blending: T.AdditiveBlending, depthWrite: false, toneMapped: false })))
-  galacticDisc.add(galacticRing); galacticDisc.add(galacticCenter)
-  // 示意轨道半径随比例模式缩放：环与银心标记必须始终落在当前取景之内，否则"绕银心公转"看不见。
+  // 环默认隐藏：它是巡游的轨道参考，不是常驻装饰，由工具栏的「银道环」开关按需揭示。
+  galacticRing.visible = false
+  galacticDisc.add(galacticRing)
+  // 示意轨道半径随比例模式缩放：环必须始终落在当前取景之内，否则"绕银心公转"看不见。
+  // 环心固定在世界空间的 R·centre。环的几何是局部 xz 平面上的单位圆 (cos a, 0, sin a)，
+  // 而 galacticDisc/galaxy 之间没有别的变换，galaxy 的四元数把局部 +x 送到 centre，
+  // 所以把环沿局部 +x 平移 R，环心就落在世界空间的 R·centre（局部 +z 映到 −l90，见下）。
   const galacticRadius = () => GALAXY.radiusRatio * (scaleMode === 'true' ? 51 : 600)
   const sizeGalaxy = () => {
     galacticRing.scale.setScalar(galacticRadius())
-    // 银心标记的尺寸跟着跨度走（全景里约 9° 视角），近看时也不会缩成一个点。
-    galacticCenter.scale.setScalar(Math.max(galacticRadius() * .2, 1.2))
+    galacticRing.position.set(galacticRadius(), 0, 0)
   }
   let clouds: Three.Mesh | null = null
   const ringCenter = new T.Vector3(), ringNormal = new T.Vector3(0, 1, 0), ringRadius = { value: .71 }, systemScale = { value: 1 }
   let saturnRing: Three.Mesh | null = null
   const ringUniforms = { ringMap: { value: atlas.saturn_ring_alpha }, ringCenter: { value: ringCenter }, ringNormal: { value: ringNormal }, systemScale }
-  for (const [index, body] of bodies.entries()) {
-    const name = body.id === 'earth' ? 'earth_daymap' : body.id === 'venus' ? 'venus_atmosphere' : body.id
+  for (const body of bodies) {
+    // 贴图名直接取 body.map（地球/金星的特例已经写进 solarData 的 map 字段）。
+    // 没有贴图的天体走 proceduralFragment，不再依赖任何图片文件。
+    const name = body.map as typeof maps[number] | undefined
     const surface = body.id === 'sun' ? material(new T.ShaderMaterial({
       uniforms: { surfaceMap: { value: atlas.sun }, clock }, vertexShader: vertex,
       fragmentShader: `uniform sampler2D surfaceMap; uniform float clock; varying vec2 vUv; varying vec3 vPosition,vNormal;
@@ -155,12 +178,20 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
         }`,
-    })) : material(new T.ShaderMaterial({
-      uniforms: { surfaceMap: { value: atlas[name] }, nightMap: { value: atlas.earth_nightmap }, cloudMap: { value: atlas.earth_clouds }, sunPosition: { value: sunPosition }, isEarth: { value: body.id === 'earth' ? 1 : 0 }, relief: { value: body.kind === 'rock' ? 2.5 : 0 }, ambient, cloudOffset, ...ringUniforms, hasRing: { value: body.id === 'saturn' ? 1 : 0 } },
+    })) : body.map ? material(new T.ShaderMaterial({
+      uniforms: { surfaceMap: { value: atlas[name!] }, nightMap: { value: atlas.earth_nightmap }, cloudMap: { value: atlas.earth_clouds }, sunPosition: { value: sunPosition }, isEarth: { value: body.id === 'earth' ? 1 : 0 }, relief: { value: body.kind === 'rock' ? 2.5 : 0 }, ambient, cloudOffset, ...ringUniforms, hasRing: { value: body.id === 'saturn' ? 1 : 0 } },
       vertexShader: vertex, fragmentShader: surfaceFragment,
+    })) : material(new T.ShaderMaterial({
+      // 气体类给更低的 mottle，否则大尺度噪声会把云带状的球面揉成麻点。
+      uniforms: { baseColor: { value: new T.Color(body.color) }, sunPosition: { value: sunPosition }, ambient, mottle: { value: body.kind === 'gas' ? .45 : 1 } },
+      vertexShader: vertex, fragmentShader: proceduralFragment,
     }))
     const mesh = new T.Mesh(sphere, surface); mesh.scale.setScalar(live.get(body.id)!.radius); mesh.userData.bodyId = body.id
-    const anchor = new T.Group(); anchor.add(mesh); system.add(anchor)
+    const anchor = new T.Group(); anchor.add(mesh)
+    // 卫星（body.parent 存在）挂到母天体的 anchor 下：它的 orbit 是「母天体半径的倍数」，
+    // 挂在母天体下就不必每帧再叠加母天体的日心位置。bodies 的顺序保证母天体先建好。
+    if (body.parent) planets.get(body.parent)!.anchor.add(anchor)
+    else system.add(anchor)
     const atmosphere = body.id === 'earth' ? '#479eff' : body.id === 'venus' ? '#eccb91' : body.id === 'neptune' ? '#3656e3' : body.color
     const halo = new T.Mesh(sphere, material(new T.ShaderMaterial({
       uniforms: { glowColor: { value: new T.Color(atmosphere) }, sunPosition: { value: sunPosition }, intensity: { value: 0 }, solar: { value: body.id === 'sun' ? 1 : 0 } }, vertexShader: vertex,
@@ -174,21 +205,24 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
     })))
     halo.scale.setScalar(live.get(body.id)!.radius * (body.id === 'sun' ? 1.16 : 1.035)); anchor.add(halo)
     planets.set(body.id, { anchor, mesh, halo })
-    if (body.orbit) {
+    // 只有以太阳为焦点的天体才有日心轨道线与拖尾。卫星的 orbit 是母天体半径的倍数，
+    // 按日心椭圆去画会得到一条穿过母天体的错误曲线，所以卫星两者都不建。
+    if (body.orbit && !body.parent) {
       const frame = frames.get(body.id)!
       const points = Array.from({ length: 256 }, (_, j) => {
         const p = ellipsePoint(live.get(body.id)!.orbit, body.ecc, frame, j / 256 * Math.PI * 2, [0, 0, 0])
         return new T.Vector3(p[0], p[1], p[2])
       })
       const orbit = new T.LineLoop(geometry(new T.BufferGeometry().setFromPoints(points)), material(new T.LineBasicMaterial({ color: body.color, transparent: true, opacity: .14, depthWrite: false })))
-      system.add(orbit); orbits.push(orbit); orbitLines.set(body.id, orbit)
+      system.add(orbit); orbits.set(body.id, orbit); orbitLines.set(body.id, orbit)
       const trailGeometry = geometry(new T.BufferGeometry())
       trailGeometry.setAttribute('position', new T.BufferAttribute(new Float32Array(64 * 3), 3))
       const colors = new Float32Array(64 * 3)
       for (let j = 0; j < 64; j++) new T.Color(body.color).multiplyScalar(Math.pow(j / 64, 2)).toArray(colors, j * 3)
       trailGeometry.setAttribute('color', new T.BufferAttribute(colors, 3))
       const trail = new T.Line(trailGeometry, material(new T.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: .6, blending: T.AdditiveBlending, depthWrite: false })))
-      system.add(trail); trails.push(trail)    }
+      system.add(trail); trails.set(body.id, trail)
+    }
     if (body.id === 'earth') {
       mesh.rotation.z = .409
       clouds = new T.Mesh(sphere, material(new T.ShaderMaterial({
@@ -220,10 +254,15 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
     }
     if (body.id === 'uranus') mesh.rotation.z = 1.7
   }
-  const moon = new T.Mesh(geometry(new T.SphereGeometry(.1, mobile ? 24 : 40, mobile ? 16 : 28)), material(new T.ShaderMaterial({
-    uniforms: { surfaceMap: { value: atlas.moon }, nightMap: { value: atlas.earth_nightmap }, cloudMap: { value: atlas.earth_clouds }, sunPosition: { value: sunPosition }, isEarth: { value: 0 }, relief: { value: 3 }, ambient, cloudOffset, ...ringUniforms, hasRing: { value: 0 } }, vertexShader: vertex, fragmentShader: surfaceFragment,
-  })))
-  planets.get('earth')!.anchor.add(moon)
+  // 哈雷彗星的离子尾：一个挂在它 anchor 上的圆锥，每帧把 +y 轴指向背离太阳的方向。
+  // 用 MeshBasicMaterial 而不是自定义着色器——尾巴是一块方向性很强的辉光，掺进
+  // surfaceFragment 那套昼夜光照只会让它变暗、失去"离子尾"的读感。
+  const halleyAnchor = planets.get('halley')!.anchor
+  const halleyTail = new T.Mesh(geometry(new T.ConeGeometry(.6, 1, mobile ? 10 : 18, 1, true)), material(new T.MeshBasicMaterial({ color: '#9fd8ff', transparent: true, opacity: .25, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide })))
+  // 圆锥默认以原点为中心、底面在 −y：沿 +y 平移半个高度，锥底就落在彗核、锥尖指向 +y，
+  // 于是每帧把 +y 对齐「背离太阳」即可，不必再补一次偏移。
+  halleyTail.geometry.translate(0, .5, 0); halleyTail.frustumCulled = false
+  halleyAnchor.add(halleyTail)
   const asteroidCount = mobile ? 500 : 1600
   const asteroids = new T.InstancedMesh(geometry(new T.IcosahedronGeometry(.025, 0)), material(new T.MeshStandardMaterial({ color: '#807970', roughness: 1 })), asteroidCount)
   const dummy = new T.Object3D()
@@ -241,6 +280,8 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   const tone = new T.Color()
   const beltScratch: [number, number, number] = [0, 0, 0]
   const moonScratch: [number, number, number] = [0, 0, 0]
+  const halleyScratch = new T.Vector3()
+  const UP = new T.Vector3(0, 1, 0)
   for (let j = 0; j < asteroidCount; j++) { tone.setScalar(asteroidOrbits[j].shade); asteroids.setColorAt(j, tone) }
   if (asteroids.instanceColor) asteroids.instanceColor.needsUpdate = true
   const placeAsteroids = (mode: ScaleMode, time: number) => {
@@ -257,6 +298,52 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
     asteroids.instanceMatrix.needsUpdate = true
   }
   scope.add(() => asteroids.dispose()); system.add(asteroids)
+  // 木星特洛伊群（L4 希腊营 / L5 特洛伊营）：与木星共用同一条轨道，平黄经领先/落后它 60°，
+  // 每个团簇沿轨道展宽约 ±30°（天平动）。以木星为参照而不是钉死在固定坐标上，两个营才会
+  // 跟着木星一起走——忽略木星的固定小行星群一近看就会露馅。
+  // 分裂常数与主带用不同的乘子，两套抽样互不相关。倾角沿用主带同款 Rayleigh 分布
+  // （TROJANS.sigma 略高，观测上特洛伊群的倾角确实比主带厚）。
+  const jupiterBody = bodies.find(body => body.id === 'jupiter')!
+  const halleyBody = bodies.find(body => body.id === 'halley')!
+  const jupiterFrame = frames.get('jupiter')!
+  const jupiterAU = jupiterBody.orbitAU, jupiterEcc = jupiterBody.ecc
+  const trojanCount = mobile ? TROJANS.count >> 1 : TROJANS.count
+  const trojanOrbits = Array.from({ length: trojanCount }, (_, j) => {
+    const rand = (n: number) => { const s = Math.sin(j * 269.5 + n * 183.3) * 12345.6789; return s - Math.floor(s) }
+    return {
+      group: j % 2,                                        // 0 = L4（领先 60°）、1 = L5（落后 60°）
+      spread: (rand(1) * 2 - 1) * TROJANS.spread,
+      jitter: 1 + (rand(2) * 2 - 1) * .06,                 // 半长轴的少量散布，避免落在同一条椭圆上
+      incl: rayleigh(rand(3), TROJANS.sigma * DEG),
+      ecc: TROJANS.ecc + rand(4) * TROJANS.eccSpread,
+      size: .35 + rand(5) ** 2.2 * 1.85,
+      tumble: rand(6) * Math.PI * 2,
+      shade: .55 + rand(7) * .6,
+    }
+  })
+  const trojans = new T.InstancedMesh(geometry(new T.IcosahedronGeometry(.03, 0)), material(new T.MeshStandardMaterial({ color: '#8a8276', roughness: 1 })), trojanCount)
+  for (let j = 0; j < trojanCount; j++) { tone.setScalar(trojanOrbits[j].shade); trojans.setColorAt(j, tone) }
+  if (trojans.instanceColor) trojans.instanceColor.needsUpdate = true
+  scope.add(() => trojans.dispose()); system.add(trojans)
+  const trojanScratch: [number, number, number] = [0, 0, 0]
+  const placeTrojans = (mode: ScaleMode, time: number) => {
+    // 半长轴按当前比例模式映射：艺术模式压缩、真实模式 1:1，与木星轨道线用的是同一个标尺。
+    const aJ = mode === 'true' ? jupiterAU * TRUE_SCALE.AU : artisticOrbit(jupiterAU)
+    const jupiterSpeed = live.get('jupiter')!.speed
+    const jupiterM = meanAnomaly(jupiterBody, jupiterSpeed, time)
+    for (let j = 0; j < trojanCount; j++) {
+      const t = trojanOrbits[j]
+      // 平黄经领先/落后 60°，再叠加各自的天平动展宽；开普勒方程与椭圆点都复用木星的根数，
+      // 所以两个营与木星轨道线严格共面、共形，不会出现"特洛伊群飘在木星轨道外"的错位。
+      const M = jupiterM + (t.group === 0 ? 1 : -1) * (TROJANS.lag + t.spread)
+      ellipsePoint(aJ * t.jitter, jupiterEcc, jupiterFrame, keplerE(jupiterEcc, M), trojanScratch)
+      // ellipsePoint 给的是木星轨道面内的点；倾角把每颗粒子抬离该平面，与主带的约定一致
+      // （黄道面 = XY 平面、法线 = +z，倾角只动 z）。
+      dummy.position.set(trojanScratch[0], trojanScratch[1], trojanScratch[2] + aJ * Math.sin(t.incl))
+      dummy.rotation.set(t.tumble + time * .1, t.tumble * .7, t.tumble * .4); dummy.scale.set(t.size, t.size * .9, t.size * 1.1); dummy.updateMatrix(); trojans.setMatrixAt(j, dummy.matrix)
+    }
+    trojans.instanceMatrix.needsUpdate = true
+  }
   // 远景尘埃层：与岩粒同带同速（顶点着色器内按开普勒差速推进，CPU 零开销），
   // 点径随距离钳制——全景里聚成一条可感知的尘带，飞近时也不会糊成大点。
   const dustCount = mobile ? 900 : 2600
@@ -319,27 +406,44 @@ void main() {
   })
   const update = (time: number, energy: number) => {
     clock.value = time; cloudOffset.value = time * .003 / (Math.PI * 2)
-    // 太阳绕银心公转：银心标记沿银道面内的环绕行（环上一点始终是太阳），等价于太阳带着
-    // 整个系统沿银道面朝银经 90°（天鹅座方向）前进。galaxy 的朝向来自真实银道基向量，
-    // 所以标记始终停在真实的银心方向上，环面与黄道面的夹角也严格是 60.19°。
-    // 方向：环心相对太阳的单位向量为 cosθ·centre − sinθ·l90——t=0 时正对银心，
-    // 随后朝银经 270° 漂移，与 Sgr A* 实测自行 μ_l = −6.379 mas/yr 同向。
+    // 整个太阳系沿银道环真正地位移（不是转视角，也不是让环绕着太阳转）。公式来自环的
+    // 几何：环心固定在世界空间的 R·centre、环半径 = R、环穿过世界原点，于是原点到环上
+    // 角度 θ 那一点的向量正好是 centre·R(1−cosθ) + l90·R·sinθ。
+    // θ=0 时位移严格为 0——太阳就停在环穿过的那个点上，初始构图不变，运动是从当前画面长出来的；
+    // 速度方向是 +l90（银经 90°、天鹅座，即 Sgr A* 相对太阳的自行方向）。
+    // 轨迹张成于 centre 与 l90，其法线是银极，所以运动平面与黄道面的夹角严格是 60.19°，
+    // 这是真实天文角度而不是观感调参。system 里装着太阳、行星、小行星、尘埃、glow 与光源，
+    // 它们作为刚体一起被搬运，太阳系内部的相对几何完全不受影响。
     const galacticAngle = time * GALAXY.omega
-    galacticDisc.position.set(Math.cos(galacticAngle) * galacticRadius(), 0, Math.sin(galacticAngle) * galacticRadius())
+    const R = galacticRadius()
+    system.position.copy(gCentre).multiplyScalar(R * (1 - Math.cos(galacticAngle))).addScaledVector(gL90, R * Math.sin(galacticAngle))
     dustMaterial.uniforms.uTime.value = time
-    for (const [index, body] of bodies.entries()) {
+    for (const body of bodies) {
       const planet = planets.get(body.id)!, metrics = live.get(body.id)!
       // 自转周期按真实比例（金星/天王星逆行自转），只有整体时间标尺被放慢到可观赏。
       planet.mesh.rotation.y = time * spinRate(body) + (body.id === 'earth' ? 2.4 : .25)
       if (!body.orbit) continue
-      // 真实三维开普勒轨道：倾角、升交点与离心率取 J2000 值，近日点处可见加速。
       const frame = frames.get(body.id)!
+      // 卫星：orbit 是「母天体半径的倍数」，锚点挂在母天体的 anchor 下，所以这里写的是
+      // 母天体的局部坐标，不必再叠加母天体的日心位置。轨道线与拖尾都不建——按日心椭圆
+      // 去画会得到一条穿过母天体的错误曲线。
+      // 月球保留实测的升交点退行（18.6 年一周）；其余卫星用 body.node 常量，轨道面固定。
+      if (body.parent) {
+        const r = live.get(body.parent)!.radius * body.orbit
+        const node = body.id === 'moon' ? -(time / (MOON.nodeYears * 365.25 * SPIN.daySeconds)) * Math.PI * 2 : body.node * DEG
+        beltPoint(r, body.ecc, keplerE(body.ecc, meanAnomaly(body, metrics.speed, time)), body.inc * DEG, node, moonScratch)
+        planet.anchor.position.set(moonScratch[0], moonScratch[1], moonScratch[2])
+        continue
+      }
+      // 真实三维开普勒轨道：倾角、升交点与离心率取 J2000 值，近日点处可见加速。
       const M = meanAnomaly(body, metrics.speed, time)
       const E = keplerE(body.ecc, M)
       const px = metrics.orbit * (Math.cos(E) - body.ecc), py = metrics.orbit * Math.sqrt(1 - body.ecc * body.ecc) * Math.sin(E)
       planet.anchor.position.set(frame.X * px + frame.Y * py, frame.U * px + frame.V * py, frame.Z * px + frame.R * py)
-      if (index) {
-        const positions = trails[index - 1].geometry.getAttribute('position')
+      // 拖尾按 id 取：新加入的天体并非「太阳之后每个都有一条」，下标会整体错位。
+      const trail = trails.get(body.id)
+      if (trail) {
+        const positions = trail.geometry.getAttribute('position')
         for (let j = 0; j < 64; j++) {
           const Ej = keplerE(body.ecc, M - (63 - j) * .012)
           const tx = metrics.orbit * (Math.cos(Ej) - body.ecc), ty = metrics.orbit * Math.sqrt(1 - body.ecc * body.ecc) * Math.sin(Ej)
@@ -349,20 +453,23 @@ void main() {
       }
     }
     if (clouds) clouds.rotation.y = time * spinRate({ spin: 1 }) * 1.12 + 2.4
-    // 月球：半径是地球的 0.273 倍、公转周期 27.32 天（真实比例），轨道对黄道倾斜 5.145°，
-    // 且升交点每 18.6 年沿黄道退行一周。旧实现把 5.1° 直接塞进 y 分量（轨道面固定在 XZ），
-    // 与行星轨道的参考面不一致；这里改用与行星相同的黄道面约定：近地点幅角 0、倾角 i、
-    // 升交点 Ω(t) 退行，月球按椭圆在面内运行、再按 sin i 抬离黄道面。
-    const earthRadius = live.get('earth')!.radius, moonDistance = earthRadius * 9
-    const moonMean = time * Math.PI * 2 / (MOON.periodDays * SPIN.daySeconds)
-    const moonNode = -(time / (MOON.nodeYears * 365.25 * SPIN.daySeconds)) * Math.PI * 2
-    const mn = moonScratch
-    beltPoint(moonDistance, 0, moonMean, MOON.incl, moonNode, mn)
-    moon.scale.setScalar(earthRadius * 2.73)
-    moon.position.set(mn[0], mn[1], mn[2]); moon.rotation.y = moonMean
+    // 哈雷的离子尾：+y 对齐「背离太阳」的方向，长度按 1/r——越近日点越长（太阳风与辐射压的
+    // 通量随日心距平方衰减）。长度用「近日点距离 / 当前日心距」这个无量纲比值乘以若干个彗核
+    // 半径：两种比例模式下所有长度同比缩放，比值不变，所以观感完全一致，也不依赖任何绝对常数。
+    // 上限 12 个核半径，否则选中彗星、相机飞到核旁边时尾巴会糊满整个屏幕。
+    const halley = planets.get('halley')!.anchor, halleyMetrics = live.get('halley')!
+    const halleyDistance = Math.max(halley.position.length(), 1e-9)
+    const halleyTailLength = halleyMetrics.radius * Math.min(12, 8 * halleyMetrics.orbit * (1 - halleyBody.ecc) / halleyDistance)
+    halleyTail.scale.set(halleyTailLength * .22, halleyTailLength, halleyTailLength * .22)
+    halleyTail.quaternion.setFromUnitVectors(UP, halleyScratch.copy(halley.position).negate().normalize())
     placeAsteroids(scaleMode, time)
+    placeTrojans(scaleMode, time)
     glow.scale.setScalar(live.get('sun')!.radius * (2.3 + Math.sin(time * .3) * .05 + energy * .12))
-    world.updateMatrixWorld(true); world.getWorldPosition(sunPosition)
+    // 光照与土星环阴影都以太阳的世界坐标为准。system 现在带着整个太阳系位移，
+    // 所以太阳不再是世界原点的 world 位置，而是「太阳 anchor」的世界坐标——太阳的 anchor
+    // 就在 system 原点，这一句必须在写 system.position 之后、updateMatrixWorld 之后取。
+    world.updateMatrixWorld(true)
+    planets.get('sun')!.anchor.getWorldPosition(sunPosition)
     planets.get('saturn')!.anchor.getWorldPosition(ringCenter); ringRadius.value = live.get('saturn')!.radius * world.scale.x
     systemScale.value = world.scale.x
     if (saturnRing) ringNormal.set(0, 0, 1).transformDirection(saturnRing.matrixWorld)
@@ -396,9 +503,12 @@ void main() {
       }
     }
     if (clouds) clouds.scale.setScalar(live.get('earth')!.radius * 1.009)
-    moon.visible = mode === 'artistic'
+    // 卫星在真实比例模式下隐藏：那里 1:1 的距离会把月球甩到地球轨道之外，卫星的
+    // 「母天体半径倍数」轨道只在距离被压缩时才成立（月球以前就跟着这个开关一起隐藏）。
+    for (const body of bodies) if (body.parent) planets.get(body.id)!.anchor.visible = mode === 'artistic'
     if (saturnRing) saturnRing.scale.setScalar(live.get('saturn')!.radius / .71)
     dustMaterial.uniforms.uTrueMix.value = mode === 'true' ? 1 : 0
+    placeTrojans(mode, clock.value)
     sizeGalaxy()
   }
   sizeGalaxy(); update(0, 0); highlight(null)
@@ -411,5 +521,15 @@ void main() {
   // 于是局部 +z = cross(centre, pole) = −l90，与银道环共用同一个朝向，
   // 「银河横贯天空」与「太阳沿银道面公转」讲的是同一件事。
   const skyQuaternion = galacticQuaternion.clone()
-  return { world, planets, update, highlight, setTheme, setScaleMode, metrics: (id: BodyId) => live.get(id)!, span: () => scaleMode === 'true' ? 51 : 600, scaleMode: () => scaleMode, skyMap: atlas.stars_milky_way, skyQuaternion, textureCount: loaded.length, galacticAnchor: galacticDisc }
+  return {
+    world, planets, update, highlight, setTheme, setScaleMode, metrics: (id: BodyId) => live.get(id)!, span: () => scaleMode === 'true' ? 51 : 600, scaleMode: () => scaleMode, skyMap: atlas.stars_milky_way, skyQuaternion, textureCount: loaded.length,
+    // galacticAnchor 仍然返回 galacticDisc：调用方只用它切换整体显隐（银道环开关），
+    // 环的可见性由 createSolarSystem 自己在 sizeGalaxy 之外管不好，所以这里保持原样。
+    galacticAnchor: galacticDisc,
+    // 巡游位移向量由 update() 每帧原地更新，调用方按引用读取即可拿到最新的值（不要存副本）。
+    cruise: system.position,
+    // 1× 时间流速下、世界单位/秒的巡游速率。圆周长 2πR、一周 2π/ω 秒，所以速率就是 R·ω。
+    // 调用方用它把位移换算成像素再夹住镜头余量。
+    cruiseSpeed: () => galacticRadius() * GALAXY.omega,
+  }
 }

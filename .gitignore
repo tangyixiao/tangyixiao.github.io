@@ -3,3 +3,7 @@ node_modules/
 __pycache__/
 /sites-blog/
 /.zcode/
+# 开发期探针脚本与截图（本地验证用，不进仓库）
+/_probe/
+# tsc --noEmit 的增量缓存
+tsconfig.tsbuildinfo

@@ -26,7 +26,7 @@ async function main() {
     await page.goto(url)
     await page.getByRole('button', { name: '探索太阳系', exact: true }).waitFor({ timeout: 2500 })
     await waitAttr('ready', 'true')
-    assert.equal(await attr('bodies'), '9')
+    assert.equal(await attr('bodies'), '21', 'sun, eight planets, five small bodies and seven moons')
     assert.equal(await attr('planets'), '8')
     assert.equal(await attr('moon'), 'true')
     assert.equal(await attr('saturn-rings'), 'true')
@@ -43,7 +43,16 @@ async function main() {
     await dialog.waitFor()
     await waitAttr('mode', 'explore')
     assert.equal(await page.locator('.site-shell').evaluate(el => el.inert), true)
-    assert.equal(await dialog.getByRole('button', { name: /选择/ }).count(), 9)
+    assert.equal(await dialog.getByRole('button', { name: /选择/ }).count(), 8, 'the picker defaults to the eight planets')
+    // 分层选择器：上层是类别，下层只列该类的天体，切回来时保留默认的行星页。
+    for (const [category, count] of [['恒星', 1], ['矮行星', 3], ['小行星', 1], ['彗星', 1], ['卫星', 7], ['行星', 8]]) {
+      await dialog.getByRole('button', { name: category, exact: true }).click()
+      assert.equal(await dialog.getByRole('button', { name: /选择/ }).count(), count, `${category} lists ${count} bodies`)
+    }
+    // 卫星按「母天体·卫星名」区分同名天体。
+    await dialog.getByRole('button', { name: '卫星', exact: true }).click()
+    assert.equal(await dialog.getByRole('button', { name: '选择地球·月球', exact: true }).count(), 1, 'moons are named after their parent')
+    await dialog.getByRole('button', { name: '行星', exact: true }).click()
     await dialog.getByRole('button', { name: '选择土星', exact: true }).click()
     await waitAttr('selected', 'saturn')
     await page.waitForTimeout(500)

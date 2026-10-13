@@ -69,21 +69,38 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       sky.scale.setScalar(grow); stars.scale.setScalar(grow)
     }
     const root = canvas.parentElement!
-    const labels = bodies.map(body => {
+    // 只有太阳与八大行星常驻标签，常驻标签总数是 9（测试断言 .celestial-label 的计数）。
+    // 「银心」标签与它指向的银心标记一起删除：那是一处人为的示意点，不是天体。
+    // 矮行星/小行星/彗星/卫星的标签按需创建，只在被选中时挂进 DOM，否则默认画面会被标签淹没。
+    const primary = bodies.filter(body => body.category === 'star' || body.category === 'planet')
+    const makeLabel = (body: (typeof bodies)[number]) => {
       const label = document.createElement('div'); label.className = 'celestial-label'; label.dataset.body = body.id
       const zh = document.createElement('span'); zh.className = 'label-zh'; zh.textContent = body.zh[0]
       const en = document.createElement('span'); en.className = 'label-en'; en.textContent = body.en[0]
-      label.append(zh, en); label.style.setProperty('--body-color', body.color); root.append(label); scope.add(() => label.remove())
+      label.append(zh, en); label.style.setProperty('--body-color', body.color); scope.add(() => label.remove())
       return label
-    })
-    const gcLabel = document.createElement('div'); gcLabel.className = 'celestial-label'; gcLabel.dataset.body = 'galactic-center'
-    const gcZh = document.createElement('span'); gcZh.className = 'label-zh'; gcZh.textContent = '银心'
-    const gcEn = document.createElement('span'); gcEn.className = 'label-en'; gcEn.textContent = 'GALACTIC CENTER'
-    gcLabel.append(gcZh, gcEn); gcLabel.style.setProperty('--body-color', '#d5c29b'); root.append(gcLabel); scope.add(() => gcLabel.remove())
+    }
+    const labels = new Map<BodyId, HTMLElement>()
+    for (const body of primary) { const label = makeLabel(body); root.append(label); labels.set(body.id, label) }
+    const extraLabels = new Map<BodyId, HTMLElement>()
+    const extraLabel = (id: BodyId) => {
+      const cached = extraLabels.get(id)
+      if (cached) return cached
+      const label = makeLabel(bodies.find(entry => entry.id === id)!); extraLabels.set(id, label)
+      return label
+    }
     const projected = new T.Vector3(), projectionOffset = new T.Vector3()
+    let mountedExtra: HTMLElement | null = null
+    // 巡游跟随的向量。太阳系真的在星空里位移（system.position），相机再跟掉其中大部分：
+    // residualScene 是夹紧后允许留在画面上的那一段（也就是天体在屏幕上真正走过的距离），
+    // shiftScene 是相机必须自己跟掉的其余部分，followApplied 记录已经跟掉多少，
+    // 探索模式里用户手动转视角时才不会被逐帧重设的相机位置顶掉。
+    const cruiseScene = new T.Vector3(), residualScene = new T.Vector3(), shiftScene = new T.Vector3()
+    const shiftDelta = new T.Vector3(), followApplied = new T.Vector3(), followScratch = new T.Vector3()
     let destroyed = false, animationFrame = 0, renderCount = 0, simulationTime = 0, lastTime: number | null = null
     let phase: ScenePhase = props.phase, theme: SceneTheme = props.theme, mode: SceneMode = 'browse', paused = props.paused
     let scaleMode: ScaleMode = 'artistic'
+    let timeScale = props.timeScale, galacticRing = props.galacticRing
     let selected: BodyId | null = null, hovered: BodyId | null = null, pulseEnergy = 0
     let flight: { fromPosition: import('three').Vector3; fromTarget: import('three').Vector3; offset: import('three').Vector3; progress: number } | null = null
     let controls: OrbitControlsType | null = null, releaseInteraction: (() => void) | null = null, interactionElement: HTMLElement | null = null
@@ -93,6 +110,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     diagnostic('bodies', String(solar.planets.size)); diagnostic('planets', '8'); diagnostic('moon', 'true'); diagnostic('saturn-rings', 'true')
     diagnostic('textures', String(solar.textureCount))
     diagnostic('ready', 'true'); diagnostic('mode', 'browse'); diagnostic('selected', 'none'); diagnostic('paused', String(paused)); diagnostic('scale', 'artistic')
+    diagnostic('time-scale', String(timeScale)); diagnostic('galactic-ring', String(galacticRing))
 
     const applyTheme = () => {
       solar.setTheme(theme)
@@ -109,21 +127,61 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       const y = (innerHeight * .5 - 195) * 2 * Math.tan(T.MathUtils.degToRad(21)) * 57 / innerHeight
       return { ...p, x: 0, y: phase === 'hero' ? y : 0, tilt: phase === 'hero' ? .5 : p.tilt, scale: phase === 'hero' ? scale : .012, cameraZ: 57 }
     }
+    // 把「太阳系已经走了多远」拆成两部分：留在画面上的 residualScene（有上限）与相机跟掉的
+    // shiftScene（其余部分）。cruise 是 system 在 world 局部空间的位移，先换算到场景空间
+    // （world 的朝向 + 缩放），再按预算截断。上限同时受两条约束：屏幕上最多走过可视宽度的
+    // 一个比例，以及「全景取景本来留给最外侧轨道的余量」——后者保证探索模式的全景里，
+    // 外行星不会被这点位移顶出画面。
+    const narrowHalf = (viewDistance: number) => viewDistance * Math.tan(Math.min(T.MathUtils.degToRad(21), Math.atan(Math.tan(T.MathUtils.degToRad(21)) * camera.aspect)))
+    const cruiseBudget = (viewDistance: number, fraction: number) => {
+      const half = narrowHalf(viewDistance)
+      return Math.min(fraction * half, .85 * Math.max(0, half - solar.span() * solar.world.scale.x))
+    }
+    const computeShift = (viewDistance: number, fraction: number) => {
+      cruiseScene.copy(solar.cruise).applyQuaternion(solar.world.quaternion).multiplyScalar(solar.world.scale.x)
+      const budgetScene = cruiseBudget(viewDistance, fraction)
+      const cruiseLength = cruiseScene.length()
+      residualScene.copy(cruiseScene)
+      if (cruiseLength > budgetScene) residualScene.multiplyScalar(budgetScene / Math.max(cruiseLength, 1e-9))
+      shiftScene.copy(cruiseScene).sub(residualScene)
+    }
     const render = (time: number, immediate = false) => {
       if (destroyed) return
       const delta = lastTime === null ? 0 : Math.min(Math.max((time - lastTime) / 1000, 0), .05)
       lastTime = time
-      if (!paused && !props.reducedMotion && visible()) simulationTime += delta
+      // 时间流速：档位只缩放模拟时间的推进速度，几何、取景与光照都不受影响。
+      if (!paused && !props.reducedMotion && visible()) simulationTime += delta * timeScale
       const rate = immediate || props.reducedMotion ? 1 : 1 - Math.exp(-delta * 5)
-      if (mode === 'browse') {
-        const p = profile()
-        solar.world.position.lerp(new T.Vector3(p.x, p.y, 0), rate)
+      const p = mode === 'browse' ? profile() : null
+      if (p) {
+        // 浏览模式的构图先落位：ρ 的换算要用到本帧 world 的朝向与缩放。
+        solar.world.position.lerp(followScratch.set(p.x, p.y, 0), rate)
         solar.world.scale.setScalar(T.MathUtils.lerp(solar.world.scale.x, p.scale, rate))
         solar.world.rotation.x = T.MathUtils.lerp(solar.world.rotation.x, p.tilt + pointer.y * .035, rate)
         solar.world.rotation.y = T.MathUtils.lerp(solar.world.rotation.y, p.turn + pointer.x * .06, rate)
-        camera.position.lerp(new T.Vector3(0, 0, p.cameraZ), rate); camera.lookAt(0, 0, 0)
       }
       solar.update(simulationTime, pulseEnergy)
+      // 太阳系沿银道面绕银心公转：solar.cruise 是 system 组在 world 局部空间的位移（t=0 时为零）。
+      // 换算到场景空间后按当前取景预算截留一小段：相机跟掉其余部分（shift），天体因此在画面上
+      // 恰好只走过 residual——太阳系确实在星空里挪动，构图却不会跑掉。相机平移本身还带来
+      // 星空视差：拉远的星点会缓缓流过，这是「整个太阳系正在银河里前进」最直接的读数。
+      const viewDistance = p ? p.cameraZ : controls ? camera.position.distanceTo(controls.target) : solar.span()
+      computeShift(viewDistance, p ? .18 : .22)
+      if (p) {
+        // 相机整体平移 shiftScene、朝向仍锁在原点：太阳系在画面里只挪动 residual，天球与背景星不动，
+        // 视向随位移微微转动——那点视差就是「整个太阳系正在银河里前进」的读数。
+        camera.position.lerp(followScratch.set(0, 0, p.cameraZ).add(shiftScene), rate)
+        camera.lookAt(0, 0, 0)
+        followApplied.copy(shiftScene)
+      } else {
+        // 探索模式有选中天体时，相机已经在逐帧跟踪它的世界坐标（天体本身随巡游移动），
+        // 这里再叠加一次跟随会把位移算两遍；只有全景视角才需要自己跟掉 shift。
+        if (!selected && controls) {
+          shiftDelta.copy(shiftScene).sub(followApplied)
+          camera.position.add(shiftDelta); controls.target.add(shiftDelta)
+        }
+        followApplied.copy(shiftScene)
+      }
       // 天球跟随 world 一起旋转：黄道面与银道面的夹角是固定的物理事实，浏览模式为了构图
       // 会旋转整个模型，此时银河必须同步倾斜，否则会和金色银道环错开一个 profile 的倾角。
       // 只同步朝向与位置、不同步缩放——天球的缩放是"相机始终保持在天球内部"的取景参数。
@@ -147,9 +205,12 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       if (!paused && !props.reducedMotion) pulseEnergy *= Math.exp(-delta * 5)
       renderer.render(scene, camera)
       const outside: BodyId[] = []
-      bodies.forEach((body, index) => {
-        const label = labels[index]
-        solar.planets.get(body.id)!.anchor.getWorldPosition(projected)
+      // 常驻标签只服务太阳与八大行星：`outside-bodies` 诊断也只统计这九个，
+      // 否则矮行星与彗星（艺术压缩下被放在 600 单位全景之外）会让「全景是否装得下」永远报错。
+      for (const body of primary) {
+        const label = labels.get(body.id)!, entry = solar.planets.get(body.id)
+        if (!entry) continue
+        entry.anchor.getWorldPosition(projected)
         const distance = camera.position.distanceTo(projected)
         const radiusPixels = body.radius * solar.world.scale.x / distance * innerHeight / (2 * Math.tan(T.MathUtils.degToRad(21)))
         projected.project(camera)
@@ -158,15 +219,27 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
         const shown = projected.z > -1 && projected.z < 1 && x > 10 && x < innerWidth - 100 && y > 85 && y < innerHeight - (mode === 'explore' ? 185 : 220) && (mode === 'explore' || phase === 'hero' && innerWidth > 760 && x > innerWidth * .48)
         label.hidden = !shown
         if (shown) label.style.transform = `translate(${(x + radiusPixels + 10).toFixed(1)}px,${(y - 5).toFixed(1)}px)`
-      })
+      }
       diagnostic('outside-bodies', outside.join(',') || 'none')
-      // 银心标签：只在探索模式显示，跟随银心标记的投影位置。
-      solar.galacticAnchor.getWorldPosition(projected)
-      projected.project(camera)
-      const gcX = (projected.x * .5 + .5) * innerWidth, gcY = (-projected.y * .5 + .5) * innerHeight
-      const gcShown = mode === 'explore' && projected.z > -1 && projected.z < 1 && gcX > 10 && gcX < innerWidth - 10 && gcY > 85 && gcY < innerHeight - 150
-      gcLabel.hidden = !gcShown
-      if (gcShown) gcLabel.style.transform = `translate(${gcX.toFixed(1)}px,${(gcY - 5).toFixed(1)}px)`
+      // 小天体与卫星没有常驻标签，只在被选中时临时挂一个进 DOM（默认画面因此不会被标签淹没）。
+      // 银心标签与银心标记一起删除：那是一处人为的示意点，不是天体。
+      const selectedExtra = selected && !labels.has(selected) ? extraLabel(selected) : null
+      if (mountedExtra && mountedExtra !== selectedExtra) mountedExtra.remove()
+      mountedExtra = null
+      if (selectedExtra && selected) {
+        const entry = solar.planets.get(selected)
+        if (entry) {
+          root.append(selectedExtra); mountedExtra = selectedExtra
+          entry.anchor.getWorldPosition(projected)
+          const distance = camera.position.distanceTo(projected)
+          const radiusPixels = solar.metrics(selected).radius * solar.world.scale.x / distance * innerHeight / (2 * Math.tan(T.MathUtils.degToRad(21)))
+          projected.project(camera)
+          const x = (projected.x * .5 + .5) * innerWidth, y = (-projected.y * .5 + .5) * innerHeight
+          const shown = projected.z > -1 && projected.z < 1 && x > 10 && x < innerWidth - 100 && y > 85 && y < innerHeight - (mode === 'explore' ? 185 : 220)
+          selectedExtra.hidden = !shown
+          if (shown) selectedExtra.style.transform = `translate(${(x + radiusPixels + 10).toFixed(1)}px,${(y - 5).toFixed(1)}px)`
+        }
+      }
       renderCount++; onRender?.(renderCount)
       diagnostic('time', simulationTime.toFixed(4)); diagnostic('camera', camera.position.toArray().map(v => v.toFixed(3)).join(','))
       diagnostic('camera-distance', controls ? controls.getDistance().toFixed(3) : camera.position.length().toFixed(3))
@@ -207,6 +280,9 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       if (controls) { controls.target.set(0, 0, 0); controls.minDistance = scaleMode === 'true' ? .017 : .05; controls.maxDistance = distance * 1.65; controls.update() }
       if (controls) controls.enableDamping = !props.reducedMotion
       previousTarget.set(0, 0, 0)
+      // 相机被重设到「不含巡游跟随」的标准机位，所以已跟随量清零：下一帧会按当前 shift
+      // 重新把整个太阳系跟回来。否则重设后只剩残差级别的跟随量，太阳系会整块飞出画面。
+      followApplied.set(0, 0, 0)
     }
     const selectBody = (id: BodyId | null, preserveDirection = false) => {
       if (mode !== 'explore') return
@@ -289,6 +365,13 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     }
     const pulse = (seed: number) => { pulseEnergy = Number.isFinite(seed) ? 1 + Math.sin(seed) * .1 : 0; invalidate() }
     const setPaused = (next: boolean) => { if (paused === next) return; paused = next; diagnostic('paused', String(paused)); invalidate() }
+    // 时间流速只改模拟时间的推进倍率：几何、取景、光照与巡游位移都由 simulationTime 推导，
+    // 所以换挡等价于「同样的画面、更快的时钟」，不会出现天体跳位。
+    // 值没变时直接返回：初始化会把当前值灌进来一次，reduced-motion 下多渲染一帧就破坏了
+    // 「只渲染一帧」的约定。
+    const setTimeScale = (next: number) => { if (timeScale === next) return; timeScale = next as typeof timeScale; diagnostic('time-scale', String(timeScale)); invalidate() }
+    // 银道环保留但默认隐藏，这里只切它的可见性——它标的是太阳绕银心的公转路径，不是常驻装饰。
+    const setGalacticRing = (next: boolean) => { if (galacticRing === next) return; galacticRing = next; solar.galacticAnchor.visible = next; diagnostic('galactic-ring', String(next)); invalidate() }
     const resetView = () => { if (mode === 'explore') { overview(); invalidate() } }
     const zoomBy = (direction: number) => { if (!controls) return; flight = null; if (direction > 0) controls.dollyIn(1 / 1.2); else controls.dollyOut(1 / 1.2); controls.update(); invalidate() }
     const onVisibility = () => { if (visible()) { lastTime = null; render(performance.now()); start() } else stop() }
@@ -298,8 +381,9 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     window.addEventListener('pointermove', onPointer, { passive: true }); scope.add(() => window.removeEventListener('pointermove', onPointer))
     document.addEventListener('visibilitychange', onVisibility); scope.add(() => document.removeEventListener('visibilitychange', onVisibility))
     scope.add(() => { releaseInteraction?.(); controls?.dispose() })
+    solar.galacticAnchor.visible = galacticRing
     renderer.setClearColor(0x000000, 0); applyTheme(); frameEnvironment(); resize(true); render(0, true); start()
     const destroy = () => { if (destroyed) return; destroyed = true; diagnostic('ready', 'false'); stop(); try { scope.cleanup() } catch { /* Release all resources even when a driver disposer fails. */ } }
-    return { setPhase, setTheme, pulse, setMode, setScaleMode, selectBody, setPaused, resetView, zoomBy, destroy }
+    return { setPhase, setTheme, pulse, setMode, setScaleMode, selectBody, setPaused, setTimeScale, setGalacticRing, resetView, zoomBy, destroy }
   } catch (error) { try { scope.cleanup() } catch { /* Preserve initialization error. */ } throw error }
 }

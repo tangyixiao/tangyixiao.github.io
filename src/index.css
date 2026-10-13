@@ -337,13 +337,28 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
 .scale-toggle:hover { border-color: var(--teal); background: var(--surface-raised); }
 .scale-toggle span:first-child { color: var(--gold); }
 .scale-toggle[aria-pressed='true'] { border-color: color-mix(in srgb, var(--teal) 55%, transparent); color: var(--teal); }
+.category-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 8px; }
+.category-chips button { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 13px; border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--bg) 84%, transparent); color: inherit; font: inherit; font-size: .68rem; font-weight: 600; white-space: nowrap; cursor: pointer; transition: border-color .2s, background .2s, color .2s; }
+.category-chips button:hover { border-color: var(--teal); background: var(--surface-raised); }
+.category-chips button[aria-pressed='true'] { border-color: color-mix(in srgb, var(--teal) 55%, transparent); background: color-mix(in srgb, var(--teal) 12%, transparent); color: var(--teal); }
+.time-scale { display: flex; flex: none; max-width: 100%; }
+.time-scale button { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; margin-left: -1px; padding: 0 11px; border: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 84%, transparent); color: inherit; font: inherit; font-size: .74rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; cursor: pointer; transition: border-color .2s, background .2s, color .2s; }
+.time-scale button:first-child { margin-left: 0; border-radius: 5px 0 0 5px; }
+.time-scale button:last-child { border-radius: 0 5px 5px 0; }
+.time-scale button:hover { z-index: 1; border-color: var(--teal); background: var(--surface-raised); }
+.time-scale button[aria-pressed='true'] { z-index: 1; border-color: color-mix(in srgb, var(--teal) 55%, transparent); background: color-mix(in srgb, var(--teal) 12%, transparent); color: var(--teal); }
+.ring-toggle { display: inline-flex; gap: 9px; align-items: center; flex: none; min-height: 44px; padding: 0 15px; border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--bg) 84%, transparent); color: inherit; font: inherit; font-size: .74rem; font-weight: 600; white-space: nowrap; cursor: pointer; transition: border-color .2s, background .2s; }
+.ring-toggle::before { content: ''; flex: none; width: 9px; height: 9px; border: 1px solid var(--muted); border-radius: 50%; }
+.ring-toggle:hover { border-color: var(--teal); background: var(--surface-raised); }
+.ring-toggle[aria-pressed='true'] { border-color: color-mix(in srgb, var(--teal) 55%, transparent); color: var(--teal); }
+.ring-toggle[aria-pressed='true']::before { border-color: var(--teal); background: var(--teal); box-shadow: 0 0 9px color-mix(in srgb, var(--teal) 40%, transparent); }
 .explore-blackhole { display: flex; width: max-content; max-width: 100%; margin: 10px auto 0; border-color: color-mix(in srgb, var(--teal) 45%, transparent); }
 .explore-blackhole:hover { border-color: var(--teal); box-shadow: 0 14px 50px color-mix(in srgb, var(--teal) 20%, transparent); }
 .explore-blackhole .explore-icon { color: var(--teal); font-size: 1.25rem; }
 .explore-threebody { display: flex; width: max-content; max-width: 100%; margin: 10px auto 0; border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
 .explore-threebody:hover { border-color: var(--gold); box-shadow: 0 14px 50px color-mix(in srgb, var(--gold) 20%, transparent); }
 .explore-threebody .explore-icon { color: var(--gold); font-size: 1.25rem; }
-@media (max-width: 760px) { .explorer-toolbar { flex-wrap: wrap; row-gap: 10px; } }
+@media (max-width: 760px) { .explorer-toolbar { flex-wrap: wrap; row-gap: 8px; } .category-chips { gap: 5px; margin-bottom: 6px; } .category-chips button { flex: 1 1 0; min-width: 0; padding: 0 6px; font-size: .62rem; } .time-scale { align-self: stretch; justify-content: center; } .time-scale button { flex: 1 1 0; padding: 0 6px; font-size: .68rem; } .ring-toggle { align-self: stretch; justify-content: center; padding: 0 12px; } }
 .universe-fallback .fallback-solar { position: absolute; inset: 0; overflow: hidden; }
 .universe-fallback .fallback-solar b { top: 48%; left: 73%; width: 45px; height: 45px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6b6, #ffac49 55%, #df5918); box-shadow: 0 0 50px 18px #f98b3733; }
 .universe-fallback .fallback-solar i { top: 50%; left: 75%; right: auto; width: calc(120px + var(--orbit) * 60px); height: calc(60px + var(--orbit) * 30px); aspect-ratio: auto; transform: translate(-50%, -50%) rotate(-24deg); border-color: color-mix(in srgb, var(--gold) 28%, transparent); }
@@ -371,7 +386,7 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
   .explorer-bottom { left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); }
   .planet-picker { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; padding: 7px; border-radius: 14px; }
   .planet-picker button { flex-direction: column; gap: 6px; padding: 7px 2px; font-size: .59rem; }
-  .explorer-toolbar { flex-direction: column-reverse; gap: 10px; margin-top: 10px; }
+  .explorer-toolbar { flex-wrap: wrap; gap: 8px; margin-top: 8px; }
   .explorer-controls { width: 100%; justify-content: center; }
   .explorer-controls button { padding: 9px 12px; }
   .desktop-hint { display: none; }
@@ -436,7 +451,18 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
   .dot-mercury { width: 13px; height: 13px; margin: 4px 0; }
   .dot-mars { width: 17px; height: 17px; margin: 2px 0; }
   .dot-saturn::after { inset: 5px -4px; border-width: 2px; }
-  .explorer-toolbar { margin-top: 8px; }
+  .category-chips { gap: 4px; margin-bottom: 5px; }
+  .category-chips button { min-height: 34px; padding: 0 9px; font-size: .62rem; }
+  /* 横屏矮窗里只留 390px 高度：底部面板必须够矮，否则会顶到左侧的天体信息栏上。
+     所以分类行与工具栏都收紧，工具栏允许换行但行距最小；面板总高约 180px（含 picker 63px），
+     仍能把 picker 留在信息栏下方。 */
+  .explorer-toolbar { flex-wrap: wrap; justify-content: center; column-gap: 8px; row-gap: 5px; margin-top: 5px; }
+  .explorer-hint { display: none; }
+  .scale-toggle, .ring-toggle, .blackhole-entry { padding: 0 10px; font-size: .68rem; }
+  .scale-toggle, .ring-toggle, .blackhole-entry, .time-scale button, .explorer-controls button { min-height: 38px; }
+  .time-scale button { min-width: 38px; padding: 0 6px; font-size: .68rem; }
+  .explorer-controls button { padding: 0 10px; }
+  .explorer-controls button span { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .project-card, .project-card:hover, .focus-card, .focus-card:hover, .focus-card[data-spatial-active='true'], .project-card[data-spatial-active='true'] { transform: none; }

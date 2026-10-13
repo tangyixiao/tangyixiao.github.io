@@ -1,26 +1,33 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { bodies, planetFacts, solarCopy, surfaceFor } from './solarData'
+import { bodies, categoryCopy, planetFacts, solarCopy, surfaceFor } from './solarData'
+import { bodyCategories, timeScales } from './types'
 import type { Language } from '../site/content'
-import type { BodyId, ScaleMode } from './types'
+import type { BodyCategory, BodyId, ScaleMode, TimeScale } from './types'
 
 interface Props {
   language: Language
   selected: BodyId | null
   paused: boolean
   scaleMode: ScaleMode
+  timeScale: TimeScale
+  galacticRing: boolean
   onSelect: (body: BodyId) => void
   onPause: () => void
   onReset: () => void
   onZoom: (direction: number) => void
   onScaleMode: () => void
+  onTimeScale: (scale: TimeScale) => void
+  onGalacticRing: (visible: boolean) => void
   onClose: () => void
   onSurface: (element: HTMLDivElement | null) => void
 }
 
-export default function SolarExplorer({ language, selected, paused, scaleMode, onSelect, onPause, onReset, onZoom, onScaleMode, onClose, onSurface }: Props) {
+export default function SolarExplorer({ language, selected, paused, scaleMode, timeScale, galacticRing, onSelect, onPause, onReset, onZoom, onScaleMode, onTimeScale, onGalacticRing, onClose, onSurface }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const [infoExpanded, setInfoExpanded] = useState(false)
+  // `current` is already the selected body below, so the picker category keeps its own name.
+  const [category, setCategory] = useState<BodyCategory>('planet')
   const copy = solarCopy[language]
   const current = bodies.find(body => body.id === selected)
   const facts = current ? planetFacts[current.id] : null
@@ -58,8 +65,16 @@ export default function SolarExplorer({ language, selected, paused, scaleMode, o
       <a className="solar-credit" href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer">{language === 'zh' ? '表面贴图' : 'Surface maps'}: Solar System Scope · CC BY 4.0 ↗</a>
       </div>
     </aside>
-    <div className="explorer-bottom"><div className="planet-picker" aria-label={copy.overview}>{bodies.map(body => <button type="button" key={body.id} data-body={body.id} aria-label={`${copy.select}${language === 'en' ? ' ' : ''}${body[language][0]}`} aria-pressed={selected === body.id} onClick={() => onSelect(body.id)}><span className={`planet-dot dot-${body.id}`} style={{ backgroundImage: `url(${surfaceFor(body.id)})` }} /><span>{body[language][0]}</span></button>)}</div>
-      <div className="explorer-toolbar"><button className="scale-toggle" type="button" aria-pressed={scaleMode === 'true'} onClick={onScaleMode}><span aria-hidden="true">{scaleMode === 'true' ? '✧' : '✦'}</span>{scaleMode === 'true' ? copy.artisticScale : copy.trueScale}</button><a className="blackhole-entry" href="/blackhole.html"><span aria-hidden="true">◉</span>{copy.blackhole}<span aria-hidden="true">↗</span></a><a className="blackhole-entry" href="/threebody.html"><span aria-hidden="true">✦</span>{copy.threebody}<span aria-hidden="true">↗</span></a><p className="explorer-hint"><span className="desktop-hint">{copy.hint}</span><span className="touch-hint">{copy.touchHint}</span></p><div className="explorer-controls"><button type="button" onClick={onPause} aria-label={paused ? copy.resume : copy.pause} aria-pressed={paused}>{paused ? '▷' : 'Ⅱ'} <span>{paused ? copy.resume : copy.pause}</span></button><button type="button" aria-label={copy.zoomOut} onClick={() => onZoom(-1)}>−</button><button type="button" aria-label={copy.zoomIn} onClick={() => onZoom(1)}>+</button><button type="button" onClick={onReset} aria-label={copy.reset}>↺ <span>{copy.reset}</span></button></div></div>
+    <div className="explorer-bottom"><div className="category-chips" role="group" aria-label={copy.title}>{bodyCategories.map(cat => <button type="button" key={cat} data-category={cat} aria-pressed={cat === category} onClick={() => setCategory(cat)}>{categoryCopy[cat][language === 'en' ? 1 : 0]}</button>)}</div>
+      <div className="planet-picker" aria-label={copy.overview}>{bodies.filter(body => body.category === category).map(body => {
+        const parent = body.parent ? bodies.find(candidate => candidate.id === body.parent) : null
+        const name = parent ? `${parent[language][0]}·${body[language][0]}` : body[language][0]
+        const surface = surfaceFor(body.id)
+        return <button type="button" key={body.id} data-body={body.id} aria-label={`${copy.select}${language === 'en' ? ' ' : ''}${name}`} aria-pressed={selected === body.id} onClick={() => onSelect(body.id)}>{surface
+          ? <span className={`planet-dot dot-${body.id}`} style={{ backgroundImage: `url(${surface})` }} />
+          : <span className="planet-dot" data-procedural="true" style={{ backgroundColor: body.color }} />}<span>{body[language][0]}</span></button>
+      })}</div>
+      <div className="explorer-toolbar"><button className="scale-toggle" type="button" aria-pressed={scaleMode === 'true'} onClick={onScaleMode}><span aria-hidden="true">{scaleMode === 'true' ? '✧' : '✦'}</span>{scaleMode === 'true' ? copy.artisticScale : copy.trueScale}</button><div className="time-scale" role="group" aria-label={copy.timeScale}>{timeScales.map(value => <button type="button" key={value} aria-label={`${copy.timeScale} ${value}×`} aria-pressed={timeScale === value} onClick={() => onTimeScale(value)}>{value}×</button>)}</div><button className="ring-toggle" type="button" aria-pressed={galacticRing} onClick={() => onGalacticRing(!galacticRing)}>{copy.galacticRing}</button><a className="blackhole-entry" href="/blackhole.html"><span aria-hidden="true">◉</span>{copy.blackhole}<span aria-hidden="true">↗</span></a><a className="blackhole-entry" href="/threebody.html"><span aria-hidden="true">✦</span>{copy.threebody}<span aria-hidden="true">↗</span></a><p className="explorer-hint"><span className="desktop-hint">{copy.hint}</span><span className="touch-hint">{copy.touchHint}</span></p><div className="explorer-controls"><button type="button" onClick={onPause} aria-label={paused ? copy.resume : copy.pause} aria-pressed={paused}>{paused ? '▷' : 'Ⅱ'} <span>{paused ? copy.resume : copy.pause}</span></button><button type="button" aria-label={copy.zoomOut} onClick={() => onZoom(-1)}>−</button><button type="button" aria-label={copy.zoomIn} onClick={() => onZoom(1)}>+</button><button type="button" onClick={onReset} aria-label={copy.reset}>↺ <span>{copy.reset}</span></button></div></div>
     </div>
   </div>
 }
