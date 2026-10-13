@@ -148,9 +148,14 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
     return new T.Vector3(Math.cos(a), 0, Math.sin(a))
   })
   const galacticRing = new T.LineLoop(geometry(new T.BufferGeometry().setFromPoints(ringPoints)), material(new T.LineBasicMaterial({ color: '#d5c29b', transparent: true, opacity: .22, depthWrite: false })))
-  // 环默认隐藏：它是巡游的轨道参考，不是常驻装饰，由工具栏的「银道环」开关按需揭示。
-  galacticRing.visible = false
   galacticDisc.add(galacticRing)
+  // 环默认隐藏：它是巡游的轨道参考，不是常驻装饰，由工具栏的「银道环」开关按需揭示。
+  // 隐藏标记打在 galacticDisc（也就是返回给调用方的 galacticAnchor）上，而不是 galacticRing 上：
+  // 渲染时父级不可见会整棵子树被裁掉，反过来父级可见也救不回 visible=false 的子节点。
+  // 调用方（createUniverseController 的 setGalacticRing）正是切 galacticAnchor.visible，
+  // 若把标记打在环自己身上，开关就会永远打不开——实测开关前后截图逐字节相同。
+  // galacticDisc 只有环这一个子节点，所以隐藏它等价于隐藏环。
+  galacticDisc.visible = false
   // 示意轨道半径随比例模式缩放：环必须始终落在当前取景之内，否则"绕银心公转"看不见。
   // 环心固定在世界空间的 R·centre。环的几何是局部 xz 平面上的单位圆 (cos a, 0, sin a)，
   // 而 galacticDisc/galaxy 之间没有别的变换，galaxy 的四元数把局部 +x 送到 centre，
