@@ -118,6 +118,26 @@ async function main() {
     const infoBox = await detail.boundingBox(), picker = await short.locator('.planet-picker').boundingBox()
     assert.ok(infoBox.y + infoBox.height < picker.y, 'landscape controls and information do not overlap')
     await short.close()
+    // 银道环开关必须真的改动画面的像素。这里用 reduced-motion 冻结渲染循环（只剩 invalidate()
+    // 触发的单帧），并裁掉 y≥690 的区域把工具栏排除在外——否则按钮自身的高亮变化会让对比永远不相等。
+    // 这个断言是有来历的：环的隐藏标记一度打在子节点 galacticRing 上，而开关切的是父级
+    // galacticDisc，父级可见救不回 visible=false 的子节点，于是开关点了没反应。
+    // 当时的浏览器测试对此零覆盖，直到逐像素比对才发现「属性变了、画面一个像素没变」。
+    const ring = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'zh-CN', reducedMotion: 'reduce' })
+    await ring.goto(url)
+    await ring.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneReady === 'true')
+    await ring.getByRole('button', { name: '探索太阳系', exact: true }).click()
+    await ring.waitForTimeout(900)
+    const clip = { x: 0, y: 0, width: 1440, height: 690 }
+    const ringOff = await ring.screenshot({ clip })
+    assert.equal(await ring.locator('[data-scene-root]').getAttribute('data-scene-galactic-ring'), 'false')
+    await ring.getByRole('button', { name: '银道环', exact: true }).click()
+    await ring.waitForTimeout(900)
+    assert.equal(await ring.locator('[data-scene-root]').getAttribute('data-scene-galactic-ring'), 'true')
+    const ringOn = await ring.screenshot({ clip })
+    assert.ok(!ringOff.equals(ringOn), 'the galactic ring toggle must change pixels, not just its attribute')
+    await ring.close()
+
     for (const [width, height] of [[800, 900], [820, 1180]]) {
       const tablet = await browser.newPage({ viewport: { width, height }, locale: 'en-US', reducedMotion: 'reduce' })
       await tablet.goto(url)
