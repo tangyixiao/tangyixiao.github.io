@@ -84,6 +84,82 @@ void main(){ vec3 n=normalize(vNormal);
   #include <colorspace_fragment>
 }`
 
+// 太阳的表面流动与色球日珥共用一套三维值噪声。太阳是流体：米粒组织、黑子与日珥都没有
+// 固定的 UV 边界，而球面 UV 在两极被压成一条线、接缝处还要 wrap，直接在 UV 上做噪声会在
+// 极点拉出条纹。改用「顶点自身的朝向」当坐标（单位球，顶点坐标即方向），噪声天然无缝，
+// 也不新增任何贴图文件（贴图数断言保持 14）。
+// 三层八度是刻意压过的最低配置：足以撑出"颗粒—团块—大区"的层次，再多就在软件光栅化
+// （浏览器测试用的 swiftshader）上把帧率拖垮，从而拖慢依赖飞行进度的断言。
+const solarNoise = `
+float hash(vec3 p){ return fract(sin(dot(p, vec3(127.1,311.7,74.7)))*43758.5453); }
+float vnoise(vec3 p){ vec3 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
+  return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
+             mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z); }
+float fbm(vec3 p){ float a=.5, s=0.; for(int k=0;k<3;k++){ s+=a*vnoise(p); p=p*2.03+vec3(1.7,9.2,3.1); a*=.5; } return s; }
+`
+
+// 太阳的顶点着色器比共享版多输出一个 vObject：顶点在单位球上的坐标就是它自身的朝向，
+// 且不随自转改变。表面上的黑子与日珥因此长在星体上、随自转一起转——光球贴图本身近乎
+// 各向同性，只转 mesh 看不出来，必须让"结构"跟着星体走。
+const sunVertex = `
+varying vec2 vUv;
+varying vec3 vPosition, vNormal, vObject;
+void main() {
+  vUv = uv;
+  vObject = position;
+  vPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+  vNormal = normalize(mat3(modelMatrix) * normal);
+  gl_Position = projectionMatrix * viewMatrix * vec4(vPosition, 1.0);
+}`
+
+// 太阳表面：在 NASA 光球照片之上叠一层会翻滚的对流。两层噪声互相推挤（域扭曲）才有
+// "沸腾"的读感，单层噪声只会整体明暗变化、看着像云不像流体。亮纹是上升的热气体、暗纹是
+// 下沉的冷气体；黑子用低频单层噪声即可（本影压到接近全黑），它随星体自转进出视野，
+// 这是"这颗恒星在自转"最直接的读数。边缘再叠一层色球的暖边，把轮廓钉出来。
+const sunSurfaceFragment = `
+uniform sampler2D surfaceMap; uniform float clock;
+varying vec2 vUv; varying vec3 vPosition, vNormal, vObject;
+${solarNoise}
+void main(){
+  vec3 dir = normalize(vObject);
+  float warp = vnoise(dir * 3.0 + vec3(0.0, clock * .035, 0.0));
+  float cells = fbm(dir * 9.0 + vec3(warp * 1.6, warp * .8, clock * .02));
+  float granule = smoothstep(.30, .80, cells);
+  float spots = smoothstep(.60, .80, vnoise(dir * 2.3 + vec3(11.3, 4.7, 2.9)));
+  vec2 uv = vUv + vec2(sin(vUv.y * 28. + clock * .12) * .0015, 0.);
+  vec3 map = texture2D(surfaceMap, uv).rgb;
+  float limb = pow(max(dot(normalize(vNormal), normalize(cameraPosition - vPosition)), 0.), .25);
+  vec3 color = mix(vec3(1.2, .18, .015), map * vec3(2.6, 1.45, .65), limb);
+  color *= 1.0 + (granule - .45) * .55;
+  color = mix(color, vec3(.20, .03, .01), spots * .85);
+  color += vec3(1.0, .34, .08) * pow(1.0 - limb, 4.0) * .30;
+  gl_FragColor = vec4(color, 1.0);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+}`
+
+// 太阳的色球与日珥。halo 是一层 1.16 倍半径的 BackSide 球壳：不透明光球挡住了壳的正中，
+// 只剩贴边的一圈露出来，那一圈正好就是色球的位置。日珥是沿磁力线拱起又落下的等离子体环，
+// 用两个不同速度的噪声场相乘得到"此起彼伏"的生长—衰落，而不是整圈同时呼吸。
+// 日珥长在 vObject（星体自身）上，所以它随自转一起扫过边缘。
+const sunHaloFragment = `
+uniform float clock, intensity;
+varying vec2 vUv; varying vec3 vPosition, vNormal, vObject;
+${solarNoise}
+void main(){
+  vec3 n = normalize(vNormal);
+  vec3 eye = normalize(cameraPosition - vPosition);
+  float rim = pow(1.0 - abs(dot(n, eye)), 2.4);
+  vec3 dir = normalize(vObject);
+  float arcs = vnoise(dir * 3.0 + vec3(0.0, clock * .04, 0.0));
+  float arcs2 = vnoise(dir * 6.5 + vec3(arcs * 2.0, clock * .022, 0.0));
+  float prom = smoothstep(.45, .80, arcs) * smoothstep(.30, .85, arcs2);
+  float edge = pow(1.0 - abs(dot(n, eye)), 3.0);
+  vec3 color = mix(vec3(1.0, .30, .06), vec3(1.0, .80, .42), prom);
+  gl_FragColor = vec4(color, (rim + prom * edge * 1.6) * intensity);
+  #include <colorspace_fragment>
+}`
+
 export async function createSolarSystem(T: typeof Three, scope: ResourceScope, mobile: boolean, signal: AbortSignal) {
   const geometry = <G extends Three.BufferGeometry>(g: G) => scope.track(g, g => g.dispose())
   const material = <M extends Three.Material>(m: M) => scope.track(m, m => m.dispose())
@@ -125,6 +201,9 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   const sunPosition = new T.Vector3()
   const ambient = { value: .045 }, clock = { value: 0 }, cloudOffset = { value: 0 }
   let scaleMode: ScaleMode = 'artistic'
+  // 浅色主题下把太阳的发光统一压暗：主题只切换了 glow 的混合方式与不透明度，
+  // 加法混合下的日珥在浅色背景上会白成一片，所以色球强度与点光源都要跟着主题走。
+  let themeDim = 1
   const live = new Map<BodyId, { orbit: number; radius: number; speed: number }>()
   for (const body of bodies) live.set(body.id, scaleValue(body, scaleMode))
   const frames = new Map<BodyId, OrbitFrame>()
@@ -137,7 +216,13 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   gc.fillStyle = gradient; gc.fillRect(0, 0, 256, 256)
   const glow = new T.Sprite(material(new T.SpriteMaterial({ map: texture(new T.CanvasTexture(glowCanvas)), transparent: true, blending: T.AdditiveBlending, depthWrite: false, opacity: .7, toneMapped: false })))
   glow.scale.set(75, 75, 1); glow.renderOrder = -1; system.add(glow)
-  system.add(new T.PointLight('#fff4df', 12, 0, 1), new T.AmbientLight('#b4c4dd', .2))
+  // 点光源留着句柄：update() 里要让它跟着日冕一起呼吸，否则日冕在缩放时整个太阳系的
+  // 明暗却一成不变，呼吸就只发生在贴图上而不是"这颗恒星"上。
+  // 太阳的 halo 也先取到：update() 每帧要写它的色球强度，而 highlight() 不能再碰它
+  // （见下方 highlight 的注释），所以这里把 material 取出来复用。
+  const sunLight = new T.PointLight('#fff4df', 12, 0, 1)
+  let sunHalo: Three.ShaderMaterial
+  system.add(sunLight, new T.AmbientLight('#b4c4dd', .2))
   // 太阳绕银心公转的轨道环：环在银道面内（与黄道面夹角严格等于 60.19°），半径略大于海王星
   // 轨道、小于全景取景半径，因此环与整个太阳系能同框。环静止、环心固定在世界空间的 R·centre，
   // 环半径也是 R，所以环必然穿过世界原点——也就是太阳零位移时的位置。太阳（连同整个系统）
@@ -174,15 +259,7 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
     // 没有贴图的天体走 proceduralFragment，不再依赖任何图片文件。
     const name = body.map as typeof maps[number] | undefined
     const surface = body.id === 'sun' ? material(new T.ShaderMaterial({
-      uniforms: { surfaceMap: { value: atlas.sun }, clock }, vertexShader: vertex,
-      fragmentShader: `uniform sampler2D surfaceMap; uniform float clock; varying vec2 vUv; varying vec3 vPosition,vNormal;
-        void main(){ vec2 uv=vUv + vec2(sin(vUv.y*28.+clock*.12)*.0015,0.); vec3 map=texture2D(surfaceMap,uv).rgb;
-        float limb=pow(max(dot(normalize(vNormal),normalize(cameraPosition-vPosition)),0.),.25);
-        vec3 color=mix(vec3(1.2,.18,.015),map*vec3(2.6,1.45,.65),limb);
-        gl_FragColor=vec4(color,1.);
-        #include <tonemapping_fragment>
-        #include <colorspace_fragment>
-        }`,
+      uniforms: { surfaceMap: { value: atlas.sun }, clock }, vertexShader: sunVertex, fragmentShader: sunSurfaceFragment,
     })) : body.map ? material(new T.ShaderMaterial({
       uniforms: { surfaceMap: { value: atlas[name!] }, nightMap: { value: atlas.earth_nightmap }, cloudMap: { value: atlas.earth_clouds }, sunPosition: { value: sunPosition }, isEarth: { value: body.id === 'earth' ? 1 : 0 }, relief: { value: body.kind === 'rock' ? 2.5 : 0 }, ambient, cloudOffset, ...ringUniforms, hasRing: { value: body.id === 'saturn' ? 1 : 0 } },
       vertexShader: vertex, fragmentShader: surfaceFragment,
@@ -199,8 +276,13 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
     else system.add(anchor)
     const atmosphere = body.id === 'earth' ? '#479eff' : body.id === 'venus' ? '#eccb91' : body.id === 'neptune' ? '#3656e3' : body.color
     const halo = new T.Mesh(sphere, material(new T.ShaderMaterial({
-      uniforms: { glowColor: { value: new T.Color(atmosphere) }, sunPosition: { value: sunPosition }, intensity: { value: 0 }, solar: { value: body.id === 'sun' ? 1 : 0 } }, vertexShader: vertex,
-      fragmentShader: `uniform vec3 glowColor,sunPosition; uniform float intensity,solar; varying vec3 vPosition,vNormal;
+      uniforms: body.id === 'sun'
+        // 太阳的色球强度不给 highlight 用：highlight(null) 会把强度写回天然值 0，那一下会让
+        // 日珥瞬间熄灭再亮回来，所以太阳的 halo 强度改由 update() 自己按呼吸节奏驱动。
+        ? { clock, intensity: { value: 0 } }
+        : { glowColor: { value: new T.Color(atmosphere) }, sunPosition: { value: sunPosition }, intensity: { value: 0 }, solar: { value: 0 } },
+      vertexShader: body.id === 'sun' ? sunVertex : vertex,
+      fragmentShader: body.id === 'sun' ? sunHaloFragment : `uniform vec3 glowColor,sunPosition; uniform float intensity,solar; varying vec3 vPosition,vNormal;
         void main(){ vec3 n=normalize(vNormal); vec3 eye=normalize(cameraPosition-vPosition); float rim=pow(1.-abs(dot(n,eye)),3.5);
         float day=smoothstep(-.3,.8,dot(n,normalize(sunPosition-vPosition))); vec3 hue=mix(vec3(1.,.26,.06),glowColor,smoothstep(0.,.35,day));
         gl_FragColor=vec4(mix(hue,glowColor,solar),rim*intensity*mix(.16+day*.84,1.,solar));
@@ -210,6 +292,8 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
     })))
     halo.scale.setScalar(live.get(body.id)!.radius * (body.id === 'sun' ? 1.16 : 1.035)); anchor.add(halo)
     planets.set(body.id, { anchor, mesh, halo })
+    // 太阳的 halo material 在这里拿到：bodies 里太阳第一个，此时它已经建好。
+    if (body.id === 'sun') sunHalo = halo.material as Three.ShaderMaterial
     // 只有以太阳为焦点的天体才有日心轨道线与拖尾。卫星的 orbit 是母天体半径的倍数，
     // 按日心椭圆去画会得到一条穿过母天体的错误曲线，所以卫星两者都不建。
     if (body.orbit && !body.parent) {
@@ -406,8 +490,11 @@ void main() {
   const dust = new T.Points(dustGeometry, dustMaterial); dust.frustumCulled = false
   system.add(dust)
   const highlight = (id: BodyId | null) => planets.forEach((planet, key) => {
-    const natural = key === 'sun' ? 0 : key === 'earth' ? .55 : key === 'venus' || key === 'neptune' || key === 'uranus' ? .25 : .015
-    ;(planet.halo.material as Three.ShaderMaterial).uniforms.intensity.value = natural + (key === id && key !== 'sun' ? .12 : 0)
+    // 太阳的色球强度由 update() 按呼吸节奏自己驱动（见 update 内 sunLight 附近），
+    // 这里不能再写它的 intensity：highlight(null) 会把日珥直接掐灭。
+    if (key === 'sun') return
+    const natural = key === 'earth' ? .55 : key === 'venus' || key === 'neptune' || key === 'uranus' ? .25 : .015
+    ;(planet.halo.material as Three.ShaderMaterial).uniforms.intensity.value = natural + (key === id ? .12 : 0)
   })
   const update = (time: number, energy: number) => {
     clock.value = time; cloudOffset.value = time * .003 / (Math.PI * 2)
@@ -469,7 +556,17 @@ void main() {
     halleyTail.quaternion.setFromUnitVectors(UP, halleyScratch.copy(halley.position).negate().normalize())
     placeAsteroids(scaleMode, time)
     placeTrojans(scaleMode, time)
-    glow.scale.setScalar(live.get('sun')!.radius * (2.3 + Math.sin(time * .3) * .05 + energy * .12))
+    // 太阳的自转：真实周期是 25.38 天，按 SPIN.daySeconds=10 折算成 253.8 秒一圈，
+    // 直播里几乎看不出动。这里单独给 12 秒一圈的视觉化倍率——黑子与日珥随星体转过，
+    // 表面流动仍在跑，两者叠起来才读得出"这颗恒星在自转"。
+    // 倍数不写进 spinRate：那个函数被所有天体共用，改它会连带改变其他行星的自转速度。
+    planets.get('sun')!.mesh.rotation.y = time * Math.PI * 2 / 12
+    // 呼吸节拍：日冕的缩放、点光源的亮度与色球的强度共用 solarPulse 这一个低频正弦，
+    // 于是行星的受光面也随太阳脉动，而不只是贴片在闪；三者同相，太阳才像同一个光源。
+    const solarPulse = .5 + .5 * Math.sin(time * .3)
+    glow.scale.setScalar(live.get('sun')!.radius * (2.3 + solarPulse * .05 + energy * .12))
+    sunLight.intensity = 12 * (.92 + solarPulse * .08) + energy * 1.4
+    sunHalo.uniforms.intensity.value = (.34 + solarPulse * .07 + energy * .16) * themeDim
     // 光照与土星环阴影都以太阳的世界坐标为准。system 现在带着整个太阳系位移，
     // 所以太阳不再是世界原点的 world 位置，而是「太阳 anchor」的世界坐标——太阳的 anchor
     // 就在 system 原点，这一句必须在写 system.position 之后、updateMatrixWorld 之后取。
@@ -484,6 +581,7 @@ void main() {
     orbits.forEach(line => { (line.material as Three.LineBasicMaterial).opacity = theme === 'dark' ? .16 : .3 })
     ;(glow.material as Three.SpriteMaterial).blending = theme === 'dark' ? T.AdditiveBlending : T.NormalBlending
     ;(glow.material as Three.SpriteMaterial).opacity = theme === 'dark' ? .7 : .45
+    themeDim = theme === 'dark' ? 1 : .55
   }
   // 真实比例：距离 1:1、行星间大小比例严格保持（太阳 20 倍 / 行星 160 倍放大以保可见）、速度遵循开普勒第三定律。
   const setScaleMode = (mode: ScaleMode) => {
