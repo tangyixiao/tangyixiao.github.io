@@ -3,7 +3,7 @@ import { createUniverseController, particleCountForWidth } from './createUnivers
 import type { ScenePhase, SceneTheme, UniverseCanvasProps, UniverseController } from './types'
 
 export default function UniverseCanvas(props: UniverseCanvasProps) {
-  const { phase, theme, pulse, reducedMotion, mode, scaleMode, selected, paused, reset, zoom, timeScale, galacticRing, interactionElement, onAvailability } = props
+  const { phase, theme, pulse, reducedMotion, mode, scaleMode, selected, paused, reset, zoom, timeScale, galacticRing, galacticView, interactionElement, onAvailability } = props
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const controllerRef = useRef<UniverseController | null>(null)
@@ -52,6 +52,7 @@ export default function UniverseCanvas(props: UniverseCanvasProps) {
       controller.setPaused(current.paused)
       controller.setTimeScale(current.timeScale)
       controller.setGalacticRing(current.galacticRing)
+      controller.setGalacticView(current.galacticView)
       if (current.scaleMode !== 'artistic') controller.setScaleMode(current.scaleMode)
       appliedReset.current = current.reset
       if (current.zoom !== 0) for (let i = 0; i < Math.abs(current.zoom); i++) controller.zoomBy(current.zoom)
@@ -81,6 +82,7 @@ export default function UniverseCanvas(props: UniverseCanvasProps) {
   useEffect(() => { controllerRef.current?.setPaused(paused) }, [paused])
   useEffect(() => { controllerRef.current?.setTimeScale(timeScale) }, [timeScale])
   useEffect(() => { controllerRef.current?.setGalacticRing(galacticRing) }, [galacticRing])
+  useEffect(() => { controllerRef.current?.setGalacticView(galacticView) }, [galacticView])
   useEffect(() => {
     if (controllerRef.current && reset !== appliedReset.current) { controllerRef.current.resetView(); appliedReset.current = reset }
   }, [reset])

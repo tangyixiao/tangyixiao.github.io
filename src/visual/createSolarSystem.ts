@@ -1,6 +1,6 @@
 import type * as Three from 'three'
 import type { ResourceScope } from './resourceScope'
-import { artisticOrbit, BELT, beltEccentricAnomaly, beltPoint, bodies, ellipsePoint, GALACTIC, GALAXY, keplerE, meanAnomaly, MOON, orbitFrame, rayleigh, scaleValue, SPIN, spinRate, TROJANS, TRUE_SCALE, type OrbitFrame } from './solarData'
+import { artisticOrbit, BELT, beltEccentricAnomaly, beltPoint, bodies, ellipsePoint, GALACTIC, GALAXY, keplerE, meanAnomaly, MOON, orbitFrame, rayleigh, scaleValue, spanFor, SPIN, spinRate, TROJANS, TRUE_SCALE, type OrbitFrame } from './solarData'
 import type { BodyId, ScaleMode, SceneTheme } from './types'
 
 const maps = ['sun', 'mercury', 'venus_atmosphere', 'earth_daymap', 'earth_nightmap', 'earth_clouds', 'mars', 'jupiter', 'saturn', 'saturn_ring_alpha', 'uranus', 'neptune', 'moon', 'stars_milky_way'] as const
@@ -199,6 +199,9 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   // 不再成立（无轨道的太阳、只有日心轨道的彗星、绕母天体的卫星各自缺项），下标会整体错位。
   const orbits = new Map<BodyId, Three.LineLoop>(), trails = new Map<BodyId, Three.Line>()
   const sunPosition = new T.Vector3()
+  // 银道环中心与环面法线（世界坐标，每帧随 update() 刷新）：「星系视角」要把相机放到环外去看
+  // 整圈公转，它需要的是环的真实空间位置，而不是控制器自己再算一遍 GALACTIC 基向量。
+  const galacticCentreWorld = new T.Vector3(), galacticNormalWorld = new T.Vector3(0, 1, 0)
   const ambient = { value: .045 }, clock = { value: 0 }, cloudOffset = { value: 0 }
   let scaleMode: ScaleMode = 'artistic'
   // 浅色主题下把太阳的发光统一压暗：主题只切换了 glow 的混合方式与不透明度，
@@ -245,7 +248,14 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   // 环心固定在世界空间的 R·centre。环的几何是局部 xz 平面上的单位圆 (cos a, 0, sin a)，
   // 而 galacticDisc/galaxy 之间没有别的变换，galaxy 的四元数把局部 +x 送到 centre，
   // 所以把环沿局部 +x 平移 R，环心就落在世界空间的 R·centre（局部 +z 映到 −l90，见下）。
-  const galacticRadius = () => GALAXY.radiusRatio * (scaleMode === 'true' ? 51 : 600)
+  // 示意轨道半径 = 全景跨度 × 系数。系数两种取值：主视图里 .97（环落在海王星轨道之外、
+  // 又在全景取景半径之内，两种比例模式都贴边可见）；「星系视角」里 24（环必须远大于行星系统，
+  // 否则拉远后环与海王星轨道在画面上重合，看不出太阳系只是环上的一个点）。
+  // 真实半径是 8.277 kpc ≈ 1.7e9 AU，与这里任何取值都差 8 个数量级，所以半径只能是示意值；
+  // 但环面（银道面）、环心方向与前进方向都是真实值。
+  let galacticExtent = false
+  const radiusRatio = () => galacticExtent ? GALAXY.viewRadiusRatio : GALAXY.radiusRatio
+  const galacticRadius = () => radiusRatio() * spanFor(scaleMode)
   const sizeGalaxy = () => {
     galacticRing.scale.setScalar(galacticRadius())
     galacticRing.position.set(galacticRadius(), 0, 0)
@@ -571,6 +581,10 @@ void main() {
     // 所以太阳不再是世界原点的 world 位置，而是「太阳 anchor」的世界坐标——太阳的 anchor
     // 就在 system 原点，这一句必须在写 system.position 之后、updateMatrixWorld 之后取。
     world.updateMatrixWorld(true)
+    // 环心 = galacticDisc 局部 (R,0,0) 的 world 位置（galacticDisc 自身没有位移，环的 R 平移就在
+    // galacticRing 上，见 sizeGalaxy）；法线 = galacticDisc 局部 +y（银极）的方向向量。
+    galacticCentreWorld.set(galacticRadius(), 0, 0).applyMatrix4(galacticDisc.matrixWorld)
+    galacticNormalWorld.set(0, 1, 0).transformDirection(galacticDisc.matrixWorld)
     planets.get('sun')!.anchor.getWorldPosition(sunPosition)
     planets.get('saturn')!.anchor.getWorldPosition(ringCenter); ringRadius.value = live.get('saturn')!.radius * world.scale.x
     systemScale.value = world.scale.x
@@ -583,7 +597,7 @@ void main() {
     ;(glow.material as Three.SpriteMaterial).opacity = theme === 'dark' ? .7 : .45
     themeDim = theme === 'dark' ? 1 : .55
   }
-  // 真实比例：距离 1:1、行星间大小比例严格保持（太阳 20 倍 / 行星 160 倍放大以保可见）、速度遵循开普勒第三定律。
+  // 真实比例：距离 1:1、所有天体共用同一个放大系数（比例严格真实）、速度遵循开普勒第三定律。
   const setScaleMode = (mode: ScaleMode) => {
     if (scaleMode === mode) return
     scaleMode = mode
@@ -614,6 +628,15 @@ void main() {
     placeTrojans(mode, clock.value)
     sizeGalaxy()
   }
+  // 「星系视角」把示意环放大到远大于行星系统的尺度（见 galacticRadius 的注释）。
+  // 这不是第二个场景：环、天体、巡游位移全部照旧，只是半径换了系数，于是同一个太阳系
+  // 从"环上的一点"这个尺度上被看见。主视图与星系视角的切换因此没有任何重建成本。
+  const setGalacticExtent = (active: boolean) => {
+    if (galacticExtent === active) return
+    galacticExtent = active
+    sizeGalaxy()
+    update(clock.value, 0)
+  }
   sizeGalaxy(); update(0, 0); highlight(null)
   // 天球朝向：stars_milky_way 实测银道带基本是直线——把每列亮度重心拟合一个正弦，
   // 振幅只有 4.2°（图高的 2.3%），所以它是银道面（l/b）投影；另一张 NASA Deep Star Maps
@@ -625,10 +648,15 @@ void main() {
   // 「银河横贯天空」与「太阳沿银道面公转」讲的是同一件事。
   const skyQuaternion = galacticQuaternion.clone()
   return {
-    world, planets, update, highlight, setTheme, setScaleMode, metrics: (id: BodyId) => live.get(id)!, span: () => scaleMode === 'true' ? 51 : 600, scaleMode: () => scaleMode, skyMap: atlas.stars_milky_way, skyQuaternion, textureCount: loaded.length,
+    world, planets, update, highlight, setTheme, setScaleMode, setGalacticExtent, metrics: (id: BodyId) => live.get(id)!, span: () => spanFor(scaleMode), scaleMode: () => scaleMode, galacticExtent: () => galacticExtent, skyMap: atlas.stars_milky_way, skyQuaternion, textureCount: loaded.length,
     // galacticAnchor 仍然返回 galacticDisc：调用方只用它切换整体显隐（银道环开关），
     // 环的可见性由 createSolarSystem 自己在 sizeGalaxy 之外管不好，所以这里保持原样。
     galacticAnchor: galacticDisc,
+    // 「星系视角」的取景依据：环心（世界坐标）、环面法线（单位向量）与环半径（世界单位）。
+    // 环心与法线由 update() 每帧原地刷新，调用方按引用读取。
+    galacticCentre: galacticCentreWorld,
+    galacticNormal: galacticNormalWorld,
+    galacticRadius: () => galacticRadius() * world.scale.x,
     // 巡游位移向量由 update() 每帧原地更新，调用方按引用读取即可拿到最新的值（不要存副本）。
     cruise: system.position,
     // 1× 时间流速下、世界单位/秒的巡游速率。圆周长 2πR、一周 2π/ω 秒，所以速率就是 R·ω。

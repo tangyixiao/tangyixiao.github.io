@@ -46,6 +46,11 @@ async function main() {
     await page.getByRole('button', { name: '重置视角', exact: true }).click()
     await page.waitForTimeout(100)
     assert.ok(Math.abs(Number(await scene.getAttribute('data-scene-camera-distance')) - portraitDistance) < .1, 'resize already fits the whole system without requiring reset')
+    // 时间流速新增 240× / 720× 两挡：切换必须落到 data-scene-time-scale 上。
+    await page.getByRole('button', { name: '时间流速 720×', exact: true }).click()
+    await page.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneTimeScale === '720')
+    await page.getByRole('button', { name: '时间流速 240×', exact: true }).click()
+    await page.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneTimeScale === '240')
     await page.keyboard.press('Escape')
     await page.close()
 
@@ -74,6 +79,25 @@ async function main() {
       await scaled.getByRole('button', { name: '真实比例', exact: true }).click()
       await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneScale === 'true')
       assert.match(await scaled.locator('.body-detail').innerText(), /1 AU ≈ 1\.55 单位/, 'true-scale disclaimer is shown')
+      // 单一放大系数：读数给出 k 与被选天体的真实像素直径，九个标记环覆盖九个主天体。
+      await scaled.waitForTimeout(400)
+      const detailText = await scaled.locator('.body-detail').innerText()
+      assert.match(detailText, /统一放大系数\s*\|?\s*20×/, 'uniform magnification factor is disclosed')
+      assert.match(detailText, /本视图真实直径\s*\|?\s*0\.\d+ px/, 'selected body publishes its true pixel diameter')
+      assert.equal(await scaled.locator('.celestial-marker:not([hidden])').count(), 9, 'every primary body gets a position marker in true scale')
+      // 「星系视角」：整条银心轨道进入画面，比例尺亮出真实半径与倍数。
+      await scaled.getByRole('button', { name: '星系视角', exact: true }).click()
+      await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneView === 'galactic')
+      await scaled.waitForTimeout(600)
+      assert.ok(Number(await scaledScene.getAttribute('data-scene-camera-distance')) > Number(await scaledScene.getAttribute('data-scene-galactic-radius')), 'galactic view frames the whole ring, not the system')
+      const scaleCard = await scaled.locator('.galactic-scale').innerText()
+      assert.match(scaleCard, /8\.277 kpc/, 'scale bar states the real galactic-centre distance')
+      assert.match(scaleCard, /5,678 万倍/, 'scale bar states the computed Neptune-orbit ratio')
+      const before = await scaledScene.getAttribute('data-scene-galactic-angle')
+      await scaled.waitForTimeout(1500)
+      assert.notEqual(await scaledScene.getAttribute('data-scene-galactic-angle'), before, 'the ring really carries the system around in galactic view')
+      await scaled.getByRole('button', { name: '星系视角', exact: true }).click()
+      await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneView === 'system')
     } finally {
       await scaled.close()
     }

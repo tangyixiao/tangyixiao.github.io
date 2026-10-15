@@ -7,9 +7,11 @@ export type BodyId =
   | 'sun' | 'mercury' | 'venus' | 'earth' | 'mars' | 'jupiter' | 'saturn' | 'uranus' | 'neptune'
   | 'moon' | 'io' | 'europa' | 'ganymede' | 'callisto' | 'titan' | 'triton'
   | 'pluto' | 'ceres' | 'pallas' | 'eris' | 'halley'
-export type TimeScale = 1 | 4 | 16 | 60
+// 时间流速挡位。1× 是真实相对周期（地球一天 = 10 秒、一圈银河 25 分钟）；越往上越适合看长周期动作：
+// 240×（一圈银河 6.3 秒）与 720×（2.1 秒）是为「星系视角」看公转整圈加的。
+export type TimeScale = 1 | 4 | 16 | 60 | 240 | 720
 
-export const timeScales: readonly TimeScale[] = [1, 4, 16, 60]
+export const timeScales: readonly TimeScale[] = [1, 4, 16, 60, 240, 720]
 export const bodyCategories: readonly BodyCategory[] = ['star', 'planet', 'dwarf', 'asteroid', 'comet', 'satellite']
 
 export interface UniverseCanvasProps {
@@ -25,6 +27,7 @@ export interface UniverseCanvasProps {
   zoom: number
   timeScale: TimeScale
   galacticRing: boolean
+  galacticView: boolean
   interactionElement: HTMLElement | null
   onSelect: (body: BodyId | null) => void
   onAvailability: (available: boolean) => void
@@ -40,6 +43,7 @@ export interface UniverseController {
   setPaused(paused: boolean): void
   setTimeScale(scale: TimeScale): void
   setGalacticRing(visible: boolean): void
+  setGalacticView(active: boolean): void
   resetView(): void
   zoomBy(direction: number): void
   destroy(): void

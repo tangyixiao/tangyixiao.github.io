@@ -1,7 +1,7 @@
 import type { OrbitControls as OrbitControlsType } from 'three/addons/controls/OrbitControls.js'
 import { createResourceScope } from './resourceScope'
 import { createSolarSystem } from './createSolarSystem'
-import { bodies } from './solarData'
+import { bodies, GALAXY, TRUE_SCALE } from './solarData'
 import type { BodyId, ScaleMode, SceneMode, ScenePhase, SceneTheme, UniverseCanvasProps, UniverseController } from './types'
 
 export const particleCountForWidth = (width: number) => width <= 760 ? 420 : 1100
@@ -63,9 +63,12 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       transparent: true, depthWrite: false, blending: T.AdditiveBlending,
     }), m => m.dispose())
     const stars = new T.Points(starGeometry, starMaterial); stars.frustumCulled = false; scene.add(stars)
-    // 星空环境随当前模式的取景距离缩放，保证拉到最远时相机仍处于天球内部。
+    // 星空环境随当前取景距离缩放，保证拉到最远时相机仍处于天球内部。
+    // 「星系视角」要把整条银心轨道（直径 2R）装进画面，环境半径必须跟着一起放大，
+    // 否则相机退到环外时会直接穿出天球，银河背景反而消失。
+    const environmentSpan = () => galacticView && mode === 'explore' ? solar.galacticRadius() * 2.6 : solar.span()
     const frameEnvironment = () => {
-      const grow = solar.span() / Math.sin(T.MathUtils.degToRad(21)) * 1.65 * 1.08 / 210
+      const grow = environmentSpan() / Math.sin(T.MathUtils.degToRad(21)) * 1.65 * 1.08 / 210
       sky.scale.setScalar(grow); stars.scale.setScalar(grow)
     }
     const root = canvas.parentElement!
@@ -82,6 +85,30 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     }
     const labels = new Map<BodyId, HTMLElement>()
     for (const body of primary) { const label = makeLabel(body); root.append(label); labels.set(body.id, label) }
+    // 真实比例模式下天体小到看不见（地球在全景里约 0.02 像素），但位置仍然要能被找到、被点中，
+    // 所以每个常驻天体再多一个固定 11 像素的标记环。环是空心的：它标的是位置，不是天体大小——
+    // 天体的真实像素直径由 update 写出的 data-scene-body-pixels 给出，两者不会互相冒充。
+    // 只在真实比例模式显示：艺术模式下行星本来就有球面大小，再加环只是噪声，也违反「主视图不动」。
+    const makeMarker = (body: (typeof bodies)[number]) => {
+      const marker = document.createElement('div'); marker.className = 'celestial-marker'; marker.dataset.body = body.id
+      marker.hidden = true; marker.style.setProperty('--body-color', body.color); scope.add(() => marker.remove())
+      return marker
+    }
+    const markers = new Map<BodyId, HTMLElement>()
+    for (const body of primary) { const marker = makeMarker(body); root.append(marker); markers.set(body.id, marker) }
+    // 星系视角里整个太阳系只占画面宽度的百分之几，九颗行星的标签会叠成一片，谁也读不出来；
+    // 这个尺度上有意义的位置只有一个——「太阳系在哪里」。所以在这个视角里换成一个跟随太阳
+    // 世界坐标的亮点：环是静止的轨道，亮点沿环走完一圈，就是「整个体系真的在公转」本身。
+    const systemMarker = document.createElement('div')
+    systemMarker.className = 'system-marker'; systemMarker.hidden = true
+    root.append(systemMarker); scope.add(() => systemMarker.remove())
+    const extraMarkers = new Map<BodyId, HTMLElement>()
+    const extraMarker = (id: BodyId) => {
+      const cached = extraMarkers.get(id)
+      if (cached) return cached
+      const marker = makeMarker(bodies.find(entry => entry.id === id)!); extraMarkers.set(id, marker)
+      return marker
+    }
     const extraLabels = new Map<BodyId, HTMLElement>()
     const extraLabel = (id: BodyId) => {
       const cached = extraLabels.get(id)
@@ -90,17 +117,20 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       return label
     }
     const projected = new T.Vector3(), projectionOffset = new T.Vector3()
-    let mountedExtra: HTMLElement | null = null
+    let mountedExtra: HTMLElement | null = null, mountedMarker: HTMLElement | null = null
     // 巡游跟随的向量。太阳系真的在星空里位移（system.position），相机再跟掉其中大部分：
     // residualScene 是夹紧后允许留在画面上的那一段（也就是天体在屏幕上真正走过的距离），
     // shiftScene 是相机必须自己跟掉的其余部分，followApplied 记录已经跟掉多少，
     // 探索模式里用户手动转视角时才不会被逐帧重设的相机位置顶掉。
     const cruiseScene = new T.Vector3(), residualScene = new T.Vector3(), shiftScene = new T.Vector3()
     const shiftDelta = new T.Vector3(), followApplied = new T.Vector3(), followScratch = new T.Vector3()
+    // 星系视角取景用的暂存向量：环心、环面法线、视线方向。它们每帧由 createSolarSystem 刷新，
+    // 单独开暂存是因为取景要把法线单位化、把环心取反，改写原对象会把场景里的基准改坏。
+    const galacticCentreScratch = new T.Vector3(), galacticNormalScratch = new T.Vector3(), galacticDirScratch = new T.Vector3()
     let destroyed = false, animationFrame = 0, renderCount = 0, simulationTime = 0, lastTime: number | null = null
     let phase: ScenePhase = props.phase, theme: SceneTheme = props.theme, mode: SceneMode = 'browse', paused = props.paused
     let scaleMode: ScaleMode = 'artistic'
-    let timeScale = props.timeScale, galacticRing = props.galacticRing
+    let timeScale = props.timeScale, galacticRing = props.galacticRing, galacticView = props.galacticView
     let selected: BodyId | null = null, hovered: BodyId | null = null, pulseEnergy = 0
     let flight: { fromPosition: import('three').Vector3; fromTarget: import('three').Vector3; offset: import('three').Vector3; progress: number } | null = null
     let controls: OrbitControlsType | null = null, releaseInteraction: (() => void) | null = null, interactionElement: HTMLElement | null = null
@@ -110,7 +140,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     diagnostic('bodies', String(solar.planets.size)); diagnostic('planets', '8'); diagnostic('moon', 'true'); diagnostic('saturn-rings', 'true')
     diagnostic('textures', String(solar.textureCount))
     diagnostic('ready', 'true'); diagnostic('mode', 'browse'); diagnostic('selected', 'none'); diagnostic('paused', String(paused)); diagnostic('scale', 'artistic')
-    diagnostic('time-scale', String(timeScale)); diagnostic('galactic-ring', String(galacticRing))
+    diagnostic('time-scale', String(timeScale)); diagnostic('galactic-ring', String(galacticRing)); diagnostic('view', 'system')
 
     const applyTheme = () => {
       solar.setTheme(theme)
@@ -137,8 +167,11 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       const half = narrowHalf(viewDistance)
       return Math.min(fraction * half, .85 * Math.max(0, half - solar.span() * solar.world.scale.x))
     }
-    const computeShift = (viewDistance: number, fraction: number) => {
+    const computeShift = (viewDistance: number, fraction: number, follow = true) => {
       cruiseScene.copy(solar.cruise).applyQuaternion(solar.world.quaternion).multiplyScalar(solar.world.scale.x)
+      // 星系视角里相机不跟：整圈公转正是要看的东西，位移必须原原本本留在画面上，
+      // 否则相机会像主视图那样跟掉 86%，一圈走完屏幕上才挪几十像素。
+      if (!follow) { residualScene.copy(cruiseScene); shiftScene.set(0, 0, 0); return }
       const budgetScene = cruiseBudget(viewDistance, fraction)
       const cruiseLength = cruiseScene.length()
       residualScene.copy(cruiseScene)
@@ -166,7 +199,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       // 恰好只走过 residual——太阳系确实在星空里挪动，构图却不会跑掉。相机平移本身还带来
       // 星空视差：拉远的星点会缓缓流过，这是「整个太阳系正在银河里前进」最直接的读数。
       const viewDistance = p ? p.cameraZ : controls ? camera.position.distanceTo(controls.target) : solar.span()
-      computeShift(viewDistance, p ? .18 : .22)
+      computeShift(viewDistance, p ? .18 : .22, !galacticView)
       if (p) {
         // 相机整体平移 shiftScene、朝向仍锁在原点：太阳系在画面里只挪动 residual，天球与背景星不动，
         // 视向随位移微微转动——那点视差就是「整个太阳系正在银河里前进」的读数。
@@ -208,17 +241,33 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       // 常驻标签只服务太阳与八大行星：`outside-bodies` 诊断也只统计这九个，
       // 否则矮行星与彗星（艺术压缩下被放在 600 单位全景之外）会让「全景是否装得下」永远报错。
       for (const body of primary) {
-        const label = labels.get(body.id)!, entry = solar.planets.get(body.id)
+        const label = labels.get(body.id)!, marker = markers.get(body.id)!, entry = solar.planets.get(body.id)
         if (!entry) continue
         entry.anchor.getWorldPosition(projected)
         const distance = camera.position.distanceTo(projected)
-        const radiusPixels = body.radius * solar.world.scale.x / distance * innerHeight / (2 * Math.tan(T.MathUtils.degToRad(21)))
+        // 用 metrics(半径) 而不是 body.radius：真实比例模式下 live 里的半径是统一放大后的值，
+        // body.radius 仍是艺术模式的半径，标签偏移量必须跟当前模式一致。
+        const radiusPixels = solar.metrics(body.id).radius * solar.world.scale.x / distance * innerHeight / (2 * Math.tan(T.MathUtils.degToRad(21)))
         projected.project(camera)
         if (Math.abs(projected.x) > 1 || Math.abs(projected.y) > 1 || projected.z < -1 || projected.z > 1) outside.push(body.id)
         const x = (projected.x * .5 + .5) * innerWidth, y = (-projected.y * .5 + .5) * innerHeight
-        const shown = projected.z > -1 && projected.z < 1 && x > 10 && x < innerWidth - 100 && y > 85 && y < innerHeight - (mode === 'explore' ? 185 : 220) && (mode === 'explore' || phase === 'hero' && innerWidth > 760 && x > innerWidth * .48)
+        const shown = !galacticView && projected.z > -1 && projected.z < 1 && x > 10 && x < innerWidth - 100 && y > 85 && y < innerHeight - (mode === 'explore' ? 185 : 220) && (mode === 'explore' || phase === 'hero' && innerWidth > 760 && x > innerWidth * .48)
         label.hidden = !shown
         if (shown) label.style.transform = `translate(${(x + radiusPixels + 10).toFixed(1)}px,${(y - 5).toFixed(1)}px)`
+        // 标记环只在真实比例模式出现，且与标签共用同一个「在画面内」判定，两者不会各自错位。
+        const marked = shown && scaleMode === 'true'
+        marker.hidden = !marked
+        if (marked) marker.style.transform = `translate(${(x - 5.5).toFixed(1)}px,${(y - 5.5).toFixed(1)}px)`
+      }
+      // 星系视角里九个天体的标签会挤在同一小块像素上，所以整体让位给一个跟随太阳的亮点：
+      // 那个亮点就是「太阳系」，它沿静止的环走一圈，公转因此看得见，也不必读任何文字。
+      systemMarker.hidden = !(galacticView && mode === 'explore')
+      if (!systemMarker.hidden) {
+        solar.world.updateMatrixWorld(true)
+        solar.planets.get('sun')!.anchor.getWorldPosition(projected)
+        projected.project(camera)
+        const mx = (projected.x * .5 + .5) * innerWidth, my = (-projected.y * .5 + .5) * innerHeight
+        systemMarker.style.transform = `translate(${(mx - 4).toFixed(1)}px,${(my - 4).toFixed(1)}px)`
       }
       diagnostic('outside-bodies', outside.join(',') || 'none')
       // 小天体与卫星没有常驻标签，只在被选中时临时挂一个进 DOM（默认画面因此不会被标签淹没）。
@@ -226,6 +275,9 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       const selectedExtra = selected && !labels.has(selected) ? extraLabel(selected) : null
       if (mountedExtra && mountedExtra !== selectedExtra) mountedExtra.remove()
       mountedExtra = null
+      const selectedMarker = selected && !markers.has(selected) ? extraMarker(selected) : null
+      if (mountedMarker && mountedMarker !== selectedMarker) mountedMarker.remove()
+      mountedMarker = null
       if (selectedExtra && selected) {
         const entry = solar.planets.get(selected)
         if (entry) {
@@ -238,10 +290,33 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
           const shown = projected.z > -1 && projected.z < 1 && x > 10 && x < innerWidth - 100 && y > 85 && y < innerHeight - (mode === 'explore' ? 185 : 220)
           selectedExtra.hidden = !shown
           if (shown) selectedExtra.style.transform = `translate(${(x + radiusPixels + 10).toFixed(1)}px,${(y - 5).toFixed(1)}px)`
+          if (selectedMarker) {
+            root.append(selectedMarker); mountedMarker = selectedMarker
+            const marked = shown && scaleMode === 'true'
+            selectedMarker.hidden = !marked
+            if (marked) selectedMarker.style.transform = `translate(${(x - 5.5).toFixed(1)}px,${(y - 5.5).toFixed(1)}px)`
+          }
         }
       }
+      // 真实比例下的诚实读数：选中天体「在本视图里真实的像素直径」与「画面像素/世界单位」。
+      // 面板只读这两个数，不必自己重算取景，也就不会和场景里的实际相机互相打架。
+      const pixelScale = innerHeight / (2 * Math.tan(T.MathUtils.degToRad(21)) * Math.max(camera.position.distanceTo(controls?.target ?? previousTarget), 1e-9))
+      diagnostic('pixel-scale', pixelScale.toPrecision(4))
+      if (selected) {
+        const pixels = 2 * solar.metrics(selected).radius * solar.world.scale.x * pixelScale
+        diagnostic('body-pixels', pixels.toPrecision(4))
+      } else diagnostic('body-pixels', 'none')
       renderCount++; onRender?.(renderCount)
       diagnostic('time', simulationTime.toFixed(4)); diagnostic('camera', camera.position.toArray().map(v => v.toFixed(3)).join(','))
+      // 「绕行进度」：沿银道环走过的角度（度）。它是「整个体系真的在公转」最直接的读数——
+      // 星系视角里环是可见的，读数与画面上的位移同源，不是另算的一套进度条。
+      diagnostic('galactic-angle', (simulationTime * GALAXY.omega * 180 / Math.PI % 360).toFixed(2))
+      // 比例尺要写「画面里这一圈的半径」：除以 world 的缩放才是模型自身的半径，
+      // 否则浏览模式的构图缩放会混进读数里（那不是天体的尺度，是相机的尺度）。
+      // 单位跟着模式走：艺术模式的世界单位没有真实含义，就直接报单位；真实模式下
+      // 1 单位 = 1.55 AU，所以必须换算成 AU，否则面板会拿世界单位去冒充 AU（实测会差 1.55 倍）。
+      const radiusWorld = solar.galacticRadius() / Math.max(solar.world.scale.x, 1e-9)
+      diagnostic('galactic-radius', (scaleMode === 'true' ? radiusWorld / TRUE_SCALE.AU : radiusWorld).toPrecision(4))
       diagnostic('camera-distance', controls ? controls.getDistance().toFixed(3) : camera.position.length().toFixed(3))
       diagnostic('flight-progress', flight ? flight.progress.toFixed(3) : '1.000')
     }
@@ -264,9 +339,16 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       const particles = particleCountForWidth(mobile ? Math.min(width, 760) : width)
       starGeometry.setDrawRange(0, particles); diagnostic('particles', String(particles))
       if (!initial) {
-        if (mode === 'explore') { if (selected) selectBody(selected, true); else overview() }
+        if (mode === 'explore') { if (selected) selectBody(selected, true); else frameView() }
         invalidate()
       }
+    }
+    // 相机裁剪面：星系视角的机位在主视图之外四个数量级（艺术模式下 85,000 单位），
+    // 固定的 far = 12000 会把整个画面裁空。裁剪面因此跟着当前机位走，而不是重新取景一次。
+    const setCameraRange = (distance: number) => {
+      camera.near = Math.max(distance / 1e4, .02)
+      camera.far = Math.max(distance * 4, 12000)
+      camera.updateProjectionMatrix()
     }
     const overview = () => {
       flight = null
@@ -275,6 +357,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       const halfFov = Math.min(T.MathUtils.degToRad(21), Math.atan(Math.tan(T.MathUtils.degToRad(21)) * camera.aspect))
       const distance = solar.span() / Math.sin(halfFov)
       frameEnvironment()
+      setCameraRange(distance)
       camera.position.set(0, .75, 1).normalize().multiplyScalar(distance)
       camera.lookAt(0, 0, 0)
       if (controls) { controls.target.set(0, 0, 0); controls.minDistance = scaleMode === 'true' ? .017 : .05; controls.maxDistance = distance * 1.65; controls.update() }
@@ -284,9 +367,37 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       // 重新把整个太阳系跟回来。否则重设后只剩残差级别的跟随量，太阳系会整块飞出画面。
       followApplied.set(0, 0, 0)
     }
+    // 「星系视角」的取景：把整条银心轨道（直径 2R）装进画面，环心居中，相机从环面斜上方看，
+    // 于是金色环是一个椭圆、太阳系是环上的一个点，一圈公转在屏幕上真的走完整。
+    // 主视图（浏览模式的首页构图与探索模式的全景）完全不受影响——它是另一个机位，不是一个新场景。
+    const galacticOverview = () => {
+      flight = null
+      selected = null; hovered = null; diagnostic('selected', 'none'); solar.highlight(null)
+      if (controls) { controls.enableDamping = false; controls.update() }
+      // 环心与环面法线由 createSolarSystem 每帧刷新；这里先补一次 update，保证刚切过来时
+      // 拿到的是当前 world 变换下的值（浏览模式的位移/缩放刚被重置，不能读上一次的缓存）。
+      solar.update(simulationTime, pulseEnergy)
+      const centre = galacticCentreScratch.copy(solar.galacticCentre), normal = galacticNormalScratch.copy(solar.galacticNormal).normalize()
+      const halfFov = Math.min(T.MathUtils.degToRad(21), Math.atan(Math.tan(T.MathUtils.degToRad(21)) * camera.aspect))
+      const radius = Math.max(solar.galacticRadius(), 1e-6)
+      // 视线方向 = 环面法线为主 + 一点「从环心看向太阳系」的分量：纯法线是正俯视，
+      // 环会退化成一条线；掺入面内分量后是一个有透视的椭圆，进深方向的前进也看得出来。
+      const direction = galacticDirScratch.copy(centre).negate().normalize().multiplyScalar(.62).addScaledVector(normal, .82).normalize()
+      const distance = radius * 2.12 / Math.sin(halfFov)
+      setCameraRange(distance)
+      camera.position.copy(centre).addScaledVector(direction, distance)
+      camera.lookAt(centre)
+      if (controls) { controls.target.copy(centre); controls.minDistance = Math.max(solar.span() * .05, camera.near * 3); controls.maxDistance = distance * 2.2; controls.update() }
+      if (controls) controls.enableDamping = !props.reducedMotion
+      previousTarget.copy(centre)
+      followApplied.set(0, 0, 0)
+    }
+    // 「当前视角该用哪个机位」只有一个入口：主视图与星系视角共用复位、换比例、换模式、
+    // 取消选中等所有路径，任何一处漏接都会出现「切过去还是主视图构图」的半截状态。
+    const frameView = () => { if (galacticView) galacticOverview(); else overview() }
     const selectBody = (id: BodyId | null, preserveDirection = false) => {
       if (mode !== 'explore') return
-      if (!id) { overview(); invalidate(); return }
+      if (!id) { frameView(); invalidate(); return }
       selected = id; diagnostic('selected', id); solar.highlight(id)
       solar.world.updateMatrixWorld(true)
       solar.planets.get(id)!.anchor.getWorldPosition(targetPosition)
@@ -301,6 +412,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       const availableHalfHeight = Math.max(innerHeight * .5 - (landscape ? 130 : 190), 45)
       const framing = innerWidth > 760 ? Math.max(baseFraming, innerHeight * .47 / availableHalfHeight) : baseFraming
       const distance = framingRadius / Math.sin(halfFov) * framing
+      setCameraRange(distance)
       if (props.reducedMotion) { camera.position.copy(targetPosition).addScaledVector(direction, distance); controls?.target.copy(targetPosition) }
       else flight = { fromPosition: camera.position.clone(), fromTarget: controls?.target.clone() ?? new T.Vector3(), offset: direction.multiplyScalar(distance), progress: 0 }
       previousTarget.copy(targetPosition)
@@ -322,7 +434,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       if (mode === 'explore' && element) {
         solar.world.position.set(0, 0, 0); solar.world.scale.setScalar(1); solar.world.rotation.set(0, 0, 0)
         controls = new OrbitControls(camera, element); controls.enablePan = false; controls.enableDamping = !props.reducedMotion; controls.dampingFactor = .09
-        overview()
+        frameView()
         let down: { x: number; y: number; id: number } | null = null, dragged = false
         const onDown = (event: PointerEvent) => { flight = null; if (down) dragged = true; else { down = { x: event.clientX, y: event.clientY, id: event.pointerId }; dragged = false } }
         const onMove = (event: PointerEvent) => {
@@ -359,7 +471,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       solar.setScaleMode(next)
       frameEnvironment()
       diagnostic('scale', next)
-      if (mode === 'explore') { if (selected) selectBody(selected, true); else overview() }
+      if (mode === 'explore') { if (selected) selectBody(selected, true); else frameView() }
       else render(performance.now(), true)
       invalidate()
     }
@@ -372,7 +484,30 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     const setTimeScale = (next: number) => { if (timeScale === next) return; timeScale = next as typeof timeScale; diagnostic('time-scale', String(timeScale)); invalidate() }
     // 银道环保留但默认隐藏，这里只切它的可见性——它标的是太阳绕银心的公转路径，不是常驻装饰。
     const setGalacticRing = (next: boolean) => { if (galacticRing === next) return; galacticRing = next; solar.galacticAnchor.visible = next; diagnostic('galactic-ring', String(next)); invalidate() }
-    const resetView = () => { if (mode === 'explore') { overview(); invalidate() } }
+    // 「星系视角」：只换机位与光的可见性，不改场景内容，也不动主视图的任何取景参数。
+    // 进入时把银道环显形——这个视角里整条环就是画面主体，藏起来就只剩一片空星空。
+    // 半径要比行星系统大得多：环半径只有 0.97×span，而 span 恰好是海王星轨道（艺术模式下
+    // 600 对 572），两者几乎重合，拉远后画面上是两个套在一起的圆，看不出"轨道上的一点"。
+    const setGalacticView = (active: boolean) => {
+      if (galacticView === active) return
+      galacticView = active; diagnostic('view', active ? 'galactic' : 'system')
+      solar.setGalacticExtent(active)
+      solar.galacticAnchor.visible = active || galacticRing
+      // 环境（银河背景球与星点）必须按新取景重新缩放：星系视角的相机退到环外，
+      // 尺寸不变的话会直接穿出天球，银河背景反而消失。
+      frameEnvironment()
+      if (active && mode === 'browse') {
+        // 星系视角是探索面板里的东西，但浏览模式也可能被要求切（面板与画布的生命周期不同步），
+        // 这时把 world 归位到 1:1：环面法线只在 world 无缩放、无位移时才等于真实银道面朝向。
+        solar.world.position.set(0, 0, 0); solar.world.scale.setScalar(1); solar.world.rotation.set(0, 0, 0)
+      }
+      // 换视角就重新取景并清掉选中：选中的天体属于主视图的叙事，跟着一起切过去会让相机
+      // 又飞回行星尺度，星系视角刚建立起来的"整条轨道"立刻消失。
+      if (mode === 'explore') frameView()
+      else render(performance.now(), true)
+      invalidate()
+    }
+    const resetView = () => { if (mode === 'explore') { frameView(); invalidate() } }
     const zoomBy = (direction: number) => { if (!controls) return; flight = null; if (direction > 0) controls.dollyIn(1 / 1.2); else controls.dollyOut(1 / 1.2); controls.update(); invalidate() }
     const onVisibility = () => { if (visible()) { lastTime = null; render(performance.now()); start() } else stop() }
     const onPointer = (event: PointerEvent) => { if (mode !== 'browse' || props.reducedMotion || !matchMedia('(hover:hover) and (pointer:fine)').matches) return; pointer.set(event.clientX / Math.max(innerWidth, 1) * 2 - 1, 1 - event.clientY / Math.max(innerHeight, 1) * 2) }
@@ -384,6 +519,6 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     solar.galacticAnchor.visible = galacticRing
     renderer.setClearColor(0x000000, 0); applyTheme(); frameEnvironment(); resize(true); render(0, true); start()
     const destroy = () => { if (destroyed) return; destroyed = true; diagnostic('ready', 'false'); stop(); try { scope.cleanup() } catch { /* Release all resources even when a driver disposer fails. */ } }
-    return { setPhase, setTheme, pulse, setMode, setScaleMode, selectBody, setPaused, setTimeScale, setGalacticRing, resetView, zoomBy, destroy }
+    return { setPhase, setTheme, pulse, setMode, setScaleMode, selectBody, setPaused, setTimeScale, setGalacticRing, setGalacticView, resetView, zoomBy, destroy }
   } catch (error) { try { scope.cleanup() } catch { /* Preserve initialization error. */ } throw error }
 }

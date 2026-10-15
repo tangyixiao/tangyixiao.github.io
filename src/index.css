@@ -286,8 +286,10 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
 .dot-sun { box-shadow: 0 0 18px #ffae5270; }
 .dot-saturn { position: relative; }
 .dot-saturn::after { content: ''; position: absolute; inset: 3px -4px; border: 1px solid #efcead; border-radius: 50%; transform: rotate(-30deg); }
-.explorer-toolbar { display: flex; gap: 14px; align-items: center; justify-content: space-between; margin-top: 14px; }
-.explorer-hint { font-size: .65rem; color: var(--muted); margin: 0; }
+.explorer-toolbar { display: flex; gap: 14px; row-gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 14px; }
+/* 提示语是工具栏里唯一的纯文本，flex 会把它压成每行一个字的竖条（实测只剩 10px 宽）。
+   给它一个不可压缩的最小宽度并禁止换行：空间不够时整块换到下一行，而不是自己变形。 */
+.explorer-hint { font-size: .65rem; color: var(--muted); margin: 0; flex: 1 1 220px; min-width: 0; white-space: nowrap; }
 .touch-hint { display: none; }
 .explorer-controls { display: flex; gap: 6px; }
 .explorer-controls button { border: 1px solid var(--line); border-radius: 10px; min-width: 44px; min-height: 44px; padding: 9px 13px; background: var(--glass); backdrop-filter: blur(15px); font-size: .8rem; }
@@ -295,6 +297,15 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
 .celestial-label { position: absolute; top: 0; left: 0; padding-left: 19px; white-space: nowrap; color: var(--muted); font: 500 .64rem/1.5 'DejaVu Sans Mono', 'Microsoft YaHei', monospace; letter-spacing: .09em; text-shadow: 0 2px 8px var(--bg), 0 0 14px var(--bg); }
 .celestial-label[hidden] { display: none; }
 .celestial-label::before { content: ''; width: 12px; height: 1px; background: var(--body-color); position: absolute; top: .6em; left: 0; opacity: .65; }
+/* 真实比例下的标记环：天体本体在那个比例里小到不足一个像素（地球约 0.02 px），
+   位置仍然要能被找到、被点中。环是空心的、固定 11 像素，标的是位置而不是大小——
+   天体的真实像素直径由面板上的读数给出，两者不会互相冒充。pointer-events: none 保证
+   画布中心的那次点击仍然打在太阳的球体上，而不是被这层覆盖物吃掉。 */
+.celestial-marker { position: absolute; top: 0; left: 0; width: 11px; height: 11px; border: 1px solid var(--body-color); border-radius: 50%; opacity: .75; pointer-events: none; }
+.celestial-marker[hidden] { display: none; }
+/* 星系视角里「太阳系」只是环上的一个点：整个系统缩到几个像素，标记就代表它。 */
+.system-marker { position: absolute; top: 0; left: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 12px var(--gold); pointer-events: none; }
+.system-marker[hidden] { display: none; }
 .label-en { display: none; }
 :root[data-language='en'] .label-en { display: inline; }
 :root[data-language='en'] .label-zh { display: none; }
@@ -311,6 +322,32 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
 .body-info-content > p { margin-top: 25px; font-size: .8rem; line-height: 1.9; }
 .body-info-toggle { display: none; pointer-events: auto; }
 .body-facts { margin: 28px 0; }
+/* 真实比例下的诚实读数：统一放大系数、本视图里的真实像素直径、太阳:地球比例。
+   数字由画布写进 data-scene-* 诊断属性，面板只读，不自己重算取景。 */
+.body-scale { margin: 20px 0; border-top: 1px solid var(--line); }
+.body-scale > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.body-scale dt { color: var(--muted); font-size: .64rem; }
+.body-scale dd { margin: 0; font: 500 .7rem/1.4 'DejaVu Sans Mono', 'Microsoft YaHei', monospace; letter-spacing: .04em; }
+.body-scale dd small { color: var(--muted); margin-left: 3px; }
+.body-scale-note { margin: 10px 0 0; color: var(--muted); font-size: .62rem; line-height: 1.7; }
+/* 星系视角的比例尺：真实距离 8.277 kpc 与画面里这一圈的示意半径并列，
+   比值由 GALACTIC_REAL 现算（5,680 万倍），不是写死在文案里的结论。 */
+/* 比例尺是底部面板的第一个子元素（不是浮层）：它把分类行、picker 与工具栏整体往上推，
+   因此永远不会盖住 picker。先前用绝对定位 + bottom: 200px，在 1440×900、1280×800、1366×768
+   三种桌面尺寸下都压在 picker 上（实测面板底边 700 而 picker 顶边 562）。 */
+.galactic-scale { width: 100%; margin-bottom: 12px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 6px; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(15px); pointer-events: none; }
+.galactic-scale[hidden] { display: none; }
+.galactic-scale h4 { margin: 0 0 10px; font-size: .66rem; font-weight: 600; letter-spacing: .16em; color: var(--muted); text-transform: uppercase; }
+.galactic-scale ol { list-style: none; display: flex; gap: 10px; align-items: center; margin: 0 0 9px; padding: 0; }
+.galactic-scale li { flex: 1 1 0; min-width: 0; font-size: .62rem; color: var(--muted); }
+.galactic-scale li b { display: block; margin-bottom: 5px; color: var(--fg); font-size: .68rem; font-weight: 600; }
+.galactic-scale li::before { content: ''; display: block; height: 1px; margin-bottom: 5px; background: var(--line); }
+.galactic-scale li:first-child::before { background: var(--gold); }
+.galactic-scale li span { display: block; font: .6rem/1.6 'DejaVu Sans Mono', 'Microsoft YaHei', monospace; }
+.galactic-scale p { margin: 0; font-size: .62rem; line-height: 1.7; }
+.galactic-scale strong { color: var(--gold); font-weight: 600; }
+.galactic-scale .galactic-progress { color: var(--teal); font: 600 .64rem/1.6 'DejaVu Sans Mono', 'Microsoft YaHei', monospace; letter-spacing: .06em; }
+@media (max-width: 760px) { .galactic-scale { margin-bottom: 8px; padding: 10px 12px; } .galactic-scale ol { flex-direction: column; align-items: stretch; gap: 6px; } .galactic-scale h4 { margin-bottom: 7px; } }
 .body-facts > div { padding: 15px 0; border-top: 1px solid var(--line); }
 .body-facts dt { color: var(--muted); font-size: .64rem; }
 .body-facts dd { margin: 8px 0 0; font: 400 1.35rem/1.3 'DejaVu Sans Mono', monospace; letter-spacing: -.04em; }
@@ -347,11 +384,12 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
 .time-scale button:last-child { border-radius: 0 5px 5px 0; }
 .time-scale button:hover { z-index: 1; border-color: var(--teal); background: var(--surface-raised); }
 .time-scale button[aria-pressed='true'] { z-index: 1; border-color: color-mix(in srgb, var(--teal) 55%, transparent); background: color-mix(in srgb, var(--teal) 12%, transparent); color: var(--teal); }
-.ring-toggle { display: inline-flex; gap: 9px; align-items: center; flex: none; min-height: 44px; padding: 0 15px; border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--bg) 84%, transparent); color: inherit; font: inherit; font-size: .74rem; font-weight: 600; white-space: nowrap; cursor: pointer; transition: border-color .2s, background .2s; }
-.ring-toggle::before { content: ''; flex: none; width: 9px; height: 9px; border: 1px solid var(--muted); border-radius: 50%; }
-.ring-toggle:hover { border-color: var(--teal); background: var(--surface-raised); }
-.ring-toggle[aria-pressed='true'] { border-color: color-mix(in srgb, var(--teal) 55%, transparent); color: var(--teal); }
-.ring-toggle[aria-pressed='true']::before { border-color: var(--teal); background: var(--teal); box-shadow: 0 0 9px color-mix(in srgb, var(--teal) 40%, transparent); }
+.ring-toggle, .view-toggle { display: inline-flex; gap: 9px; align-items: center; flex: none; min-height: 44px; padding: 0 15px; border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--bg) 84%, transparent); color: inherit; font: inherit; font-size: .74rem; font-weight: 600; white-space: nowrap; cursor: pointer; transition: border-color .2s, background .2s; }
+.ring-toggle::before, .view-toggle::before { content: ''; flex: none; width: 9px; height: 9px; border: 1px solid var(--muted); border-radius: 50%; }
+.view-toggle::before { border-color: var(--gold); }
+.ring-toggle:hover, .view-toggle:hover { border-color: var(--teal); background: var(--surface-raised); }
+.ring-toggle[aria-pressed='true'], .view-toggle[aria-pressed='true'] { border-color: color-mix(in srgb, var(--teal) 55%, transparent); color: var(--teal); }
+.ring-toggle[aria-pressed='true']::before, .view-toggle[aria-pressed='true']::before { border-color: var(--teal); background: var(--teal); box-shadow: 0 0 9px color-mix(in srgb, var(--teal) 40%, transparent); }
 .explore-blackhole { display: flex; width: max-content; max-width: 100%; margin: 10px auto 0; border-color: color-mix(in srgb, var(--teal) 45%, transparent); }
 .explore-blackhole:hover { border-color: var(--teal); box-shadow: 0 14px 50px color-mix(in srgb, var(--teal) 20%, transparent); }
 .explore-blackhole .explore-icon { color: var(--teal); font-size: 1.25rem; }
@@ -387,6 +425,14 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
   .planet-picker { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; padding: 7px; border-radius: 14px; }
   .planet-picker button { flex-direction: column; gap: 6px; padding: 7px 2px; font-size: .59rem; }
   .explorer-toolbar { flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  /* 窄屏上多了一个「星系视角」按钮、时间流速也从四挡位变六挡位，工具栏自然更高。底部面板
+     是从下往上长高的，高到一定程度就会盖住左侧信息栏里的「天体信息」按钮（320×568 实测
+     88px 的信息栏底边在 172px，面板顶边必须留在它下面）。所以窄屏把工具栏按钮压到 38px，
+     和「横屏矮窗」里已经用过的那条规则一致——省下的高度刚好让面板回到信息栏下方。 */
+  .scale-toggle, .ring-toggle, .view-toggle, .blackhole-entry, .time-scale button, .explorer-controls button { min-height: 38px; }
+  .time-scale { flex: 0 1 auto; align-self: center; }
+  .time-scale button { padding: 0 4px; font-size: .6rem; }
+  .view-toggle { padding: 0 12px; }
   .explorer-controls { width: 100%; justify-content: center; }
   .explorer-controls button { padding: 9px 12px; }
   .desktop-hint { display: none; }

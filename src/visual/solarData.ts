@@ -141,8 +141,8 @@ export const bodies: Body[] = seeds.map(seed => ({
 export const bodyById = (id: BodyId) => bodies.find(body => body.id === id)!
 
 export const solarCopy = {
-  zh: { explore: '探索太阳系', title: '太阳系', subtitle: '一片可以亲手探索的星空。', disclaimer: '天体大小按真实比例（太阳直径 = 109 个地球）；公转与自转周期均按真实相对比例推进，距离经艺术化压缩，各天体的轨道位置按今天的真实日期就位。太阳带着整个太阳系沿银道面朝银经 90°（天鹅座方向）前进——银道面与黄道面夹角 60.19°，工具栏里的「银道环」可以画出这条公转路径（真实一周约 2.3 亿年，演示约 25 分钟）。背景里的银河就铺在同一个银道面上。', trueScale: '真实比例', artisticScale: '艺术模式', trueDisclaimer: '距离按 1:1 真实比例（1 AU ≈ 1.55 单位），公转速度遵循开普勒第三定律，轨道倾角与离心率为真实值。太阳放大 20 倍、行星放大 160 倍以保持可见——按真实尺寸，地球在这幅全景里不足 0.01 像素。', threebody: '三体', threebodyCta: '探访半人马座α', unavailable: '当前设备无法显示动态太阳系，可继续浏览主页。', loading: '正在点亮星空…', pause: '暂停', resume: '继续', reset: '重置视角', exit: '退出探索', zoomIn: '放大', zoomOut: '缩小', select: '选择', overview: '太阳与八大行星', hint: '拖动旋转 · 滚轮缩放 · 点选行星', touchHint: '单指旋转 · 双指缩放 · 轻触行星', tracking: '正在追踪', sceneLabel: '太阳系交互视图', rotateLeft: '向左旋转', rotateRight: '向右旋转', blackhole: '黑洞', blackholeCta: '跃迁至黑洞', timeScale: '时间流速', galacticRing: '银道环' },
-  en: { explore: 'Explore the solar system', title: 'Solar system', subtitle: 'A sky you can explore for yourself.', disclaimer: 'Body sizes are in true proportion (the Sun spans 109 Earths); orbital and rotation periods keep their real ratios, distances are compressed for legibility, and every orbit starts from its real position on today\'s date. The Sun carries the solar system along the galactic plane toward galactic longitude 90° (Cygnus) — the galactic plane meets the ecliptic at 60.19°, and the "Galactic ring" control in the toolbar draws that orbit (230 million years in reality, ~25 minutes here). The Milky Way in the background lies in the very same plane.', trueScale: 'True scale', artisticScale: 'Artistic', trueDisclaimer: 'Distances are 1:1 to reality (1 AU ≈ 1.55 units), orbital speeds follow Kepler\'s third law, and inclinations and eccentricities are real. The Sun is enlarged 20× and planets 160× to stay visible — at true size, Earth would be under 0.01 pixels in this panorama.', threebody: 'Three-body', threebodyCta: 'Visit Alpha Centauri', unavailable: 'Animated solar system unavailable on this device. You can still browse the homepage.', loading: 'Lighting up the sky…', pause: 'Pause', resume: 'Resume', reset: 'Reset view', exit: 'Exit exploration', zoomIn: 'Zoom in', zoomOut: 'Zoom out', select: 'Select', overview: 'The Sun and eight planets', hint: 'Drag to rotate · Scroll to zoom · Select a planet', touchHint: 'One finger to rotate · Pinch to zoom · Tap a planet', tracking: 'Following', sceneLabel: 'Interactive solar system view', rotateLeft: 'Rotate left', rotateRight: 'Rotate right', blackhole: 'Black hole', blackholeCta: 'Enter the black hole', timeScale: 'Time scale', galacticRing: 'Galactic ring' },
+  zh: { explore: '探索太阳系', title: '太阳系', subtitle: '一片可以亲手探索的星空。', disclaimer: '天体大小按真实比例（太阳直径 = 109 个地球）；公转与自转周期均按真实相对比例推进，距离经艺术化压缩，各天体的轨道位置按今天的真实日期就位。太阳带着整个太阳系沿银道面朝银经 90°（天鹅座方向）前进——银道面与黄道面夹角 60.19°，工具栏里的「银道环」可以画出这条公转路径，切到「星系视角」能把整条轨道拉进画面，看太阳带着整个体系真的走完一圈（真实一周约 2.3 亿年，演示约 25 分钟）。背景里的银河就铺在同一个银道面上。', trueScale: '真实比例', artisticScale: '艺术模式', trueDisclaimer: '距离按 1:1 真实比例（1 AU ≈ 1.55 单位），公转速度遵循开普勒第三定律，轨道倾角与离心率为真实值。所有天体共用同一个放大系数 20×，没有任何最小值钳制——太阳 : 地球 = 109.2 : 1 严格成立（旧版本给太阳乘 20、行星乘 160，比例是假的）。按这个比例地球在这幅全景里只有约 0.02 像素，所以每个天体用一个固定大小的标记环标出位置，它的真实像素直径见上方读数。', threebody: '三体', threebodyCta: '探访半人马座α', unavailable: '当前设备无法显示动态太阳系，可继续浏览主页。', loading: '正在点亮星空…', pause: '暂停', resume: '继续', reset: '重置视角', exit: '退出探索', zoomIn: '放大', zoomOut: '缩小', select: '选择', overview: '太阳与八大行星', hint: '拖动旋转 · 滚轮缩放 · 点选行星', touchHint: '单指旋转 · 双指缩放 · 轻触行星', tracking: '正在追踪', sceneLabel: '太阳系交互视图', rotateLeft: '向左旋转', rotateRight: '向右旋转', blackhole: '黑洞', blackholeCta: '跃迁至黑洞', timeScale: '时间流速', galacticRing: '银道环', galacticView: '星系视角', galacticScaleTitle: '比例尺 · 银心公转', galacticScaleSun: '太阳系', galacticScaleCentre: '银心', galacticScaleReal: '真实距离 8.277 kpc ≈ 1.71 × 10⁹ AU', galacticScaleRatio: '真实轨道半径≈海王星轨道的', galacticScaleRatioUnit: '万倍', galacticRatioInvalid: '真实轨道半径与画面里的环无法同框', galacticScaleDrawnTrue: '画面里这一圈的半径', galacticScaleDrawnTrueUnit: 'AU（1 AU ≈ 1.55 单位，海王星轨道 30.1 AU）', galacticScaleDrawnArt: '画面用艺术压缩距离，这一圈半径', galacticScaleDrawnArtUnit: '单位（不是真实 AU）', galacticScaleNote: '环半径只为示意——真实比例下两者无法同框；环面、前进方向与周期都是真实值。', galacticProgress: '已绕行', magnifyLabel: '统一放大系数', pixelLabel: '本视图真实直径', ratioLabel: '太阳 : 地球 = 109.2 : 1', markerLabel: '标记环标的是位置，不是大小' },
+  en: { explore: 'Explore the solar system', title: 'Solar system', subtitle: 'A sky you can explore for yourself.', disclaimer: 'Body sizes are in true proportion (the Sun spans 109 Earths); orbital and rotation periods keep their real ratios, distances are compressed for legibility, and every orbit starts from its real position on today\'s date. The Sun carries the solar system along the galactic plane toward galactic longitude 90° (Cygnus) — the galactic plane meets the ecliptic at 60.19°, and the "Galactic ring" control in the toolbar draws that orbit; "Galaxy view" pulls the whole track into frame so you can watch the Sun carry the entire system around it (230 million years in reality, ~25 minutes here). The Milky Way in the background lies in the very same plane.', trueScale: 'True scale', artisticScale: 'Artistic', trueDisclaimer: 'Distances are 1:1 to reality (1 AU ≈ 1.55 units), orbital speeds follow Kepler\'s third law, and inclinations and eccentricities are real. Every body shares one magnification factor of 20× with no minimum-size clamp — the Sun : Earth ratio of 109.2 : 1 holds exactly (the old version used 20× for the Sun and 160× for planets, which faked the ratio). At that ratio Earth is about 0.02 pixels across in this panorama, so each body is marked by a fixed-size ring instead, and its true pixel diameter is shown above.', threebody: 'Three-body', threebodyCta: 'Visit Alpha Centauri', unavailable: 'Animated solar system unavailable on this device. You can still browse the homepage.', loading: 'Lighting up the sky…', pause: 'Pause', resume: 'Resume', reset: 'Reset view', exit: 'Exit exploration', zoomIn: 'Zoom in', zoomOut: 'Zoom out', select: 'Select', overview: 'The Sun and eight planets', hint: 'Drag to rotate · Scroll to zoom · Select a planet', touchHint: 'One finger to rotate · Pinch to zoom · Tap a planet', tracking: 'Following', sceneLabel: 'Interactive solar system view', rotateLeft: 'Rotate left', rotateRight: 'Rotate right', blackhole: 'Black hole', blackholeCta: 'Enter the black hole', timeScale: 'Time scale', galacticRing: 'Galactic ring', galacticView: 'Galaxy view', galacticScaleTitle: 'Scale bar · galactic orbit', galacticScaleSun: 'Solar system', galacticScaleCentre: 'Galactic centre', galacticScaleReal: 'Real distance 8.277 kpc ≈ 1.71 × 10⁹ AU', galacticScaleRatio: 'The real orbit radius is about', galacticScaleRatioUnit: 'million x Neptune\'s orbit', galacticRatioInvalid: 'The real orbit radius cannot share a frame with the drawn ring', galacticScaleDrawnTrue: 'This circle\'s drawn radius', galacticScaleDrawnTrueUnit: 'AU (1 AU ≈ 1.55 units; Neptune orbits at 30.1 AU)', galacticScaleDrawnArt: 'Drawn with artistic distance compression, this circle\'s radius is', galacticScaleDrawnArtUnit: 'units (not real AU)', galacticScaleNote: 'The ring radius is indicative only — at true proportions the two cannot share a frame. Its plane, direction of travel and period are real.', galacticProgress: 'Travelled', magnifyLabel: 'One magnification factor', pixelLabel: 'True diameter in this view', ratioLabel: 'Sun : Earth = 109.2 : 1', markerLabel: 'The ring marks position, not size' },
 }
 
 // 探索面板里的天体分类。太阳单列「恒星」，八大行星是默认页，小天体与卫星各自成类。
@@ -184,8 +184,20 @@ export const surfaceFor = (id: BodyId): string | null => {
 }
 
 // 真实比例模式的换算：1 AU = 1.55 单位（地球轨道与艺术模式的 5.9 对齐，切换不跳变）。
-// 太阳放大 20 倍、行星放大 160 倍仅保可见，比例关系在行星之间严格保持。
-export const TRUE_SCALE = { AU: 1.55, sunMag: 20, planetMag: 160, minSize: .011, earthSpeed: .15, sunRadiusAU: .00465, earthRadiusAU: 4.2588e-5 } as const
+// 大小：所有天体共用同一个放大系数 magnify，太阳也不例外——太阳 : 地球 = 109.2 : 1 严格成立。
+// 旧实现把太阳乘 20、行星乘 160（两者差 8.33 倍），minSize 又把四颗内行星压成同一尺寸，
+// 那只是「距离 1:1」，尺寸是假的。20 倍是让太阳仍然可见的放大系数；行星在这个比例下远小于 1 像素，
+// 因此靠面板上的标记环定位、由「真实像素直径」读数给出实际大小，而不是把球体放大。
+export const TRUE_SCALE = { AU: 1.55, magnify: 20, earthSpeed: .15, earthRadiusAU: 4.2588e-5 } as const
+
+// 取景跨度（世界单位）：艺术模式把外行星压缩到 600 以内，真实模式下 1 AU = 1.55 单位、海王星 46.6。
+// 取景、银道环半径与「星系视角」的相机距离都从这一个常量推导，避免同一组数字散落多处。
+export const SPAN = { artistic: 600, true: 51 } as const
+export const spanFor = (mode: ScaleMode) => mode === 'true' ? SPAN.true : SPAN.artistic
+
+// 银心距离等真实数值：示意环与真实距离相差 5,700 万倍，界面上的比例尺必须能自己算出这个比值，
+// 而不是把结论写死在文案里（1 pc = 206,264.806 AU，海王星平均日距 30.07 AU）。
+export const GALACTIC_REAL = { distanceKpc: 8.277, auPerParsec: 206264.806, neptuneAU: 30.07 } as const
 
 // 银道坐标系在黄道坐标系（也是场景坐标系：+x 为黄经 0°、+y 为黄经 90°、+z 为黄北极）中的基向量，
 // 由 J2000 北银极（β = +29.8114°）与银心（β = −5.5363°，λ = 266.8396°）换算：
@@ -207,7 +219,7 @@ export const GALACTIC = {
 // 画面上不足一个像素，故不单独偏移。
 // radiusRatio = .97：环必须落在海王星轨道之外、又在全景取景半径之内。艺术模式下海王星在
 // 572/600 = .953，真实模式下在 46.6/51 = .914，取 .97 两种模式都在环内且贴边可见。
-export const GALAXY = { omega: Math.PI * 2 / 1500, radiusRatio: .97 } as const
+export const GALAXY = { omega: Math.PI * 2 / 1500, radiusRatio: .97, viewRadiusRatio: 24 } as const
 
 // 月球轨道：对黄道倾斜 5.145°，升交点每 18.6 年沿黄道退行一周（都是真实值）。
 // 公转周期与倾角已并入 bodies 的 moon 条目，这里只保留交点退行需要的时间常数。
@@ -231,9 +243,10 @@ export const BELT = {
 export const TROJANS = { lag: 60 * DEG, spread: 30 * DEG, count: 300, ecc: .05, eccSpread: .08, sigma: 13 } as const
 
 export const trueOrbit = (body: { orbitAU: number }) => body.orbitAU * TRUE_SCALE.AU
-export const trueRadius = (body: { id: BodyId; radiusEarth: number }) => body.id === 'sun'
-  ? TRUE_SCALE.sunRadiusAU * TRUE_SCALE.AU * TRUE_SCALE.sunMag
-  : Math.max(body.radiusEarth * TRUE_SCALE.earthRadiusAU * TRUE_SCALE.AU * TRUE_SCALE.planetMag, TRUE_SCALE.minSize)
+// 半径：天体半径（以地球半径为单位）× 1 R⊕ 的 AU 值 × 统一的放大系数。公式里没有分支、没有上限、
+// 没有最小值钳制，所以任意两个天体的半径比严格等于它们的真实半径比——太阳 109.2 R⊕ 就是 109.2 倍地球。
+export const trueRadius = (body: { radiusEarth: number }) =>
+  body.radiusEarth * TRUE_SCALE.earthRadiusAU * TRUE_SCALE.AU * TRUE_SCALE.magnify
 export const trueSpeed = (body: { orbitAU: number }) => body.orbitAU ? TRUE_SCALE.earthSpeed / body.orbitAU ** 1.5 : 0
 export const scaleValue = (body: Body, mode: ScaleMode) => mode === 'true'
   ? { orbit: trueOrbit(body), radius: trueRadius(body), speed: trueSpeed(body) }
