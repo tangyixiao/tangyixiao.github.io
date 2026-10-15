@@ -163,9 +163,14 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     // 一个比例，以及「全景取景本来留给最外侧轨道的余量」——后者保证探索模式的全景里，
     // 外行星不会被这点位移顶出画面。
     const narrowHalf = (viewDistance: number) => viewDistance * Math.tan(Math.min(T.MathUtils.degToRad(21), Math.atan(Math.tan(T.MathUtils.degToRad(21)) * camera.aspect)))
+    // 残差预算 = 画面上留下多少公转位移。这是「太阳动没动」的可见性旋钮：
+    // 旧值（.18/.22）加上海王星余量项会把 86–95% 的位移跟掉，1× 下一圈 25 分钟屏幕上只漂几十像素——
+    // 用户看到的就是"太阳不动、行星围着它转"的日心说画面。现在留下两到三成的可视宽度，
+    // 太阳带着整个体系在画面里走出肉眼可见的一段弧；外行星被顶出画面的风险由取景距离
+    // 在 explore 侧预留 22% 余量（overview 的 span/sin(21°) → ×1.22）吸收。
     const cruiseBudget = (viewDistance: number, fraction: number) => {
       const half = narrowHalf(viewDistance)
-      return Math.min(fraction * half, .85 * Math.max(0, half - solar.span() * solar.world.scale.x))
+      return fraction * half
     }
     const computeShift = (viewDistance: number, fraction: number, follow = true) => {
       cruiseScene.copy(solar.cruise).applyQuaternion(solar.world.quaternion).multiplyScalar(solar.world.scale.x)
@@ -201,7 +206,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       // 恰好只走过 residual——太阳系确实在星空里挪动，构图却不会跑掉。相机平移本身还带来
       // 星空视差：拉远的星点会缓缓流过，这是「整个太阳系正在银河里前进」最直接的读数。
       const viewDistance = p ? p.cameraZ : controls ? camera.position.distanceTo(controls.target) : solar.span()
-      computeShift(viewDistance, p ? .18 : .22, !galacticView)
+      computeShift(viewDistance, p ? .3 : .28, !galacticView)
       if (p) {
         // 相机整体平移 shiftScene、朝向仍锁在原点：太阳系在画面里只挪动 residual，天球与背景星不动，
         // 视向随位移微微转动——那点视差就是「整个太阳系正在银河里前进」的读数。
@@ -360,7 +365,10 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       selected = null; hovered = null; diagnostic('selected', 'none'); solar.highlight(null)
       if (controls) { controls.enableDamping = false; controls.update() }
       const halfFov = Math.min(T.MathUtils.degToRad(21), Math.atan(Math.tan(T.MathUtils.degToRad(21)) * camera.aspect))
-      const distance = solar.span() / Math.sin(halfFov)
+      // 探索全景在标准取景距离上再退 22%：公转位移如今只被相机跟掉七成（residual .28），
+      // 太阳系会整体滑出标准取景的边框，多退的距离就是给这段滑行留的余量。
+      // 相机保持"看向外行星轨道的边缘"，构图仍是同一张全景，只是更宽。
+      const distance = solar.span() / Math.sin(halfFov) * 1.22
       frameEnvironment()
       setCameraRange(distance)
       camera.position.set(0, .75, 1).normalize().multiplyScalar(distance)
@@ -428,8 +436,24 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       const bounds = canvas.getBoundingClientRect()
       const point = new T.Vector2((event.clientX - bounds.left) / bounds.width * 2 - 1, -(event.clientY - bounds.top) / bounds.height * 2 + 1)
       scene.updateMatrixWorld(true); camera.updateMatrixWorld(true); raycaster.setFromCamera(point, camera)
-      const hit = raycaster.intersectObjects(Array.from(solar.planets.values()).map(body => body.mesh), false)[0]
-      return hit ? hit.object.userData.bodyId as BodyId : null
+      const meshes = Array.from(solar.planets.values()).map(body => body.mesh)
+      const hit = raycaster.intersectObjects(meshes, false)[0]
+      if (hit) return hit.object.userData.bodyId as BodyId
+      // 公转位移如今留在画面上（residual 预算），真实比例下行星可能只有零点几个像素，
+      // 射线永远打不中 mesh；以光标为中心、阈值随相机距离放宽的最近邻拾取兜底，
+      // 「点到天体附近就是它」在 1px 和 1000px 的尺度上都成立。命中 mesh 优先。
+      const origin = raycaster.ray.origin, direction = raycaster.ray.direction
+      let best: { id: BodyId; score: number } | null = null
+      for (const body of meshes) {
+        const radius = solar.metrics(body.userData.bodyId as BodyId).radius * solar.world.scale.x
+        const distance = raycaster.ray.distanceToPoint(body.getWorldPosition(followScratch))
+        // 屏幕阈值：天体直径的 3 倍，最少 0.02 个视角单位——选中的交互目标永远比像素大一点。
+        const threshold = Math.max(radius * 3, origin.distanceTo(body.getWorldPosition(followScratch)) * .02)
+        if (distance > threshold) continue
+        const score = distance + Math.max(0, origin.distanceTo(followScratch) - radius)
+        if (!best || score < best.score) best = { id: body.userData.bodyId as BodyId, score }
+      }
+      return best ? best.id : null
     }
     const setMode = (next: SceneMode, element: HTMLElement | null) => {
       if (next === mode && element === interactionElement) return
