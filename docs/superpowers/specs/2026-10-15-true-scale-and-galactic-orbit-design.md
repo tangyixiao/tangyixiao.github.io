@@ -48,3 +48,34 @@ trueRadius = body.radiusEarth × earthRadiusAU × AU × magnify   // 无分支�
 
 `npm run test:unit` 8/8；`npm run test:browser` 六套全绿（含新增：单一系数读数、9 个标记环、
 星系视角取景与角度推进、比例尺内容、720×/240× 换挡）。`npx tsc --noEmit` 干净。
+
+## 第二轮：参考视频的运动语言（BV19N411C7VY，2026-10-15 晚）
+
+用户追加（原文）：「【最真实的太阳系运动，3D动画】https://www.bilibili.com/video/BV19N411C7VY 我说要是这样的」。
+视频无旁白（ASR 只有标题句），全部信息在画面里（已抽帧分析）。它的三个标志性元素与落地方式：
+
+1. **行星亮尾迹（彗尾状，颜色随行星）**：64 点拖尾由 `LineBasicMaterial` 改为自定义
+   `ShaderMaterial`（`trailVertex`/`trailFragment`，`createSolarSystem.ts`）——1px 的 WebGL
+   线无法加宽，改为顶点沿视线方向抬向相机（`uPixelScale × .006 × 深度`），片元用
+   `intensity = (1.2 + 3.2·glow) · min(uPixelScale, 2)` 加亮，`tint = mix(vColor, 白, glow·.35)`
+   保留每行星的色相、头部泛白。`uCamera` 每帧由控制器传入 model 空间（`setTrailCamera`），
+   `uPixelScale` 由 `resize()` 写入（`setPixelScale`）。
+   **弧长律**：`arcSpan = clamp(1.15 · (speed/mercurySpeed)^-.28, .3, 4.2)` rad——越慢（越外）的
+   行星尾迹越长，参考视频 f_012 里外行星的长弧最抢眼；arcSpan 是整条弧的张角、均分给 63 段
+   （早期实现每段都走满 arcSpan，64 点扫了 63×arcSpan ≈ 海王星 8 圈，画面折成多边形网——教训：
+   弧长参数必须除以段数）。
+2. **太阳的金色行进光束**：`sunBeam` 圆台（`CylinderGeometry(.14,.34)`，加性混合、双面、
+   `frustumCulled=false`）挂在 system 组里，每帧 `setFromUnitVectors(+Y, GALACTIC.l90)`——
+   l90 = 银经 90°（天鹅座）方向 = 太阳系真实的运动方向；长度 `sun.radius × 12.5`，
+   不透明度随日面脉动呼吸（`.34 + pulse·.1 + energy·.14`）。
+3. **银河系语境**：已有的银道环、星系视角与天球银河贴图承接了这一层，不再重复造。
+
+拖尾与光束都是**示意**（真实运动没有可见尾迹），且只在艺术化压缩的构图里可见；
+真实比例模式下距离尺度变大，尾迹弧随之变短，与「1 AU ≈ 1.55 单位」的声明不冲突。
+
+## 第二轮已验证
+
+`npx tsc --noEmit` 干净；`npm run build` 通过（lazy chunks）；`npm run test:unit` 8/8；
+`node tests/solar-quality.cjs`、`node tests/solar-system.cjs` 通过；
+`_probe/look-check.cjs` 五张截图（hero/探索/16×/真实比例/星系视角）shader 错误为 0，
+16× 概览的亮弧贴合轨道、金束可见，无布局回归。

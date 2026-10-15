@@ -194,6 +194,8 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
         solar.world.rotation.y = T.MathUtils.lerp(solar.world.rotation.y, p.turn + pointer.x * .06, rate)
       }
       solar.update(simulationTime, pulseEnergy)
+      // 拖尾着色器要相机在 model 空间的位置：渲染前同步一次，1px 线才抬得出亮带。
+      solar.setTrailCamera(camera.position, solar.world.quaternion, solar.world.scale.x)
       // 太阳系沿银道面绕银心公转：solar.cruise 是 system 组在 world 局部空间的位移（t=0 时为零）。
       // 换算到场景空间后按当前取景预算截留一小段：相机跟掉其余部分（shift），天体因此在画面上
       // 恰好只走过 residual——太阳系确实在星空里挪动，构图却不会跑掉。相机平移本身还带来
@@ -336,6 +338,9 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       camera.filmOffset = mode === 'explore' && height <= 500 && width > 760 ? -.35 * camera.filmGauge * Math.tan(T.MathUtils.degToRad(21)) * camera.aspect : 0
       camera.updateProjectionMatrix()
       renderer.setPixelRatio(Math.min(devicePixelRatio || 1, mobile || width <= 760 ? 1.35 : 1.8)); renderer.setSize(width, height, false)
+      // 拖尾的线宽在 WebGL 里是 1px，颜色亮度不随分辨率补偿的话，高分屏上会比参考视频里
+      // 「每颗行星拖着一条亮带」的观感淡一倍以上；把像素比交给 uniform，着色器自己提亮。
+      solar.setPixelScale(renderer.getPixelRatio())
       const particles = particleCountForWidth(mobile ? Math.min(width, 760) : width)
       starGeometry.setDrawRange(0, particles); diagnostic('particles', String(particles))
       if (!initial) {

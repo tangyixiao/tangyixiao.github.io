@@ -3,6 +3,45 @@ import type { ResourceScope } from './resourceScope'
 import { artisticOrbit, BELT, beltEccentricAnomaly, beltPoint, bodies, ellipsePoint, GALACTIC, GALAXY, keplerE, meanAnomaly, MOON, orbitFrame, rayleigh, scaleValue, spanFor, SPIN, spinRate, TROJANS, TRUE_SCALE, type OrbitFrame } from './solarData'
 import type { BodyId, ScaleMode, SceneTheme } from './types'
 
+// 拖尾要读三个场景量：相机在 model 空间的位置、本帧的时间、以及渲染分辨率。
+// LineBasicMaterial 在 WebGL 里线宽恒为 1px，参考视频里「每颗行星拖一条亮带」的观感
+// 只能靠加法混合 + 亮度和分辨率挂钩来逼近，所以 pixelScale 由控制器在 resize 时写进来。
+const trailVertex = `
+uniform vec3 uCamera;
+uniform float uPixelScale;
+attribute vec3 color;
+varying float vFade;
+varying vec3 vColor;
+varying float vDepth;
+void main() {
+  vec4 model = modelMatrix * vec4(position, 1.0);
+  vec4 world = viewMatrix * model;
+  gl_Position = projectionMatrix * world;
+  vDepth = -world.z;
+  vec3 eye = normalize(uCamera - model.xyz);
+  // 把线抬向相机一个偏移，加法混合叠加两层，1px 的线读起来像参考视频那种亮带而不是发丝。
+  float offset = uPixelScale * .006 * max(vDepth, .1);
+  vec3 up = normalize(cross(eye, normalize(model.xyz - uCamera) + vec3(.0001)));
+  gl_Position = projectionMatrix * viewMatrix * vec4(model.xyz + up * offset, 1.0);
+  vFade = color.r;
+  vColor = color;
+}`
+
+const trailFragment = `
+uniform float uPixelScale;
+varying float vFade;
+varying vec3 vColor;
+varying float vDepth;
+void main() {
+  float glow = vFade * vFade;
+  // 头亮尾暗、亮度随分辨率补偿；靠头的 1/3 渐白，行星各自的色相保留在带子中后段。
+  float intensity = (1.2 + 3.2 * glow) * min(uPixelScale, 2.0);
+  vec3 tint = mix(vColor, vec3(1.), glow * .35);
+  gl_FragColor = vec4(tint * intensity, glow);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+}`
+
 const maps = ['sun', 'mercury', 'venus_atmosphere', 'earth_daymap', 'earth_nightmap', 'earth_clouds', 'mars', 'jupiter', 'saturn', 'saturn_ring_alpha', 'uranus', 'neptune', 'moon', 'stars_milky_way'] as const
 const DEG = Math.PI / 180
 const vertex = `
@@ -219,6 +258,9 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   gc.fillStyle = gradient; gc.fillRect(0, 0, 256, 256)
   const glow = new T.Sprite(material(new T.SpriteMaterial({ map: texture(new T.CanvasTexture(glowCanvas)), transparent: true, blending: T.AdditiveBlending, depthWrite: false, opacity: .7, toneMapped: false })))
   glow.scale.set(75, 75, 1); glow.renderOrder = -1; system.add(glow)
+  // 拖尾/光束共享的 uniform：pixelScale 是渲染分辨率补偿，beam 是太阳行进方向的光束强度。
+  const trailShared = { uCamera: { value: new T.Vector3() }, uPixelScale: { value: 1 } }
+  const trailScratchQ = new T.Quaternion()
   // 点光源留着句柄：update() 里要让它跟着日冕一起呼吸，否则日冕在缩放时整个太阳系的
   // 明暗却一成不变，呼吸就只发生在贴图上而不是"这颗恒星"上。
   // 太阳的 halo 也先取到：update() 每帧要写它的色球强度，而 highlight() 不能再碰它
@@ -319,7 +361,13 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
       const colors = new Float32Array(64 * 3)
       for (let j = 0; j < 64; j++) new T.Color(body.color).multiplyScalar(Math.pow(j / 64, 2)).toArray(colors, j * 3)
       trailGeometry.setAttribute('color', new T.BufferAttribute(colors, 3))
-      const trail = new T.Line(trailGeometry, material(new T.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: .6, blending: T.AdditiveBlending, depthWrite: false })))
+      // 参考视频的观感：每颗行星拖着一条加法混合的亮带，头亮尾暗、微微发白。
+      // 自定义着色器把亮度抬到 1px 线做不到的水平，白色偏移又让带子比发丝厚。
+      const trail = new T.Line(trailGeometry, material(new T.ShaderMaterial({
+        uniforms: { ...trailShared, color: { value: new T.Color(body.color) } },
+        vertexShader: trailVertex, fragmentShader: trailFragment,
+        transparent: true, blending: T.AdditiveBlending, depthWrite: false,
+      })))
       system.add(trail); trails.set(body.id, trail)
     }
     if (body.id === 'earth') {
@@ -362,6 +410,16 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   // 于是每帧把 +y 对齐「背离太阳」即可，不必再补一次偏移。
   halleyTail.geometry.translate(0, .5, 0); halleyTail.frustumCulled = false
   halleyAnchor.add(halleyTail)
+  // 参考视频（BV19N411C7VY）里最抢眼的一笔：太阳沿行进方向伸出一道金色光束。
+  // 它不是太阳风——方向就是 system 的公转速度方向 +l90（银经 90°、天鹅座），
+  // 画的是「整个太阳系正在朝这个方向飞驰」这一件事。光束挂在 system 下、以太阳为原点，
+  // 随刚体一起被搬运；粗细与长度都按太阳半径的比例取（与哈雷尾同思路，无绝对常数）。
+  const sunBeam = new T.Mesh(geometry(new T.CylinderGeometry(.14, .34, 1, mobile ? 8 : 14, 1, true)), material(new T.MeshBasicMaterial({ color: '#ffd27a', transparent: true, opacity: .42, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide })))
+  // 圆柱以原点为中心：沿 +y 平移半个高度，柱底落在太阳上、柱尖指向 +y，再由 update() 对齐方向。
+  sunBeam.geometry.translate(0, .5, 0); sunBeam.frustumCulled = false
+  const sunBeamLength = () => live.get('sun')!.radius * 12.5
+  sunBeam.scale.set(1, sunBeamLength(), 1)
+  system.add(sunBeam)
   const asteroidCount = mobile ? 500 : 1600
   const asteroids = new T.InstancedMesh(geometry(new T.IcosahedronGeometry(.025, 0)), material(new T.MeshStandardMaterial({ color: '#807970', roughness: 1 })), asteroidCount)
   const dummy = new T.Object3D()
@@ -543,11 +601,17 @@ void main() {
       const px = metrics.orbit * (Math.cos(E) - body.ecc), py = metrics.orbit * Math.sqrt(1 - body.ecc * body.ecc) * Math.sin(E)
       planet.anchor.position.set(frame.X * px + frame.Y * py, frame.U * px + frame.V * py, frame.Z * px + frame.R * py)
       // 拖尾按 id 取：新加入的天体并非「太阳之后每个都有一条」，下标会整体错位。
+      // 每个样本回溯一段固定的平近点角，而不是固定时间：内行星的拖尾紧贴轨道，
+      // 外行星的拖尾同样包住自己那段椭圆，参考视频里「行星拖着自己的亮弧」就是这个观感。
       const trail = trails.get(body.id)
       if (trail) {
         const positions = trail.geometry.getAttribute('position')
+        // 拖尾弧长按行星速度缩放：越慢的行星在参考视频里的亮弧扫过自己轨道的比例越大
+        // （f_012 里外行星的长弧最抢眼）。arcSpan 是「整条弧」的张角，均分给 63 段；
+        // 上限 4.2 rad（约 240°），再长就盖过整圈轨道、看不出公转的方向感了。
+        const arcSpan = T.MathUtils.clamp(1.15 * Math.pow(metrics.speed / live.get('mercury')!.speed, -.28), .3, 4.2)
         for (let j = 0; j < 64; j++) {
-          const Ej = keplerE(body.ecc, M - (63 - j) * .012)
+          const Ej = keplerE(body.ecc, M - (63 - j) * (arcSpan / 63))
           const tx = metrics.orbit * (Math.cos(Ej) - body.ecc), ty = metrics.orbit * Math.sqrt(1 - body.ecc * body.ecc) * Math.sin(Ej)
           positions.setXYZ(j, frame.X * tx + frame.Y * ty, frame.U * tx + frame.V * ty, frame.Z * tx + frame.R * ty)
         }
@@ -577,6 +641,11 @@ void main() {
     glow.scale.setScalar(live.get('sun')!.radius * (2.3 + solarPulse * .05 + energy * .12))
     sunLight.intensity = 12 * (.92 + solarPulse * .08) + energy * 1.4
     sunHalo.uniforms.intensity.value = (.34 + solarPulse * .07 + energy * .16) * themeDim
+    // 金色行进光束：+y 对齐公转速度方向 +l90（system 的位移方向），亮度随太阳的呼吸脉动。
+    // l90 是常向量，方向永远不变；随 system 刚体变换后正好指向飞驰的前方。
+    sunBeam.quaternion.setFromUnitVectors(UP, gL90)
+    sunBeam.scale.set(1 + solarPulse * .06, sunBeamLength(), 1 + solarPulse * .06)
+    ;(sunBeam.material as Three.MeshBasicMaterial).opacity = (.34 + solarPulse * .1 + energy * .14) * themeDim
     // 光照与土星环阴影都以太阳的世界坐标为准。system 现在带着整个太阳系位移，
     // 所以太阳不再是世界原点的 world 位置，而是「太阳 anchor」的世界坐标——太阳的 anchor
     // 就在 system 原点，这一句必须在写 system.position 之后、updateMatrixWorld 之后取。
@@ -662,5 +731,11 @@ void main() {
     // 1× 时间流速下、世界单位/秒的巡游速率。圆周长 2πR、一周 2π/ω 秒，所以速率就是 R·ω。
     // 调用方用它把位移换算成像素再夹住镜头余量。
     cruiseSpeed: () => galacticRadius() * GALAXY.omega,
+    // 拖尾着色器的每帧输入：相机在 model 空间的位置（渲染前由控制器同步）、分辨率补偿。
+    setTrailCamera: (camera: Three.Vector3, quaternion: Three.Quaternion, scale: number) => {
+      trailScratchQ.copy(quaternion).invert()
+      trailShared.uCamera.value.copy(camera).sub(world.position).applyQuaternion(trailScratchQ).divideScalar(scale)
+    },
+    setPixelScale: (ratio: number) => { trailShared.uPixelScale.value = ratio },
   }
 }
