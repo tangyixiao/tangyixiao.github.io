@@ -42,7 +42,7 @@ void main() {
   #include <colorspace_fragment>
 }`
 
-const maps = ['sun', 'mercury', 'venus_atmosphere', 'earth_daymap', 'earth_nightmap', 'earth_clouds', 'mars', 'jupiter', 'saturn', 'saturn_ring_alpha', 'uranus', 'neptune', 'moon', 'stars_milky_way'] as const
+const maps = ['sun', 'mercury', 'venus_atmosphere', 'earth_daymap', 'earth_nightmap', 'earth_clouds', 'mars', 'jupiter', 'saturn', 'saturn_ring_alpha', 'uranus', 'neptune', 'moon', 'io', 'europa', 'ganymede', 'callisto', 'titan', 'triton', 'pluto', 'ceres', 'stars_milky_way'] as const
 const DEG = Math.PI / 180
 const vertex = `
 varying vec2 vUv;
@@ -103,9 +103,9 @@ void main() {
   #include <colorspace_fragment>
 }`
 
-// 没有贴图文件的天体（冥王星/谷神星/智神星/阋神星/哈雷彗星与除月球外的卫星）走程序化表面：
-// assets/solar 里只有 15 张贴图且都不描绘这些天体，用噪声起伏代替贴图既不必新增图片
-// （贴图数断言保持 14），也不会凭空编造一张"看起来像"的照片。ambient 与 surfaceFragment
+// 没有贴图文件的天体（智神星/阋神星/哈雷彗星）走程序化表面：
+// 这三个天体至今没有合规的全球等距圆柱投影贴图（NASA/USGS 从未发布过整体表面图），
+// 用噪声起伏代替贴图，避免凭空编造一张"看起来像"的照片。ambient 与 surfaceFragment
 // 共用同一个 uniform 对象，两者的明暗基准因此严格一致。
 const proceduralFragment = `
 uniform vec3 baseColor; uniform vec3 sunPosition; uniform float ambient; uniform float mottle;
@@ -126,7 +126,7 @@ void main(){ vec3 n=normalize(vNormal);
 // 太阳的表面流动与色球日珥共用一套三维值噪声。太阳是流体：米粒组织、黑子与日珥都没有
 // 固定的 UV 边界，而球面 UV 在两极被压成一条线、接缝处还要 wrap，直接在 UV 上做噪声会在
 // 极点拉出条纹。改用「顶点自身的朝向」当坐标（单位球，顶点坐标即方向），噪声天然无缝，
-// 也不新增任何贴图文件（贴图数断言保持 14）。
+// 也不新增任何贴图文件（贴图数断言与 maps 数组保持一致）。
 // 三层八度是刻意压过的最低配置：足以撑出"颗粒—团块—大区"的层次，再多就在软件光栅化
 // （浏览器测试用的 swiftshader）上把帧率拖垮，从而拖慢依赖飞行进度的断言。
 const solarNoise = `
@@ -237,6 +237,9 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   // 轨道线与拖尾都按天体 id 索引：新天体加入后「太阳之后每个天体都有一条拖尾」这个下标假设
   // 不再成立（无轨道的太阳、只有日心轨道的彗星、绕母天体的卫星各自缺项），下标会整体错位。
   const orbits = new Map<BodyId, Three.LineLoop>(), trails = new Map<BodyId, Three.Line>()
+  // 卫星的轨道线与拖尾单独存（不进 orbits/orbitLines）：setScaleMode 重建日心轨道线用
+  // ellipsePoint，卫星走 beltPoint 的「母半径倍数」椭圆，混进同一张表会被错误公式重画。
+  const satOrbits = new Map<BodyId, Three.LineLoop>(), satTrails = new Map<BodyId, Three.Line>()
   const sunPosition = new T.Vector3()
   // 银道环中心与环面法线（世界坐标，每帧随 update() 刷新）：「星系视角」要把相机放到环外去看
   // 整圈公转，它需要的是环的真实空间位置，而不是控制器自己再算一遍 GALACTIC 基向量。
@@ -371,6 +374,34 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
         transparent: true, blending: T.AdditiveBlending, depthWrite: false,
       })))
       system.add(trail); trails.set(body.id, trail)
+    }
+    // 卫星也有真实三维轨道（各自的倾角/升交点/离心率）与拖尾，与行星同样对待：
+    // 椭圆用 beltPoint 画（焦点在母天体中心），整条挂在母天体的 anchor 下——局部系
+    // 原点就是母天体，卫星定位公式 update() 里用的正是同一组参数，线与位置严格一致。
+    // 升交点用 t=0 的固定值：月球 18.6 年的交点退行只转轨道面，短弧拖尾下线的偏差
+    // 远小于线宽，不值得每帧重画 256 个顶点。
+    if (body.orbit && body.parent) {
+      const parent = body.parent
+      const satR = () => live.get(parent)!.radius * body.orbit
+      const points = Array.from({ length: 256 }, (_, j) => {
+        const p = beltPoint(satR(), body.ecc, j / 256 * Math.PI * 2, body.inc * DEG, body.node * DEG, [0, 0, 0])
+        return new T.Vector3(p[0], p[1], p[2])
+      })
+      const orbit = new T.LineLoop(geometry(new T.BufferGeometry().setFromPoints(points)), material(new T.LineBasicMaterial({ color: body.color, transparent: true, opacity: .14, depthWrite: false })))
+      planets.get(body.parent)!.anchor.add(orbit); satOrbits.set(body.id, orbit)
+      const trailGeometry = geometry(new T.BufferGeometry())
+      trailGeometry.setAttribute('position', new T.BufferAttribute(new Float32Array(64 * 3), 3))
+      const colors = new Float32Array(64 * 3)
+      for (let j = 0; j < 64; j++) new T.Color(body.color).multiplyScalar(Math.pow(j / 64, 2)).toArray(colors, j * 3)
+      trailGeometry.setAttribute('color', new T.BufferAttribute(colors, 3))
+      const trail = new T.Line(trailGeometry, material(new T.ShaderMaterial({
+        uniforms: { ...trailShared, color: { value: new T.Color(body.color) } },
+        vertexShader: trailVertex, fragmentShader: trailFragment,
+        transparent: true, blending: T.AdditiveBlending, depthWrite: false,
+      })))
+      // 拖尾顶点每帧重写而几何包围球不跟着更新，挂母锚下又随场景移动，直接关掉剔除。
+      trail.frustumCulled = false
+      planets.get(body.parent)!.anchor.add(trail); satTrails.set(body.id, trail)
     }
     if (body.id === 'earth') {
       mesh.rotation.z = .409
@@ -599,8 +630,22 @@ void main() {
         // 月球保留实测的升交点退行（18.6 年一周）；退行也走卫星标尺——升交点退行本来就
         // 以「卫星年」为单位计量，公转慢了 4 倍，退行同步慢 4 倍才能保住两者的相位关系。
         const node = body.id === 'moon' ? -(time / (MOON.nodeYears * 365.25 * SATELLITE.daySeconds)) * Math.PI * 2 : body.node * DEG
-        beltPoint(r, body.ecc, keplerE(body.ecc, meanAnomaly(body, metrics.speed, time)), body.inc * DEG, node, moonScratch)
+        const M = meanAnomaly(body, metrics.speed, time)
+        const E = keplerE(body.ecc, M)
+        beltPoint(r, body.ecc, E, body.inc * DEG, node, moonScratch)
         planet.anchor.position.set(moonScratch[0], moonScratch[1], moonScratch[2])
+        // 拖尾与行星同理：回溯一段固定平近点角，用与定位完全相同的 beltPoint 公式写点。
+        // 卫星周期短、近圆轨道，固定 1.5 rad 的弧足够读出绕母天体的方向感。
+        const trail = satTrails.get(body.id)
+        if (trail) {
+          const positions = trail.geometry.getAttribute('position')
+          for (let j = 0; j < 64; j++) {
+            const Ej = keplerE(body.ecc, M - (63 - j) * (1.5 / 63))
+            beltPoint(r, body.ecc, Ej, body.inc * DEG, node, moonScratch)
+            positions.setXYZ(j, moonScratch[0], moonScratch[1], moonScratch[2])
+          }
+          positions.needsUpdate = true
+        }
         continue
       }
       // 真实三维开普勒轨道：倾角、升交点与离心率取 J2000 值，近日点处可见加速。
@@ -674,6 +719,7 @@ void main() {
   const setTheme = (theme: SceneTheme) => {
     ambient.value = theme === 'dark' ? .045 : .12
     orbits.forEach(line => { (line.material as Three.LineBasicMaterial).opacity = theme === 'dark' ? .16 : .3 })
+    satOrbits.forEach(line => { (line.material as Three.LineBasicMaterial).opacity = theme === 'dark' ? .16 : .3 })
     ;(glow.material as Three.SpriteMaterial).blending = theme === 'dark' ? T.AdditiveBlending : T.NormalBlending
     ;(glow.material as Three.SpriteMaterial).opacity = theme === 'dark' ? .7 : .45
     themeDim = theme === 'dark' ? 1 : .55
@@ -701,6 +747,20 @@ void main() {
       }
     }
     if (clouds) clouds.scale.setScalar(live.get('earth')!.radius * 1.009)
+    // 卫星轨道线按「母半径倍数」重建：两种比例模式下母天体半径变了，椭圆要跟着缩放。
+    for (const body of bodies) {
+      if (!body.orbit || !body.parent) continue
+      const line = satOrbits.get(body.id)
+      if (!line) continue
+      const r = live.get(body.parent)!.radius * body.orbit
+      const positions = line.geometry.getAttribute('position')
+      const scratch: [number, number, number] = [0, 0, 0]
+      for (let j = 0; j < positions.count; j++) {
+        beltPoint(r, body.ecc, j / positions.count * Math.PI * 2, body.inc * DEG, body.node * DEG, scratch)
+        positions.setXYZ(j, scratch[0], scratch[1], scratch[2])
+      }
+      positions.needsUpdate = true
+    }
     // 卫星在真实比例模式下隐藏：那里 1:1 的距离会把月球甩到地球轨道之外，卫星的
     // 「母天体半径倍数」轨道只在距离被压缩时才成立（月球以前就跟着这个开关一起隐藏）。
     for (const body of bodies) if (body.parent) planets.get(body.id)!.anchor.visible = mode === 'artistic'
@@ -755,3 +815,7 @@ void main() {
     setBeamFade: (fade: number) => { beamState.fade = fade },
   }
 }
+
+
+
+

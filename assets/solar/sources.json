@@ -164,5 +164,109 @@
     "source": "https://svs.gsfc.nasa.gov/vis/a000000/a004800/a004851/starmap_2020_8k.exr",
     "note": "Project-added NASA SVS Deep Star Maps 2020 (8k EXR, image/aces, 130530278 bytes); tone-mapped (+2.2 stops, sRGB-style curve) and downscaled to 4k via ffmpeg.",
     "credit": "NASA/Goddard Space Flight Center Scientific Visualization Studio. Gaia DR2: ESA/Gaia/DPAC. Public domain (NASA media)."
+  },
+  {
+    "file": "io.webp",
+    "size": 61536,
+    "dimensions": [
+      1024,
+      512
+    ],
+    "originalSha256": "d722a545c9290b33f3b57cb7ccb9e173b367a7a8fa4867e74a8e11538f274282",
+    "mirror": "https://web.archive.org/web/2020id_/https://astropedia.astrogeology.usgs.gov/download/Io/Voyager-Galileo/Io_Galileo_SSI_Global_Mosaic_ClrMerge_1km.cub/full.jpg",
+    "source": "https://astropedia.astrogeology.usgs.gov/download/Io/Voyager-Galileo/Io_Galileo_SSI_Global_Mosaic_ClrMerge_1km.cub",
+    "note": "Project-added NASA/USGS equirectangular global mosaic; resampled to 2048x1024 (io kept native) and re-encoded as WebP q84 via ffmpeg. Unimaged regions filled with mean color; titan re-graded.",
+    "credit": "NASA/JPL and USGS Astrogeology Science Center (DLR for the Ceres Dawn frame-camera map). Public domain (US government work)."
+  },
+  {
+    "file": "europa.webp",
+    "size": 141610,
+    "dimensions": [
+      2048,
+      1024
+    ],
+    "originalSha256": "9ce061d355549c7b57ea1ffc1e6c107bb84b038d9a43c6591a1a68c4fb306d49",
+    "mirror": "https://upload.wikimedia.org/wikipedia/commons/2/26/Europa_Voyager_GalileoSSI_global_mosaic.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Europa_Voyager_GalileoSSI_global_mosaic.jpg",
+    "note": "Project-added NASA/USGS equirectangular global mosaic; resampled to 2048x1024 (io kept native) and re-encoded as WebP q84 via ffmpeg. Unimaged regions filled with mean color; titan re-graded.",
+    "credit": "NASA/JPL and USGS Astrogeology Science Center (DLR for the Ceres Dawn frame-camera map). Public domain (US government work)."
+  },
+  {
+    "file": "ganymede.webp",
+    "size": 120900,
+    "dimensions": [
+      2048,
+      1024
+    ],
+    "originalSha256": "71859125f8b473eb52165e1790ab1d1767e07c6b51b9f48fdc20cead216f081e",
+    "mirror": "https://web.archive.org/web/2021id_/https://astropedia.astrogeology.usgs.gov/download/Ganymede/Voyager-Galileo/thumbs/Ganymede_Voyager_GalileoSSI_global_mosaic_1024.jpg",
+    "source": "https://astropedia.astrogeology.usgs.gov/download/Ganymede/Voyager-Galileo/Ganymede_Voyager_GalileoSSI_global_mosaic_1km.cub",
+    "note": "Project-added NASA/USGS equirectangular global mosaic; resampled to 2048x1024 (io kept native) and re-encoded as WebP q84 via ffmpeg. Unimaged regions filled with mean color; titan re-graded.",
+    "credit": "NASA/JPL and USGS Astrogeology Science Center (DLR for the Ceres Dawn frame-camera map). Public domain (US government work)."
+  },
+  {
+    "file": "callisto.webp",
+    "size": 120670,
+    "dimensions": [
+      2048,
+      1024
+    ],
+    "originalSha256": "ec3202dca0a0182c885f88f37a6ce484f344785e4c3135fc8c43d53f87e879c7",
+    "mirror": "https://web.archive.org/web/2021id_/https://astropedia.astrogeology.usgs.gov/download/Callisto/Voyager-Galileo/thumbs/Callisto_Voyager_GalileoSSI_global_mosaic_1024.jpg",
+    "source": "https://astropedia.astrogeology.usgs.gov/download/Callisto/Voyager-Galileo/Callisto_Voyager_GalileoSSI_global_mosaic_1km.cub",
+    "note": "Project-added NASA/USGS equirectangular global mosaic; resampled to 2048x1024 (io kept native) and re-encoded as WebP q84 via ffmpeg. Unimaged regions filled with mean color; titan re-graded.",
+    "credit": "NASA/JPL and USGS Astrogeology Science Center (DLR for the Ceres Dawn frame-camera map). Public domain (US government work)."
+  },
+  {
+    "file": "titan.webp",
+    "size": 161924,
+    "dimensions": [
+      2048,
+      1024
+    ],
+    "originalSha256": "3c0d0da362575dc868dfa1ab82bf688fc29b38ea31cfc4c40c44bcda18c2950d",
+    "mirror": "https://upload.wikimedia.org/wikipedia/commons/7/7a/Titan_map_April_2011_full.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Titan_map_April_2011_full.png",
+    "note": "Project-added NASA/USGS equirectangular global mosaic; resampled to 2048x1024 (io kept native) and re-encoded as WebP q84 via ffmpeg. Unimaged regions filled with mean color; titan re-graded.",
+    "credit": "NASA/JPL and USGS Astrogeology Science Center (DLR for the Ceres Dawn frame-camera map). Public domain (US government work)."
+  },
+  {
+    "file": "triton.webp",
+    "size": 174596,
+    "dimensions": [
+      2048,
+      1024
+    ],
+    "originalSha256": "c52ed6f83b57b0674b2c9364705ec09125a0754dcf2f96103a8566088bf2d716",
+    "mirror": "https://upload.wikimedia.org/wikipedia/commons/8/87/Triton_Map.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Triton_Map.jpg",
+    "note": "Project-added NASA/USGS equirectangular global mosaic; resampled to 2048x1024 (io kept native) and re-encoded as WebP q84 via ffmpeg. Unimaged regions filled with mean color; titan re-graded.",
+    "credit": "NASA/JPL and USGS Astrogeology Science Center (DLR for the Ceres Dawn frame-camera map). Public domain (US government work)."
+  },
+  {
+    "file": "pluto.webp",
+    "size": 177254,
+    "dimensions": [
+      2048,
+      1024
+    ],
+    "originalSha256": "82657c107c3578a33ad8dc7d4250482841563abb2ae7083646189ef8e64a94d2",
+    "mirror": "https://upload.wikimedia.org/wikipedia/commons/1/1a/PIA20658-Pluto-Global-released20160502.jpg",
+    "source": "https://photojournal.jpl.nasa.gov/catalog/PIA20658",
+    "note": "Project-added NASA/USGS equirectangular global mosaic; resampled to 2048x1024 (io kept native) and re-encoded as WebP q84 via ffmpeg. Unimaged regions filled with mean color; titan re-graded.",
+    "credit": "NASA/JPL and USGS Astrogeology Science Center (DLR for the Ceres Dawn frame-camera map). Public domain (US government work)."
+  },
+  {
+    "file": "ceres.webp",
+    "size": 325922,
+    "dimensions": [
+      2048,
+      1024
+    ],
+    "originalSha256": "c34bebc8543fe99d5467ac7159381bbb90d4e29c910d8ea25e2bc4cc1a947689",
+    "mirror": "https://web.archive.org/web/2021id_/https://astropedia.astrogeology.usgs.gov/download/Ceres/Dawn/thumbs/Ceres_Dawn_FC_DLR_global_1024.jpg",
+    "source": "https://astropedia.astrogeology.usgs.gov/download/Ceres/Dawn/Ceres_Dawn_FC_DLR_global_2048.cub",
+    "note": "Project-added NASA/USGS equirectangular global mosaic; resampled to 2048x1024 (io kept native) and re-encoded as WebP q84 via ffmpeg. Unimaged regions filled with mean color; titan re-graded.",
+    "credit": "NASA/JPL and USGS Astrogeology Science Center (DLR for the Ceres Dawn frame-camera map). Public domain (US government work)."
   }
 ]

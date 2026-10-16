@@ -24,6 +24,31 @@ Planet information uses the [NASA NSSDCA Planetary Fact Sheet](https://nssdc.gsf
 Solar diameter uses twice the mean radius in the [NASA Sun Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html).
 Interface inspiration: [NASA Eyes on the Solar System](https://eyes.nasa.gov/apps/solar-system/).
 
+## NASA / USGS body maps (project-added)
+
+Eight additional, project-added maps — **not** part of the Solar System Scope
+set — replaced the procedural surfaces of the Galilean satellites, Titan,
+Triton, Pluto and Ceres. All are US-government (NASA / USGS Astrogeology)
+cartographic products, generally not copyrighted (see
+[NASA Media Usage Guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/)
+and the USGS Astrogeology terms). Each is an equirectangular global mosaic;
+retrieved URLs, original hashes and dimensions are recorded in `sources.json`.
+
+- `io.webp` — USGS [Io Galileo SSI Global Mosaic (color-merged)](https://astropedia.astrogeology.usgs.gov/download/Io/Voyager-Galileo/Io_Galileo_SSI_Global_Mosaic_ClrMerge_1km.cub), kept at native 1024×512.
+- `europa.webp` — [Europa Voyager/Galileo SSI global mosaic](https://commons.wikimedia.org/wiki/File:Europa_Voyager_GalileoSSI_global_mosaic.jpg) (NASA/JPL), unimaged areas filled with the mean surface color.
+- `ganymede.webp` — USGS [Ganymede Voyager/Galileo SSI global mosaic](https://astropedia.astrogeology.usgs.gov/download/Ganymede/Voyager-Galileo/Ganymede_Voyager_GalileoSSI_global_mosaic_1km.cub), unimaged areas filled.
+- `callisto.webp` — USGS [Callisto Voyager/Galileo SSI global mosaic](https://astropedia.astrogeology.usgs.gov/download/Callisto/Voyager-Galileo/Callisto_Voyager_GalileoSSI_global_mosaic_1km.cub), unimaged areas filled.
+- `titan.webp` — NASA Cassini ISS [Titan global map (April 2011)](https://commons.wikimedia.org/wiki/File:Titan_map_April_2011_full.png), re-graded toward the observed orange haze color.
+- `triton.webp` — Voyager 2 [Triton global map](https://commons.wikimedia.org/wiki/File:Triton_Map.jpg) (NASA/JPL), unseen hemisphere filled gray as in the source.
+- `pluto.webp` — NASA New Horizons [Pluto global map, PIA20658](https://photojournal.jpl.nasa.gov/catalog/PIA20658), edges filled.
+- `ceres.webp` — USGS/DLR [Dawn FC Ceres global map](https://astropedia.astrogeology.usgs.gov/download/Ceres/Dawn/Ceres_Dawn_FC_DLR_global_2048.cub).
+
+Changes made here: resampled to 2048×1024 (io excepted) and re-encoded as
+WebP q84 with ffmpeg; missing-data regions were keyed out and filled with a
+mean color, and Titan was re-graded, so these are derived cartographic maps,
+not unmodified photographs. Credit: NASA/JPL, USGS Astrogeology Science
+Center, DLR (Ceres frame camera processing).
+
 ## stars_deepstar.webp (black hole page backdrop)
 
 An additional, project-added map — **not** part of the Solar System Scope set:

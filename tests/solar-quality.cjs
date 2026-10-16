@@ -26,8 +26,8 @@ async function main() {
   try {
     await page.goto(url)
     await page.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneReady === 'true')
-    assert.equal(await scene.getAttribute('data-scene-textures'), '14', 'all planet, cloud, night, ring and sky maps decoded')
-    assert.equal(loaded.size, 14, 'textures are self-hosted and loaded after the scene chunk')
+    assert.equal(await scene.getAttribute('data-scene-textures'), '22', 'all planet, satellite, dwarf, cloud, night, ring and sky maps decoded')
+    assert.equal(loaded.size, 22, 'textures are self-hosted and loaded after the scene chunk')
     await page.getByRole('button', { name: '探索太阳系', exact: true }).click()
     assert.equal(await page.locator('.celestial-label').count(), 9, 'eight planets and the Sun keep permanent labels; the galactic centre marker is gone')
     await page.getByRole('button', { name: '选择地球', exact: true }).click()
