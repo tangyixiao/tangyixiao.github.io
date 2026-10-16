@@ -13,10 +13,17 @@ export const artisticRadius = (radiusEarth: number) => radiusEarth * .30
 // 行星公转：speed = .15 / AU^1.5，开普勒第三定律的真实相对周期（地球一年约 42 秒）。
 export const artisticSpeed = (au: number) => au > 0 ? .15 / au ** 1.5 : 0
 // 自转：spin 为真实自转周期（地球日），1 个地球日 ≈ 10 秒演示时间。
-// 卫星公转也走这条标尺（月球 27.32 天 ≈ 273 秒），所以卫星不会被行星公转的加速甩掉。
+// 行星公转、自转共用这条标尺。
 export const SPIN = { daySeconds: 10 } as const
 export const spinRate = (body: { spin: number }) => Math.PI * 2 / (body.spin * SPIN.daySeconds)
-export const satelliteSpeed = (periodDays: number) => Math.PI * 2 / (periodDays * SPIN.daySeconds)
+// 卫星另有自己的时间标尺：潮汐锁定让卫星自转 = 公转（spin 字段就是公转周期），若沿用
+// 「1 天 = 10 秒」，木卫一 1.77 天的公转被折成 17.7 秒一圈——选中取景后每秒划过 20°，
+// 快得像指针而看不出轨道。卫星标尺放慢到 1 天 = 40 秒：木卫一 71 秒/圈、月球 18 分钟/圈，
+// 彼此的周期比例（开普勒第三定律的观感）严格不变，只是整体时间流慢了 4 倍。
+export const SATELLITE = { daySeconds: 40 } as const
+export const satelliteSpeed = (periodDays: number) => Math.PI * 2 / (Math.abs(periodDays) * SATELLITE.daySeconds)
+// 潮汐锁定卫星的自转 = 公转，必须与公转走同一标尺，否则近月面不再朝向母天体。
+export const satelliteSpinRate = (periodDays: number) => Math.PI * 2 / (Math.abs(periodDays) * SATELLITE.daySeconds)
 
 // ---------------------------------------------------------------------------
 // 「进入时是今天的格局」：JPL J2000 线性根数按当日日期外推
@@ -112,7 +119,8 @@ const seeds: BodySeed[] = [
   // 彗尾与取景都有可依托的尺度。
   { id: 'halley', category: 'comet', kind: 'rock', color: '#8a8f96', radiusEarth: .00086, orbitAU: 17.834, spin: 2.2, angle: 0, ecc: .96714, inc: 162.26, node: 58.42, peri: 169.75, radius: .022,
     zh: ['哈雷彗星', '周期 76 年的逆行彗星，近日点在水星轨道以内，远日点越出海王星。'], en: ['Halley', 'A retrograde comet with a 76-year period, diving inside Mercury\'s orbit and reaching past Neptune.'] },
-  // 卫星：orbit 是「母天体半径的倍数」（真实距离会缩到看不见），speed 走 10 秒 = 1 天的标尺。
+  // 卫星：orbit 是「母天体半径的倍数」（真实距离会缩到看不见），公转与自转共用卫星标尺
+  // （spin 保留真实周期与正负号——负号 = 海卫一的逆行自转），所以卫星不会被行星公转的加速甩掉。
   { id: 'moon', category: 'satellite', parent: 'earth', kind: 'rock', color: '#b9b6b0', radiusEarth: .2727, orbitAU: .002570, spin: 27.32, orbit: 9, speed: satelliteSpeed(27.32), angle: 0, ecc: .0549, inc: 5.145, node: 125.08, peri: 318.15, map: 'moon',
     zh: ['月球', '地球唯一的天然卫星，以 5.1° 的倾斜绕行，升交点每 18.6 年退行一周。'], en: ['Moon', 'Earth\'s only natural satellite, tilted 5.1° with a node that regresses every 18.6 years.'] },
   { id: 'io', category: 'satellite', parent: 'jupiter', kind: 'rock', color: '#e8d27a', radiusEarth: .286, orbitAU: .002819, spin: 1.769, orbit: 3.4, speed: satelliteSpeed(1.769), angle: 1.4, ecc: .0041, inc: .036, node: 0, peri: 0,

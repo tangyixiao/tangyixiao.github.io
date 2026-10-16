@@ -1,6 +1,6 @@
 import type * as Three from 'three'
 import type { ResourceScope } from './resourceScope'
-import { artisticOrbit, BELT, beltEccentricAnomaly, beltPoint, bodies, ellipsePoint, GALACTIC, GALAXY, keplerE, meanAnomaly, MOON, orbitFrame, rayleigh, scaleValue, spanFor, SPIN, spinRate, TROJANS, TRUE_SCALE, type OrbitFrame } from './solarData'
+import { artisticOrbit, BELT, beltEccentricAnomaly, beltPoint, bodies, ellipsePoint, GALACTIC, GALAXY, keplerE, meanAnomaly, MOON, orbitFrame, rayleigh, SATELLITE, scaleValue, satelliteSpinRate, spanFor, SPIN, spinRate, TROJANS, TRUE_SCALE, type OrbitFrame } from './solarData'
 import type { BodyId, ScaleMode, SceneTheme } from './types'
 
 // 拖尾要读三个场景量：相机在 model 空间的位置、本帧的时间、以及渲染分辨率。
@@ -258,9 +258,11 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   gc.fillStyle = gradient; gc.fillRect(0, 0, 256, 256)
   const glow = new T.Sprite(material(new T.SpriteMaterial({ map: texture(new T.CanvasTexture(glowCanvas)), transparent: true, blending: T.AdditiveBlending, depthWrite: false, opacity: .7, toneMapped: false })))
   glow.scale.set(75, 75, 1); glow.renderOrder = -1; system.add(glow)
-  // 拖尾/光束共享的 uniform：pixelScale 是渲染分辨率补偿，beam 是太阳行进方向的光束强度。
+  // 拖尾/光束共享的 uniform：pixelScale 是渲染分辨率补偿。beamState 由控制器经 setBeamFade
+  // 每帧写入近景淡出系数（相机贴近太阳时把行进光束收掉），update() 里乘进光束透明度。
   const trailShared = { uCamera: { value: new T.Vector3() }, uPixelScale: { value: 1 } }
   const trailScratchQ = new T.Quaternion()
+  const beamState = { fade: 1, opacity: .42 }
   // 点光源留着句柄：update() 里要让它跟着日冕一起呼吸，否则日冕在缩放时整个太阳系的
   // 明暗却一成不变，呼吸就只发生在贴图上而不是"这颗恒星"上。
   // 太阳的 halo 也先取到：update() 每帧要写它的色球强度，而 highlight() 不能再碰它
@@ -432,7 +434,10 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
     let au = BELT.innerAU + rand(1) * (BELT.outerAU - BELT.innerAU)
     for (let k = 0; k < 8 && BELT.gaps.some(gap => Math.abs(au - gap[0]) < gap[1]); k++) au = BELT.innerAU + rand(k + 9) * (BELT.outerAU - BELT.innerAU)
     const sigma = rand(8) < BELT.coreFraction ? BELT.coreSigma : BELT.haloSigma
-    return { au, phase: rand(2) * Math.PI * 2, incl: rayleigh(rand(3), sigma) * DEG, node: rand(4) * Math.PI * 2, ecc: BELT.eccBase + rand(9) * BELT.eccSpread, size: .35 + rand(5) ** 2.2 * 1.85, tumble: rand(6) * Math.PI * 2, shade: .55 + rand(7) * .6 }
+    // 粒径走真实的幂律分布（小天体越小越多）：指数从 2.2 压到 3.4、上限从 2.2 降到 1.5——
+    // 大块头从 5.5% 减到 1.1%，带子的观感从「散落的水晶块」变回「绵密的碎石带」；
+    // 下限同时压低，保证最外圈仍有足够亮度而不是只靠尘埃层。
+    return { au, phase: rand(2) * Math.PI * 2, incl: rayleigh(rand(3), sigma) * DEG, node: rand(4) * Math.PI * 2, ecc: BELT.eccBase + rand(9) * BELT.eccSpread, size: .35 + rand(5) ** 3.4 * 1.5, tumble: rand(6) * Math.PI * 2, shade: .55 + rand(7) * .6 }
   })
   const tone = new T.Color()
   const beltScratch: [number, number, number] = [0, 0, 0]
@@ -473,7 +478,7 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
       jitter: 1 + (rand(2) * 2 - 1) * .06,                 // 半长轴的少量散布，避免落在同一条椭圆上
       incl: rayleigh(rand(3), TROJANS.sigma * DEG),
       ecc: TROJANS.ecc + rand(4) * TROJANS.eccSpread,
-      size: .35 + rand(5) ** 2.2 * 1.85,
+      size: .35 + rand(5) ** 3.4 * 1.5,
       tumble: rand(6) * Math.PI * 2,
       shade: .55 + rand(7) * .6,
     }
@@ -541,7 +546,7 @@ void main() {
   // 旧实现把带子建在 XZ 平面上（法线 +y），于是整条带子与所有行星轨道垂直。
   vec3 pos = vec3(cn * px - sn * py * ci, sn * px + cn * py * ci, py * si);
   vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-  gl_PointSize = clamp(uPixel * 380.0 / max(-mv.z, 1.0), 1.0, 2.8);
+  gl_PointSize = clamp(uPixel * 380.0 / max(-mv.z, 1.0), 1.0, 2.8) * 1.45;
   vShade = aShade;
   gl_Position = projectionMatrix * mv;
 }`,
@@ -581,7 +586,8 @@ void main() {
     for (const body of bodies) {
       const planet = planets.get(body.id)!, metrics = live.get(body.id)!
       // 自转周期按真实比例（金星/天王星逆行自转），只有整体时间标尺被放慢到可观赏。
-      planet.mesh.rotation.y = time * spinRate(body) + (body.id === 'earth' ? 2.4 : .25)
+      // 卫星是潮汐锁定的（自转 = 公转），走更慢的卫星标尺，近月面才始终朝着母天体。
+      planet.mesh.rotation.y = time * (body.parent ? satelliteSpinRate(body.spin) : spinRate(body)) + (body.id === 'earth' ? 2.4 : .25)
       if (!body.orbit) continue
       const frame = frames.get(body.id)!
       // 卫星：orbit 是「母天体半径的倍数」，锚点挂在母天体的 anchor 下，所以这里写的是
@@ -590,7 +596,9 @@ void main() {
       // 月球保留实测的升交点退行（18.6 年一周）；其余卫星用 body.node 常量，轨道面固定。
       if (body.parent) {
         const r = live.get(body.parent)!.radius * body.orbit
-        const node = body.id === 'moon' ? -(time / (MOON.nodeYears * 365.25 * SPIN.daySeconds)) * Math.PI * 2 : body.node * DEG
+        // 月球保留实测的升交点退行（18.6 年一周）；退行也走卫星标尺——升交点退行本来就
+        // 以「卫星年」为单位计量，公转慢了 4 倍，退行同步慢 4 倍才能保住两者的相位关系。
+        const node = body.id === 'moon' ? -(time / (MOON.nodeYears * 365.25 * SATELLITE.daySeconds)) * Math.PI * 2 : body.node * DEG
         beltPoint(r, body.ecc, keplerE(body.ecc, meanAnomaly(body, metrics.speed, time)), body.inc * DEG, node, moonScratch)
         planet.anchor.position.set(moonScratch[0], moonScratch[1], moonScratch[2])
         continue
@@ -643,9 +651,13 @@ void main() {
     sunHalo.uniforms.intensity.value = (.34 + solarPulse * .07 + energy * .16) * themeDim
     // 金色行进光束：+y 对齐公转速度方向 +l90（system 的位移方向），亮度随太阳的呼吸脉动。
     // l90 是常向量，方向永远不变；随 system 刚体变换后正好指向飞驰的前方。
+    // 透明度乘以 fade（控制器按相机-太阳距离算好经 setBeamFade 写进来）：相机贴近太阳时
+    // 409 单位长的光束会变成糊住半个屏幕的金色巨楔，近景里必须收掉；全景构图不受影响。
     sunBeam.quaternion.setFromUnitVectors(UP, gL90)
     sunBeam.scale.set(1 + solarPulse * .06, sunBeamLength(), 1 + solarPulse * .06)
-    ;(sunBeam.material as Three.MeshBasicMaterial).opacity = (.34 + solarPulse * .1 + energy * .14) * themeDim
+    beamState.opacity = (.34 + solarPulse * .1 + energy * .14) * themeDim
+    sunBeam.visible = beamState.fade > 0
+    ;(sunBeam.material as Three.MeshBasicMaterial).opacity = beamState.opacity * beamState.fade
     // 光照与土星环阴影都以太阳的世界坐标为准。system 现在带着整个太阳系位移，
     // 所以太阳不再是世界原点的 world 位置，而是「太阳 anchor」的世界坐标——太阳的 anchor
     // 就在 system 原点，这一句必须在写 system.position 之后、updateMatrixWorld 之后取。
@@ -737,5 +749,9 @@ void main() {
       trailShared.uCamera.value.copy(camera).sub(world.position).applyQuaternion(trailScratchQ).divideScalar(scale)
     },
     setPixelScale: (ratio: number) => { trailShared.uPixelScale.value = ratio },
+    // 近景光束淡出系数由控制器每帧计算并写回（光束长度是本模块的内部量，换算基准必须
+    // 在这里给出：相机距太阳 0.85×beamLength 以内把光束完全收掉，1.2× 以上全开）。
+    beamFadeScale: .85,
+    setBeamFade: (fade: number) => { beamState.fade = fade },
   }
 }

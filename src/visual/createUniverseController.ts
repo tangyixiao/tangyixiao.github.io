@@ -117,9 +117,10 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       return label
     }
     const projected = new T.Vector3(), projectionOffset = new T.Vector3()
+    const sunScenePosition = new T.Vector3()
     let mountedExtra: HTMLElement | null = null, mountedMarker: HTMLElement | null = null
     // 巡游跟随的向量。太阳系真的在星空里位移（system.position），相机再跟掉其中大部分：
-    // residualScene 是夹紧后允许留在画面上的那一段（也就是天体在屏幕上真正走过的距离），
+    // residualScene 是留在画面上的那一段（也就是天体在屏幕上真正走过的距离），
     // shiftScene 是相机必须自己跟掉的其余部分，followApplied 记录已经跟掉多少，
     // 探索模式里用户手动转视角时才不会被逐帧重设的相机位置顶掉。
     const cruiseScene = new T.Vector3(), residualScene = new T.Vector3(), shiftScene = new T.Vector3()
@@ -172,15 +173,32 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       const half = narrowHalf(viewDistance)
       return fraction * half
     }
-    const computeShift = (viewDistance: number, fraction: number, follow = true) => {
+    // 残差跟随状态：旧实现把残差硬钳在预算圈内，方向随银道角极慢地旋转，1× 下太阳
+    // 几秒后就停在画面上不动了（实测 36 秒只漂 28px）。现在残差改为「限速追赶 + 周期回拢」：
+    // 追赶速度远低于巡游速度，太阳以巡游速率的一小部分持续横穿画面（公转的可见读数），
+    // 残差滑到预算圈边缘时平滑地拽回起点——像摄影师每隔一阵把镜头摇回主体，观感是
+    // 有意的运镜而不是跳变。回收期只有残差被拉回，画面其他元素不动。
+    const residualState = { recycle: 0 }
+    const RESIDUAL_FOLLOW = .55            // 残差追赶速率占巡游速率的比例（其余被相机跟掉）
+    const RESIDUAL_RECYCLE = 1.6           // 回拢时长（秒）：残差沿直线滑回巡航反向的一端
+    const computeShift = (viewDistance: number, fraction: number, delta: number, follow = true) => {
       cruiseScene.copy(solar.cruise).applyQuaternion(solar.world.quaternion).multiplyScalar(solar.world.scale.x)
       // 星系视角里相机不跟：整圈公转正是要看的东西，位移必须原原本本留在画面上，
       // 否则相机会像主视图那样跟掉 86%，一圈走完屏幕上才挪几十像素。
-      if (!follow) { residualScene.copy(cruiseScene); shiftScene.set(0, 0, 0); return }
+      if (!follow) { residualState.recycle = 0; residualScene.copy(cruiseScene); shiftScene.set(0, 0, 0); return }
       const budgetScene = cruiseBudget(viewDistance, fraction)
-      const cruiseLength = cruiseScene.length()
-      residualScene.copy(cruiseScene)
-      if (cruiseLength > budgetScene) residualScene.multiplyScalar(budgetScene / Math.max(cruiseLength, 1e-9))
+      const cruiseLength = Math.max(cruiseScene.length(), 1e-9)
+      const dir = followScratch.copy(cruiseScene).divideScalar(cruiseLength)
+      // 回拢进行中：残差沿当前巡游方向从 -budget 滑到 +budget（2 个预算深的往返），
+      // 太阳在画面上快速但平滑地走完一段；没在回拢时按固定比例追赶巡游位移。
+      if (residualState.recycle > 0) {
+        residualState.recycle = Math.max(residualState.recycle - delta, 0)
+        const phase = 1 - residualState.recycle / RESIDUAL_RECYCLE
+        residualScene.copy(dir).multiplyScalar((phase * 2 - 1) * budgetScene)
+      } else {
+        residualScene.addScaledVector(dir, cruiseLength * RESIDUAL_FOLLOW * delta)
+        if (residualScene.length() >= budgetScene) residualState.recycle = RESIDUAL_RECYCLE
+      }
       shiftScene.copy(cruiseScene).sub(residualScene)
     }
     const render = (time: number, immediate = false) => {
@@ -201,12 +219,19 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       solar.update(simulationTime, pulseEnergy)
       // 拖尾着色器要相机在 model 空间的位置：渲染前同步一次，1px 线才抬得出亮带。
       solar.setTrailCamera(camera.position, solar.world.quaternion, solar.world.scale.x)
+      solar.world.updateMatrixWorld(true)
+      // 行进光束的近景淡出：分母「光束长度」= 太阳半径×12.5（与 createSolarSystem 的
+      // sunBeamLength 同式），分子是相机-太阳的世界距离。太阳世界坐标 = solar.world 下的
+      // system 原点，update() 之后逐帧刷新；相机贴近太阳（选中近景、真实比例拉近）时把
+      // 409 单位长的金色巨楔完全收掉，0.85→1.2 倍光束长之间平滑恢复，全景不受影响。
+      sunScenePosition.set(0, 0, 0).applyMatrix4(solar.world.matrixWorld)
+      solar.setBeamFade(T.MathUtils.clamp((camera.position.distanceTo(sunScenePosition) / (solar.metrics('sun').radius * 12.5) - solar.beamFadeScale) / .35, 0, 1))
       // 太阳系沿银道面绕银心公转：solar.cruise 是 system 组在 world 局部空间的位移（t=0 时为零）。
       // 换算到场景空间后按当前取景预算截留一小段：相机跟掉其余部分（shift），天体因此在画面上
       // 恰好只走过 residual——太阳系确实在星空里挪动，构图却不会跑掉。相机平移本身还带来
       // 星空视差：拉远的星点会缓缓流过，这是「整个太阳系正在银河里前进」最直接的读数。
       const viewDistance = p ? p.cameraZ : controls ? camera.position.distanceTo(controls.target) : solar.span()
-      computeShift(viewDistance, p ? .3 : .28, !galacticView)
+      computeShift(viewDistance, p ? .3 : .28, delta, !galacticView)
       if (p) {
         // 相机整体平移 shiftScene、朝向仍锁在原点：太阳系在画面里只挪动 residual，天球与背景星不动，
         // 视向随位移微微转动——那点视差就是「整个太阳系正在银河里前进」的读数。
