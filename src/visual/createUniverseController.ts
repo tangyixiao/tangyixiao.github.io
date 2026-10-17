@@ -451,6 +451,13 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       const framing = innerWidth > 760 ? Math.max(baseFraming, innerHeight * .47 / availableHalfHeight) : baseFraming
       const distance = framingRadius / Math.sin(halfFov) * framing
       setCameraRange(distance)
+      // 真实比例的小天体（智神星 .0005、谷神星 .0016、哈雷 .00007）贴脸距离比 setCameraRange
+      // 的 near 下限 .02 还小几十到几百倍——near 平面会把整颗球裁出画面：面板按几何报
+      // 454px、渲染出来却全空（艺术模式距离 .12–.23 高于下限，所以只有真实比例出事）。
+      // 取景时把 near 压到天体半径的 1/8：用户缩到 controls.minDistance(radius*1.6) 时
+      // 最近表面仍有 .6r 余量，不会被裁；其余机位维持 setCameraRange 的原值不动。
+      camera.near = Math.min(camera.near, radius / 8)
+      camera.updateProjectionMatrix()
       if (props.reducedMotion) { camera.position.copy(targetPosition).addScaledVector(direction, distance); controls?.target.copy(targetPosition) }
       else flight = { fromPosition: camera.position.clone(), fromTarget: controls?.target.clone() ?? new T.Vector3(), offset: direction.multiplyScalar(distance), progress: 0 }
       previousTarget.copy(targetPosition)
