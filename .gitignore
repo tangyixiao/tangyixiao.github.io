@@ -5,5 +5,10 @@ __pycache__/
 /.zcode/
 # 开发期探针脚本与截图（本地验证用，不进仓库）
 /_probe/
+/tests/shots/
+/tests/probe-scene.cjs
+/tests/repro-scene.cjs
+/tests/measure-3d.cjs
+/tests/verify-3d.cjs
 # tsc --noEmit 的增量缓存
 tsconfig.tsbuildinfo
