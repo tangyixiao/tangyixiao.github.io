@@ -11,21 +11,21 @@
     *{box-sizing:border-box}body{margin:0;background:var(--sky);color:var(--ink);font-family:"Segoe UI","Microsoft YaHei",sans-serif}
     .page{max-width:1440px;margin:auto;padding:36px 6vw 20px}header{display:flex;justify-content:space-between;align-items:center;gap:24px}
     .wordmark{font-size:13px;font-weight:600;letter-spacing:.18em;display:flex;align-items:center;gap:12px}.wordmark svg{width:32px;height:24px}
-    .back{font-size:12px;color:var(--ink);text-decoration:none;border-bottom:1px solid #254d5155;padding:6px 0}.back:hover{border-color:var(--ink)}
+    .lab-back{position:fixed;top:max(14px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));z-index:50;padding:9px 18px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(10,12,18,.72);color:#fff;font-size:13px;font-weight:600;letter-spacing:.05em;text-decoration:none;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:background .2s,border-color .2s}.lab-back:hover{background:rgba(10,12,18,.9);border-color:rgba(255,255,255,.4)}.lab-back:focus-visible{outline:3px solid var(--coral);outline-offset:5px}
     .intro{text-align:center;margin:44px 0 -16px;position:relative;z-index:1}.intro p{margin:0 0 14px;font-size:11px;letter-spacing:.28em}.intro h1{font-family:"Palatino Linotype","Songti SC","SimSun",serif;font-weight:500;font-size:clamp(32px,4.2vw,56px);letter-spacing:.06em;margin:0}.intro .subtitle{font-size:13px;letter-spacing:.1em;margin-top:17px}
     figure{margin:0;position:relative}.scene{width:100%;height:auto;display:block;overflow:visible}.cloud{animation:drift 12s ease-in-out infinite alternate}.cloud.second{animation-delay:-5s}.bird-bob{transform-origin:562px 385px}
     .controls{display:flex;align-items:center;justify-content:center;gap:10px;margin:-23px auto 32px;position:relative;z-index:2}button{font:inherit;font-size:12px;border:1px solid #254d5144;border-radius:999px;color:var(--ink);background:#ffffff38;padding:11px 19px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .2s,transform .2s}button:hover{background:#fff8df99;transform:translateY(-2px)}button:focus-visible,a:focus-visible{outline:3px solid var(--coral);outline-offset:5px}.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}.primary:hover{background:#35656a}.icon{font-size:12px;width:12px;text-align:center}
     footer{display:flex;justify-content:space-between;gap:16px;font-size:10px;letter-spacing:.12em;border-top:1px solid #254d5125;padding-top:18px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
     @keyframes drift{from{transform:translateX(-8px)}to{transform:translateX(14px)}}
-    @media(max-width:600px){.page{padding:24px 20px 18px}.wordmark{font-size:10px;letter-spacing:.1em}.intro{margin:48px 0 20px}.intro p{font-size:9px}.intro .subtitle{font-size:11px}.scene{width:150%;max-width:none;margin-left:-25%}figure{overflow:hidden}.controls{margin:16px 0 46px}footer{font-size:9px;letter-spacing:.02em}.back{font-size:11px}}
+    @media(max-width:600px){.page{padding:24px 20px 18px}.wordmark{font-size:10px;letter-spacing:.1em}.intro{margin:48px 0 20px}.intro p{font-size:9px}.intro .subtitle{font-size:11px}.scene{width:150%;max-width:none;margin-left:-25%}figure{overflow:hidden}.controls{margin:16px 0 46px}footer{font-size:9px;letter-spacing:.02em}.lab-back{font-size:11px}}
     @media(prefers-reduced-motion:reduce){.cloud{animation:none}button{transition:none}}
   </style>
 </head>
 <body>
+<a class="lab-back" href="/">← 返回主页</a>
 <main class="page">
   <header>
     <div class="wordmark"><svg viewBox="0 0 40 30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 18q8-13 17 0q9-13 18 0M10 26q10-9 20 0"/><path d="M20 3v5m-8-1 3 3m13-3-3 3"/></svg>海岸兜风俱乐部</div>
-    <a class="back" href="/">回到主页 ↗</a>
   </header>
   <div class="intro"><p>A LITTLE RIDE BY THE SEA</p><h1>顺风，慢慢骑。</h1><p class="subtitle">今天的目的地，是下一阵海风。</p></div>
   <figure>
