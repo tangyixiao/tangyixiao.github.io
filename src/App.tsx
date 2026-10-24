@@ -7,6 +7,33 @@ import SolarExplorer from './visual/SolarExplorer'
 import { useSpatialCards } from './visual/useSpatialCards'
 
 const UniverseCanvas = lazy(() => import('./visual/UniverseCanvas'))
+
+// 首屏性能：场景（three 模块 + 22 张贴图）是纯背景，不该和 hero 文案抢水合后的主线程与带宽。
+// Lighthouse 基线里 three chunk 的求值 + 22 张贴图把模拟 LCP 顶到 23s：只要场景的网络与脚本
+// 落在 hero 文案成帧之前，就会被算进那一帧的依赖图。h1 在 Reveal 入场动画里越过可见阈值
+// 的那一帧才是真正的 LCP（实测 ~1.3s），所以这里把 SceneLayer 的挂载推迟到首帧绘制之后的
+// 1.5s：hero 先画完、LCP 先落定，背景再进场。requestIdleCallback 不行——它在首帧绘制前
+// 就会触发（实验里跑出过 LCP 23.3s 的回退），双重 requestAnimationFrame 才保证中间夹着一次
+// 真实的绘制。
+const SCENE_MOUNT_DELAY = 1500
+function useIdleScene() {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    if (mounted) return undefined
+    let cancelled = false
+    let frame = 0, timer = 0
+    const release = () => { if (!cancelled) setMounted(true) }
+    frame = window.requestAnimationFrame(() => {
+      frame = window.requestAnimationFrame(() => { timer = window.setTimeout(release, SCENE_MOUNT_DELAY) })
+    })
+    return () => {
+      cancelled = true
+      window.cancelAnimationFrame(frame)
+      window.clearTimeout(timer)
+    }
+  }, [mounted])
+  return mounted
+}
 const SECTION_PHASES = { home: 'hero', work: 'projects', focus: 'focus', lab: 'focus', about: 'about', links: 'links' } as const
 type RouteId = keyof typeof SECTION_PHASES
 const ROUTE_IDS = Object.keys(SECTION_PHASES) as RouteId[]
@@ -87,6 +114,7 @@ function App() {
   const sequence = useRef(0)
   const reduce = useReducedMotion() ?? false
   const route = useHashRoute()
+  const sceneMounted = useIdleScene()
   const phase = SECTION_PHASES[route.view]
   const copy = siteContent[language]
   const solar = solarCopy[language]
@@ -135,7 +163,7 @@ function App() {
 
   return <>
     <a className="skip-link" href="#main">{language === 'zh' ? '跳到主要内容' : 'Skip to main content'}</a>
-    <SceneLayer phase={phase} theme={theme} pulse={pulse} reducedMotion={reduce} mode={exploring ? 'explore' : 'browse'} scaleMode={scaleMode} selected={selectedBody} paused={paused} reset={sceneReset} zoom={sceneZoom} timeScale={timeScale} galacticRing={galacticRing} galacticView={galacticView} interactionElement={surface} onSelect={setSelectedBody} onAvailability={setAvailable} />
+    {sceneMounted && <SceneLayer phase={phase} theme={theme} pulse={pulse} reducedMotion={reduce} mode={exploring ? 'explore' : 'browse'} scaleMode={scaleMode} selected={selectedBody} paused={paused} reset={sceneReset} zoom={sceneZoom} timeScale={timeScale} galacticRing={galacticRing} galacticView={galacticView} interactionElement={surface} onSelect={setSelectedBody} onAvailability={setAvailable} />}
     <div className="site-shell">
       <header className="site-header">
         <nav className="site-nav" aria-label={language === 'zh' ? '主导航' : 'Primary navigation'}>

@@ -588,6 +588,10 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
     window.addEventListener('pointermove', onPointer, { passive: true }); scope.add(() => window.removeEventListener('pointermove', onPointer))
     document.addEventListener('visibilitychange', onVisibility); scope.add(() => document.removeEventListener('visibilitychange', onVisibility))
     scope.add(() => { releaseInteraction?.(); controls?.dispose() })
+    // 首帧 render 会同步编译全部着色器，是初始化最后一段长任务：让出主线程再渲，
+    // 并保持与贴图阶段一致的取消语义（中止时走 showFallback）。
+    await new Promise<void>(resolve => setTimeout(resolve, 0))
+    if (assetAbort.signal.aborted || signal?.aborted) throw new DOMException('Scene disposed', 'AbortError')
     solar.galacticAnchor.visible = galacticRing
     renderer.setClearColor(0x000000, 0); applyTheme(); frameEnvironment(); resize(true); render(0, true); start()
     const destroy = () => { if (destroyed) return; destroyed = true; diagnostic('ready', 'false'); stop(); try { scope.cleanup() } catch { /* Release all resources even when a driver disposer fails. */ } }

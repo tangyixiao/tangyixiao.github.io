@@ -199,6 +199,15 @@ void main(){
   #include <colorspace_fragment>
 }`
 
+// 首屏性能：贴图加载完成后，几何、材质与实例化网格的构建原本是同步的一大段脚本
+// （Lighthouse 里是 800ms+ 的单个 long task，直接吃掉 TBT）。把构建拆成几个阶段，
+// 每个阶段之间让出一次主线程：hero 已经画完，这里多花几毫秒调度换来更低的阻塞。
+// 每次让出后都检查 abort 信号，保持与贴图加载一致的取消语义。
+const yieldToMain = async (signal: AbortSignal) => {
+  await new Promise<void>(resolve => setTimeout(resolve, 0))
+  if (signal.aborted) throw new DOMException('Scene disposed', 'AbortError')
+}
+
 export async function createSolarSystem(T: typeof Three, scope: ResourceScope, mobile: boolean, signal: AbortSignal) {
   const geometry = <G extends Three.BufferGeometry>(g: G) => scope.track(g, g => g.dispose())
   const material = <M extends Three.Material>(m: M) => scope.track(m, m => m.dispose())
@@ -216,6 +225,7 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
     return [name, map] as const
   }))
   const atlas = Object.fromEntries(loaded) as Record<typeof maps[number], Three.Texture>
+  await yieldToMain(signal)
   // world 供浏览/探索模式取景缩放。system 是黄道面上的太阳系本体；
   // galaxy 用真实的银道基向量承载银道面：银心标记与太阳的公转轨道环，太阳带着整个系统沿环前行。
   const world = new T.Group()
@@ -437,6 +447,7 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
     }
     if (body.id === 'uranus') mesh.rotation.z = 1.7
   }
+  await yieldToMain(signal)
   // 哈雷彗星的离子尾：一个挂在它 anchor 上的圆锥，每帧把 +y 轴指向背离太阳的方向。
   // 用 MeshBasicMaterial 而不是自定义着色器——尾巴是一块方向性很强的辉光，掺进
   // surfaceFragment 那套昼夜光照只会让它变暗、失去"离子尾"的读感。
@@ -596,6 +607,7 @@ void main() {
   }))
   const dust = new T.Points(dustGeometry, dustMaterial); dust.frustumCulled = false
   system.add(dust)
+  await yieldToMain(signal)
   const highlight = (id: BodyId | null) => planets.forEach((planet, key) => {
     // 太阳的色球强度由 update() 按呼吸节奏自己驱动（见 update 内 sunLight 附近），
     // 这里不能再写它的 intensity：highlight(null) 会把日珥直接掐灭。
