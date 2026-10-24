@@ -66,11 +66,13 @@ async function main() {
       const baseDistance = Number(await scaledScene.getAttribute('data-scene-camera-distance'))
       await scaled.getByRole('button', { name: '真实比例', exact: true }).click()
       await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneScale === 'true')
-      await scaled.waitForTimeout(900)
+      await scaled.waitForTimeout(1500)
       assert.equal(await scaledScene.getAttribute('data-scene-outside-bodies'), 'none', 'true-scale overview still fits all eight planets')
       const trueDistance = Number(await scaledScene.getAttribute('data-scene-camera-distance'))
-      // 艺术模式压缩外行星距离（全景更远），真实比例 1:1 距离下全景相机反而更近。
-      assert.ok(trueDistance < baseDistance * 0.55, `true-scale camera reframes closer (${baseDistance} -> ${trueDistance})`)
+      // 艺术模式压缩外行星距离，全景相机约 60 单位；真实比例 1:1 距离下海王星轨道 30 AU × 1.55
+      // ≈ 46.5 单位半径，取景改为诚实地装下整条真实轨道（相机拉远到约 173 单位），
+      // 全部八大行星仍在画面内（上一行断言）；配合标记环/光晕/轨道线提亮保持可见性。
+      assert.ok(trueDistance > baseDistance * 2, `true-scale overview pulls back to frame the real orbits (${baseDistance} -> ${trueDistance})`)
       await scaled.getByRole('button', { name: '选择地球', exact: true }).click()
       await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneSelected === 'earth')
       await scaled.getByRole('button', { name: '艺术模式', exact: true }).click()
