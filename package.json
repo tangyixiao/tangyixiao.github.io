@@ -6,7 +6,8 @@
   "scripts": {
     "build": "vite build && node scripts/build-blog.mjs && node scripts/copy-legacy.mjs && node scripts/verify-lazy-chunks.mjs",
     "test:unit": "node --experimental-strip-types --test tests/visual-lifecycle.test.mjs tests/solar-geometry.test.mjs",
-    "test:browser": "node tests/homepage-smoke.mjs && node tests/homepage.smoke.cjs && node tests/homepage-redesign.cjs && node tests/solar-system.cjs && node tests/solar-quality.cjs && node tests/blog.smoke.cjs"
+    "test:browser": "node tests/homepage-smoke.mjs && node tests/homepage.smoke.cjs && node tests/homepage-redesign.cjs && node tests/solar-system.cjs && node tests/solar-quality.cjs && node tests/blog.smoke.cjs",
+    "og": "node scripts/generate-og.mjs"
   },
   "dependencies": {
     "motion": "^13.1.1",
