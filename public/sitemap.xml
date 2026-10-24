@@ -2,104 +2,62 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://tangyixiao.github.io/</loc>
-    <lastmod>2026-09-29</lastmod>
+    <lastmod>2026-10-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://tangyixiao.github.io/notes.html</loc>
-    <lastmod>2026-09-29</lastmod>
+    <loc>https://tangyixiao.github.io/blog/</loc>
+    <lastmod>2026-10-02</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://tangyixiao.github.io/thechao.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.5</priority>
+    <loc>https://tangyixiao.github.io/blog/posts/agent-experiment.html</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://tangyixiao.github.io/thechaos.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.5</priority>
+    <loc>https://tangyixiao.github.io/blog/posts/problem-to-note.html</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://tangyixiao.github.io/blog/posts/proof-and-notes.html</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://tangyixiao.github.io/blackhole.html</loc>
     <lastmod>2026-10-11</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://tangyixiao.github.io/KCM%E7%B3%BB%E5%88%97/KCM%20CS%201.0.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
+    <loc>https://tangyixiao.github.io/threebody.html</loc>
+    <lastmod>2026-10-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://tangyixiao.github.io/KCM%E7%B3%BB%E5%88%97/KCM%20CS%202.0.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
+    <loc>https://tangyixiao.github.io/thechao.html</loc>
+    <lastmod>2026-10-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://tangyixiao.github.io/KCM%E7%B3%BB%E5%88%97/KCM-%E6%8C%96%E5%9C%9F%E8%B1%86%204.3.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
+    <loc>https://tangyixiao.github.io/thechaos.html</loc>
+    <lastmod>2026-10-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://tangyixiao.github.io/KCM%E7%B3%BB%E5%88%97/KCM-%E6%8C%96%E5%9C%9F%E8%B1%86%205.0.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://tangyixiao.github.io/KCM%E7%B3%BB%E5%88%97/KCM%E5%88%80%E6%88%98%201.0.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://tangyixiao.github.io/KCM%E7%B3%BB%E5%88%97/KCM%E6%8C%96%E5%9C%9F%E8%B1%862.0.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://tangyixiao.github.io/KCM%E7%B3%BB%E5%88%97/KCM%E6%8C%96%E5%9C%9F%E8%B1%863.0.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://tangyixiao.github.io/KCM%E7%B3%BB%E5%88%97/wtd%20killer%20%E6%8D%A2%E6%96%B0%E7%89%88%203.0.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://tangyixiao.github.io/KCM%E7%B3%BB%E5%88%97/wtd%20killer%20%E6%8D%A2%E6%96%B0%E7%89%881.0.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://tangyixiao.github.io/KCM%E7%B3%BB%E5%88%97/wtd%20killer%EF%BC%88%E6%B5%85%E8%89%B2%E7%89%88%2B%E5%BC%80%E5%8F%91%E8%80%85%E6%A8%A1%E5%BC%8F%EF%BC%89.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://tangyixiao.github.io/KCM%E7%B3%BB%E5%88%97/wtd.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://tangyixiao.github.io/KCM%E7%B3%BB%E5%88%97/%E4%B8%9C%E6%96%B9.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://tangyixiao.github.io/luoshao/luoshao.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://tangyixiao.github.io/%E6%9E%81%E9%99%90%E8%BA%AB%E6%B3%95/%E6%9E%81%E9%99%90%E8%BA%AB%E6%B3%95.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://tangyixiao.github.io/%E6%9E%81%E9%99%90%E8%BA%AB%E6%B3%95/%E6%9E%81%E9%99%90%E8%BA%AB%E6%B3%95%EF%BC%88%E6%97%A0bug%E7%89%88%EF%BC%89.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <priority>0.4</priority>
+    <loc>https://tangyixiao.github.io/pelican/</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
   </url>
 </urlset>
