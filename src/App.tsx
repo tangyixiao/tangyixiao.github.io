@@ -34,7 +34,7 @@ function useIdleScene() {
   }, [mounted])
   return mounted
 }
-const SECTION_PHASES = { home: 'hero', work: 'projects', focus: 'focus', lab: 'focus', about: 'about', links: 'links' } as const
+const SECTION_PHASES = { home: 'hero', work: 'projects', focus: 'focus', lab: 'focus', now: 'about', about: 'about', links: 'links' } as const
 type RouteId = keyof typeof SECTION_PHASES
 const ROUTE_IDS = Object.keys(SECTION_PHASES) as RouteId[]
 const tools = ['C++', 'Python', 'LaTeX', 'Markdown', 'Git']
@@ -208,7 +208,8 @@ function App() {
     { id: 'home', label: copy.nav.home }, { id: 'work', label: copy.nav.work },
     { id: 'lab', label: copy.nav.lab },
     { id: 'blog', label: language === 'zh' ? '博客' : 'Blog' },
-    { id: 'focus', label: copy.nav.focus }, { id: 'about', label: copy.nav.about },
+    { id: 'focus', label: copy.nav.focus }, { id: 'now', label: copy.nav.now },
+    { id: 'about', label: copy.nav.about },
     { id: 'links', label: copy.nav.links },
   ]
 
@@ -248,6 +249,12 @@ function App() {
         {route.view === 'focus' && <section className="focus section view" id="focus"><div className="section-heading"><Reveal><p className="eyebrow">{copy.focus.label}</p><h2>{copy.focus.heading}</h2></Reveal><Reveal delay={.1}><p className="section-intro">{copy.focus.intro}</p></Reveal></div><div className="focus-grid">{focusIds.map((id) => <FocusCard key={id} id={id} copy={copy.focus.items[id]} onPulse={pulseScene} />)}</div></section>}
 
         {route.view === 'lab' && <section className="lab section view" id="lab"><div className="section-heading"><Reveal><p className="eyebrow">{copy.lab.label}</p><h2>{copy.lab.heading}</h2></Reveal><Reveal delay={.1}><p className="section-intro">{copy.lab.intro}</p></Reveal></div><div className="focus-grid lab-grid">{labIds.map((id, index) => <LabCard key={id} id={id} index={index} copy={copy.lab.items[id]} />)}</div></section>}
+
+        {route.view === 'now' && <section className="now section view" id="now">
+          <div className="section-heading"><Reveal><p className="eyebrow">{copy.now.label}</p><h2>{copy.now.heading}</h2></Reveal><Reveal delay={.12}><p className="section-intro">{copy.now.intro}</p></Reveal></div>
+          <div className="now-list">{copy.now.blocks.map((block, index) => <Reveal key={block.title} delay={index * .08}><article className="now-item"><span className="now-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><div><h3>{block.title}</h3><p>{block.detail}</p></div></article></Reveal>)}</div>
+          <Reveal delay={.2}><div className="now-reading"><span className="fact-label">{copy.now.readingLabel}</span><ul>{copy.now.reading.map((item) => <li key={item}>{item}</li>)}</ul><p className="now-updated">{copy.now.updatedLabel} · {copy.now.updatedAt}</p></div></Reveal>
+        </section>}
 
         {route.view === 'about' && <section className="about section view" id="about"><div className="about-heading"><Reveal><p className="eyebrow">{copy.about.label}</p><h2>{copy.about.heading}</h2></Reveal><span className="about-cross" aria-hidden="true">✳</span></div><div className="about-content"><Reveal><p>{copy.about.paragraph1}</p><p>{copy.about.paragraph2}</p></Reveal><Reveal delay={.12}><div className="about-facts"><div><span className="fact-label">{copy.about.toolsLabel}</span><p className="tool-list">{tools.map((tool) => <span key={tool}>{tool}</span>)}</p></div><div><span className="fact-label">{copy.about.interestsLabel}</span><p>{copy.about.interests}</p></div></div></Reveal></div></section>}
       </main>

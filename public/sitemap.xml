@@ -31,6 +31,12 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://tangyixiao.github.io/now/</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://tangyixiao.github.io/links/</loc>
     <lastmod>2026-10-24</lastmod>
     <changefreq>monthly</changefreq>

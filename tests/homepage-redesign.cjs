@@ -89,6 +89,12 @@ async function main() {
     await pushRoute(zh, '/links')
     await zh.locator('#links').waitFor()
     assert.equal(await zh.locator('a[href="/Code/"]').count(), 1, 'links view exposes exactly one CodeHub anchor')
+    await pushRoute(zh, '/now')
+    await zh.locator('#now').waitFor()
+    assert.equal(await zh.locator('.nav-links a[href="/now"]').count(), 1, 'the primary navigation exposes exactly one Now entry')
+    assert.equal(await zh.locator('.now-item').count(), 4, 'the now view lists the four ongoing entries')
+    assert.equal(await zh.locator('.now-reading li').count(), 3, 'the now view lists the reading entries')
+    assert.match(await zh.locator('#now').innerText(), /最后更新.*2026-10-24/s, 'the now view shows its updated date')
     await pushRoute(zh, '/')
     await zh.locator('h1').waitFor()
 
