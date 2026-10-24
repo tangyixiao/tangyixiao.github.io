@@ -41,21 +41,72 @@ const tools = ['C++', 'Python', 'LaTeX', 'Markdown', 'Git']
 
 type Route = { view: RouteId; project?: ProjectId }
 
-function parseRoute(): Route | null {
-  const id = window.location.hash.replace(/^#\/?/, '')
-  if (id === '') return { view: 'home' }
-  const [base, sub] = id.split('/')
+// v1.4 起路由读 location.pathname（history 路由），GitHub Pages 上未知路径回退到 404.html
+// （构建脚本复制 index.html 而来），应用引导后按 pathname 渲染，各版面才有可被独立收录的 URL。
+function parsePath(pathname: string): Route | null {
+  const segments = pathname.replace(/^\/+|\/+$/g, '').split('/').filter(Boolean)
+  if (segments.length === 0) return { view: 'home' }
+  const [base, sub] = segments
   if (!(ROUTE_IDS as string[]).includes(base)) return null
   if (base === 'work' && sub) return (projectIds as string[]).includes(sub) ? { view: 'work', project: sub as ProjectId } : null
   return { view: base as RouteId }
 }
 
-function useHashRoute(): Route {
-  const [route, setRoute] = useState<Route>(() => parseRoute() ?? { view: 'home' })
+function parseRoute(): Route | null {
+  return parsePath(window.location.pathname)
+}
+
+function routeToPath(route: Route): string {
+  if (route.view === 'home') return '/'
+  if (route.view === 'work' && route.project) return `/work/${route.project}`
+  return `/${route.view}`
+}
+
+// 兼容旧 hash 链接（外部可能仍有 #/work 这类引用）：引导时发现合法旧路由就用
+// replaceState 原地迁移到对应 pathname，不产生跳转与闪烁；非法 hash 保持不动。
+function migrateLegacyHash(): void {
+  const hash = window.location.hash
+  if (!hash || hash === '#') return
+  const segments = hash.replace(/^#\/?/, '').split('/').filter(Boolean)
+  let route: Route | null = null
+  if (segments.length === 0) {
+    route = { view: 'home' }
+  } else {
+    const [base, sub] = segments
+    if ((ROUTE_IDS as string[]).includes(base)) {
+      route = base === 'work' && sub
+        ? ((projectIds as string[]).includes(sub) ? { view: 'work', project: sub as ProjectId } : null)
+        : { view: base as RouteId }
+    }
+  }
+  if (route) window.history.replaceState(window.history.state, '', routeToPath(route))
+}
+
+function usePathRoute(): Route {
+  const [route, setRoute] = useState<Route>(() => { migrateLegacyHash(); return parseRoute() ?? { view: 'home' } })
   useEffect(() => {
-    const onHashChange = () => { const next = parseRoute(); if (next) setRoute(next) }
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
+    const onPopState = () => { const next = parseRoute(); if (next) setRoute(next) }
+    // 站内锚点统一拦截成 pushState；非路由路径（/blog/、独立实验页等）放行给浏览器整页加载。
+    const onClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      const anchor = (event.target as Element | null)?.closest('a')
+      if (!anchor || (anchor.target && anchor.target !== '_self') || anchor.hasAttribute('download')) return
+      const href = anchor.getAttribute('href')
+      if (!href || !href.startsWith('/')) return
+      const url = new URL(anchor.href, window.location.href)
+      if (url.origin !== window.location.origin) return
+      const next = parsePath(url.pathname)
+      if (!next) return
+      event.preventDefault()
+      if (url.pathname !== window.location.pathname) window.history.pushState({}, '', url.pathname)
+      setRoute(next)
+    }
+    window.addEventListener('popstate', onPopState)
+    document.addEventListener('click', onClick)
+    return () => {
+      window.removeEventListener('popstate', onPopState)
+      document.removeEventListener('click', onClick)
+    }
   }, [])
   useEffect(() => { window.scrollTo({ left: 0, top: 0, behavior: 'instant' }) }, [route])
   return route
@@ -113,7 +164,7 @@ function App() {
   const manualTheme = useRef(preference('site-theme') === 'light' || preference('site-theme') === 'dark')
   const sequence = useRef(0)
   const reduce = useReducedMotion() ?? false
-  const route = useHashRoute()
+  const route = usePathRoute()
   const sceneMounted = useIdleScene()
   const phase = SECTION_PHASES[route.view]
   const copy = siteContent[language]
@@ -167,10 +218,10 @@ function App() {
     <div className="site-shell">
       <header className="site-header">
         <nav className="site-nav" aria-label={language === 'zh' ? '主导航' : 'Primary navigation'}>
-          <a className="brand" href="#/" onClick={() => setMenuOpen(false)}><span className="brand-mark" aria-hidden="true">✳</span><span>{language === 'zh' ? '唐一潇' : 'Tang Yixiao'}</span></a>
+          <a className="brand" href="/" onClick={() => setMenuOpen(false)}><span className="brand-mark" aria-hidden="true">✳</span><span>{language === 'zh' ? '唐一潇' : 'Tang Yixiao'}</span></a>
           <div className="nav-links" data-open={menuOpen}>{nav.map(({ id, label }) => id === 'blog'
             ? <a href="/blog/" key={id} onClick={() => setMenuOpen(false)}>{label}</a>
-            : <a href={id === 'home' ? '#/' : `#/${id}`} key={id} data-active={route.view === id} aria-current={route.view === id ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{label}</a>)}</div>
+            : <a href={id === 'home' ? '/' : `/${id}`} key={id} data-active={route.view === id} aria-current={route.view === id ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{label}</a>)}</div>
           <div className="nav-actions">
             <button className="control language-control" type="button" onClick={switchLanguage} aria-label={copy.actions.language}>{language === 'zh' ? 'EN' : '中'}</button>
             <button className="control theme-control" type="button" onClick={switchTheme} aria-label={theme === 'dark' ? copy.actions.themeLight : copy.actions.themeDark}><span aria-hidden="true">{theme === 'dark' ? '☼' : '☾'}</span></button>
@@ -181,10 +232,10 @@ function App() {
       <main id="main">
         {route.view === 'home' && <section className="hero section" id="home">
           <div className="hero-copy">
-            <Reveal eager><p className="eyebrow"><span className="signal-dot" />{copy.hero.label}</p><p className="hero-alt">{copy.hero.alternateName}</p><h1>{copy.hero.name}</h1><p className="hero-headline">{copy.hero.headline}</p><p className="hero-description">{copy.hero.description}</p><div className="hero-actions"><a className="button-primary" href="#/work" onPointerDown={pulseScene}>{copy.actions.projects}<span aria-hidden="true">↗</span></a><a className="button-text" href="#/about">{copy.actions.about}<span aria-hidden="true">↘</span></a></div></Reveal>
+            <Reveal eager><p className="eyebrow"><span className="signal-dot" />{copy.hero.label}</p><p className="hero-alt">{copy.hero.alternateName}</p><h1>{copy.hero.name}</h1><p className="hero-headline">{copy.hero.headline}</p><p className="hero-description">{copy.hero.description}</p><div className="hero-actions"><a className="button-primary" href="/work" onPointerDown={pulseScene}>{copy.actions.projects}<span aria-hidden="true">↗</span></a><a className="button-text" href="/about">{copy.actions.about}<span aria-hidden="true">↘</span></a></div></Reveal>
           </div>
           <div className="solar-invitation"><span className="solar-coordinate">SOL / 8 PLANETS / ∞ CURIOSITY</span><button className="explore-entry" type="button" onClick={openExplorer} disabled={available === false}><span className="explore-icon" aria-hidden="true">✺</span>{solar.explore}<span aria-hidden="true">↗</span></button><a className="explore-entry explore-blackhole" href="/blackhole.html"><span className="explore-icon" aria-hidden="true">◉</span>{solar.blackholeCta}<span aria-hidden="true">↗</span></a><a className="explore-entry explore-threebody" href="/threebody.html"><span className="explore-icon" aria-hidden="true">✦</span>{solar.threebodyCta}<span aria-hidden="true">↗</span></a><p>{available === false ? solar.unavailable : available === null ? solar.loading : solar.disclaimer}</p></div>
-          <div className="hero-bottom"><span>TY / 2026</span><a href="#/work">{copy.hero.scroll} <b aria-hidden="true">↓</b></a></div>
+          <div className="hero-bottom"><span>TY / 2026</span><a href="/work">{copy.hero.scroll} <b aria-hidden="true">↓</b></a></div>
         </section>}
 
         {route.view === 'work' && !route.project && <section className="work section view" id="work">
@@ -201,15 +252,15 @@ function App() {
         {route.view === 'about' && <section className="about section view" id="about"><div className="about-heading"><Reveal><p className="eyebrow">{copy.about.label}</p><h2>{copy.about.heading}</h2></Reveal><span className="about-cross" aria-hidden="true">✳</span></div><div className="about-content"><Reveal><p>{copy.about.paragraph1}</p><p>{copy.about.paragraph2}</p></Reveal><Reveal delay={.12}><div className="about-facts"><div><span className="fact-label">{copy.about.toolsLabel}</span><p className="tool-list">{tools.map((tool) => <span key={tool}>{tool}</span>)}</p></div><div><span className="fact-label">{copy.about.interestsLabel}</span><p>{copy.about.interests}</p></div></div></Reveal></div></section>}
       </main>
 
-      {route.view === 'links' ? <footer className="footer section view" id="links"><div className="footer-main"><Reveal><p className="eyebrow">{copy.links.label}</p><h2>{copy.links.heading}</h2><p className="section-intro">{copy.links.description}</p></Reveal><div className="social-links"><a href={links.code}>{copy.links.code}<span aria-hidden="true">↗</span></a><ExternalLink href={links.github}>GitHub <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.luogu}>Luogu <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.cnblogs}>Cnblogs <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.csdn}>CSDN <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.bilibili}>Bilibili <span aria-hidden="true">↗</span></ExternalLink></div></div><div className="footer-bottom"><span>© 2026 {copy.hero.name}</span><a href="#/">{copy.actions.top} ↑</a></div></footer>
-      : <footer className="footer footer-slim"><div className="footer-bottom"><span>© 2026 {copy.hero.name}</span><a href="#/links">{copy.nav.links} <span aria-hidden="true">↗</span></a></div></footer>}
+      {route.view === 'links' ? <footer className="footer section view" id="links"><div className="footer-main"><Reveal><p className="eyebrow">{copy.links.label}</p><h2>{copy.links.heading}</h2><p className="section-intro">{copy.links.description}</p></Reveal><div className="social-links"><a href={links.code}>{copy.links.code}<span aria-hidden="true">↗</span></a><ExternalLink href={links.github}>GitHub <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.luogu}>Luogu <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.cnblogs}>Cnblogs <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.csdn}>CSDN <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.bilibili}>Bilibili <span aria-hidden="true">↗</span></ExternalLink></div></div><div className="footer-bottom"><span>© 2026 {copy.hero.name}</span><a href="/">{copy.actions.top} ↑</a></div></footer>
+      : <footer className="footer footer-slim"><div className="footer-bottom"><span>© 2026 {copy.hero.name}</span><a href="/links">{copy.nav.links} <span aria-hidden="true">↗</span></a></div></footer>}
     </div>
     {exploring && <SolarExplorer language={language} selected={selectedBody} paused={paused} scaleMode={scaleMode} timeScale={timeScale} galacticRing={galacticRing} galacticView={galacticView} onSelect={setSelectedBody} onPause={() => setPaused(value => !value)} onReset={() => { setSelectedBody(null); setSceneReset(value => value + 1) }} onZoom={direction => setSceneZoom(value => value + direction)} onScaleMode={() => setScaleMode(value => value === 'artistic' ? 'true' : 'artistic')} onTimeScale={setTimeScale} onGalacticRing={setGalacticRing} onGalacticView={setGalacticView} onClose={closeExplorer} onSurface={setSurface} />}
   </>
 }
 
 function ProjectCard({ id, index, copy, onPulse, visitLabel }: { id: ProjectId; index: number; copy: ProjectContent; onPulse: () => void; visitLabel: string }) {
-  return <Reveal delay={index * .1}><a className={`project-card project-${id}`} href={`#/work/${id}`} onPointerEnter={onPulse} onFocus={onPulse}><div className="project-art" aria-hidden="true"><span /><i /><b /></div><div className="project-body"><p className="project-category">{copy.category}</p><h3>{copy.title}</h3><p className="project-description">{copy.description}</p><span className="project-open">{visitLabel} <span aria-hidden="true">↗</span></span></div></a></Reveal>
+  return <Reveal delay={index * .1}><a className={`project-card project-${id}`} href={`/work/${id}`} onPointerEnter={onPulse} onFocus={onPulse}><div className="project-art" aria-hidden="true"><span /><i /><b /></div><div className="project-body"><p className="project-category">{copy.category}</p><h3>{copy.title}</h3><p className="project-description">{copy.description}</p><span className="project-open">{visitLabel} <span aria-hidden="true">↗</span></span></div></a></Reveal>
 }
 
 function ProjectDetail({ id, copy, detail, visitLabel }: { id: ProjectId; copy: ProjectContent; detail: { overview: string; highlights: string; stack: string; back: string }; visitLabel: string }) {
@@ -221,7 +272,7 @@ function ProjectDetail({ id, copy, detail, visitLabel }: { id: ProjectId; copy: 
       <Reveal><div className="detail-block"><h3 className="detail-label">{detail.overview}</h3><p className="detail-overview">{copy.overview}</p></div></Reveal>
       <Reveal delay={.08}><div className="detail-block"><h3 className="detail-label">{detail.highlights}</h3><ul className="detail-highlights">{copy.highlights.map((item) => <li key={item}>{item}</li>)}</ul></div></Reveal>
       <Reveal delay={.16}><div className="detail-block"><h3 className="detail-label">{detail.stack}</h3><p className="detail-stack">{copy.stack.map((item) => <span className="stack-tag" key={item}>{item}</span>)}</p></div></Reveal>
-      <Reveal delay={.24}><div className="detail-actions"><a className="button-primary" href={href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined}>{visitLabel}<span aria-hidden="true">↗</span></a><a className="button-text" href="#/work">{detail.back}<span aria-hidden="true">↩</span></a></div></Reveal>
+      <Reveal delay={.24}><div className="detail-actions"><a className="button-primary" href={href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined}>{visitLabel}<span aria-hidden="true">↗</span></a><a className="button-text" href="/work">{detail.back}<span aria-hidden="true">↩</span></a></div></Reveal>
     </div>
   </section>
 }
