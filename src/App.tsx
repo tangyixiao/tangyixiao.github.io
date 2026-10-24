@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { focusIds, links, projectIds, siteContent, type FocusId, type Language, type ProjectId, type Theme } from './site/content'
+import { focusIds, links, projectIds, siteContent, type FocusId, type Language, type ProjectContent, type ProjectId, type Theme } from './site/content'
 import type { BodyId, ScaleMode, TimeScale, UniverseCanvasProps } from './visual/types'
 import { solarCopy } from './visual/solarData'
 import SolarExplorer from './visual/SolarExplorer'
@@ -12,14 +12,19 @@ type RouteId = keyof typeof SECTION_PHASES
 const ROUTE_IDS = Object.keys(SECTION_PHASES) as RouteId[]
 const tools = ['C++', 'Python', 'LaTeX', 'Markdown', 'Git']
 
-function parseRoute(): RouteId | null {
+type Route = { view: RouteId; project?: ProjectId }
+
+function parseRoute(): Route | null {
   const id = window.location.hash.replace(/^#\/?/, '')
-  if (id === '') return 'home'
-  return (ROUTE_IDS as string[]).includes(id) ? id as RouteId : null
+  if (id === '') return { view: 'home' }
+  const [base, sub] = id.split('/')
+  if (!(ROUTE_IDS as string[]).includes(base)) return null
+  if (base === 'work' && sub) return (projectIds as string[]).includes(sub) ? { view: 'work', project: sub as ProjectId } : null
+  return { view: base as RouteId }
 }
 
-function useHashRoute(): RouteId {
-  const [route, setRoute] = useState<RouteId>(() => parseRoute() ?? 'home')
+function useHashRoute(): Route {
+  const [route, setRoute] = useState<Route>(() => parseRoute() ?? { view: 'home' })
   useEffect(() => {
     const onHashChange = () => { const next = parseRoute(); if (next) setRoute(next) }
     window.addEventListener('hashchange', onHashChange)
@@ -82,7 +87,7 @@ function App() {
   const sequence = useRef(0)
   const reduce = useReducedMotion() ?? false
   const route = useHashRoute()
-  const phase = SECTION_PHASES[route]
+  const phase = SECTION_PHASES[route.view]
   const copy = siteContent[language]
   const solar = solarCopy[language]
   useSpatialCards(reduce || exploring)
@@ -136,7 +141,7 @@ function App() {
           <a className="brand" href="#/" onClick={() => setMenuOpen(false)}><span className="brand-mark" aria-hidden="true">✳</span><span>{language === 'zh' ? '唐一潇' : 'Tang Yixiao'}</span></a>
           <div className="nav-links" data-open={menuOpen}>{nav.map(({ id, label }) => id === 'blog'
             ? <a href="/blog/" key={id} onClick={() => setMenuOpen(false)}>{label}</a>
-            : <a href={id === 'home' ? '#/' : `#/${id}`} key={id} data-active={route === id} aria-current={route === id ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{label}</a>)}</div>
+            : <a href={id === 'home' ? '#/' : `#/${id}`} key={id} data-active={route.view === id} aria-current={route.view === id ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{label}</a>)}</div>
           <div className="nav-actions">
             <button className="control language-control" type="button" onClick={switchLanguage} aria-label={copy.actions.language}>{language === 'zh' ? 'EN' : '中'}</button>
             <button className="control theme-control" type="button" onClick={switchTheme} aria-label={theme === 'dark' ? copy.actions.themeLight : copy.actions.themeDark}><span aria-hidden="true">{theme === 'dark' ? '☼' : '☾'}</span></button>
@@ -145,7 +150,7 @@ function App() {
         </nav>
       </header>
       <main id="main">
-        {route === 'home' && <section className="hero section" id="home">
+        {route.view === 'home' && <section className="hero section" id="home">
           <div className="hero-copy">
             <Reveal eager><p className="eyebrow"><span className="signal-dot" />{copy.hero.label}</p><p className="hero-alt">{copy.hero.alternateName}</p><h1>{copy.hero.name}</h1><p className="hero-headline">{copy.hero.headline}</p><p className="hero-description">{copy.hero.description}</p><div className="hero-actions"><a className="button-primary" href="#/work" onPointerDown={pulseScene}>{copy.actions.projects}<span aria-hidden="true">↗</span></a><a className="button-text" href="#/about">{copy.actions.about}<span aria-hidden="true">↘</span></a></div></Reveal>
           </div>
@@ -153,26 +158,41 @@ function App() {
           <div className="hero-bottom"><span>TY / 2026</span><a href="#/work">{copy.hero.scroll} <b aria-hidden="true">↓</b></a></div>
         </section>}
 
-        {route === 'work' && <section className="work section view" id="work">
+        {route.view === 'work' && !route.project && <section className="work section view" id="work">
           <div className="section-heading"><Reveal><p className="eyebrow">{copy.work.label}</p><h2>{copy.work.heading}</h2></Reveal><Reveal delay={.12}><p className="section-intro">{copy.work.intro}</p></Reveal></div>
           <div className="project-list">{projectIds.map((id, index) => <ProjectCard key={id} id={id} index={index} copy={copy.work.projects[id]} onPulse={pulseScene} visitLabel={copy.actions.visit} />)}</div>
         </section>}
 
-        {route === 'focus' && <section className="focus section view" id="focus"><div className="section-heading"><Reveal><p className="eyebrow">{copy.focus.label}</p><h2>{copy.focus.heading}</h2></Reveal><Reveal delay={.1}><p className="section-intro">{copy.focus.intro}</p></Reveal></div><div className="focus-grid">{focusIds.map((id) => <FocusCard key={id} id={id} copy={copy.focus.items[id]} onPulse={pulseScene} />)}</div></section>}
+        {route.view === 'work' && route.project && <ProjectDetail id={route.project} copy={copy.work.projects[route.project]} detail={copy.work.detail} visitLabel={copy.actions.visit} />}
 
-        {route === 'about' && <section className="about section view" id="about"><div className="about-heading"><Reveal><p className="eyebrow">{copy.about.label}</p><h2>{copy.about.heading}</h2></Reveal><span className="about-cross" aria-hidden="true">✳</span></div><div className="about-content"><Reveal><p>{copy.about.paragraph1}</p><p>{copy.about.paragraph2}</p></Reveal><Reveal delay={.12}><div className="about-facts"><div><span className="fact-label">{copy.about.toolsLabel}</span><p className="tool-list">{tools.map((tool) => <span key={tool}>{tool}</span>)}</p></div><div><span className="fact-label">{copy.about.interestsLabel}</span><p>{copy.about.interests}</p></div></div></Reveal></div></section>}
+        {route.view === 'focus' && <section className="focus section view" id="focus"><div className="section-heading"><Reveal><p className="eyebrow">{copy.focus.label}</p><h2>{copy.focus.heading}</h2></Reveal><Reveal delay={.1}><p className="section-intro">{copy.focus.intro}</p></Reveal></div><div className="focus-grid">{focusIds.map((id) => <FocusCard key={id} id={id} copy={copy.focus.items[id]} onPulse={pulseScene} />)}</div></section>}
+
+        {route.view === 'about' && <section className="about section view" id="about"><div className="about-heading"><Reveal><p className="eyebrow">{copy.about.label}</p><h2>{copy.about.heading}</h2></Reveal><span className="about-cross" aria-hidden="true">✳</span></div><div className="about-content"><Reveal><p>{copy.about.paragraph1}</p><p>{copy.about.paragraph2}</p></Reveal><Reveal delay={.12}><div className="about-facts"><div><span className="fact-label">{copy.about.toolsLabel}</span><p className="tool-list">{tools.map((tool) => <span key={tool}>{tool}</span>)}</p></div><div><span className="fact-label">{copy.about.interestsLabel}</span><p>{copy.about.interests}</p></div></div></Reveal></div></section>}
       </main>
 
-      {route === 'links' ? <footer className="footer section view" id="links"><div className="footer-main"><Reveal><p className="eyebrow">{copy.links.label}</p><h2>{copy.links.heading}</h2><p className="section-intro">{copy.links.description}</p></Reveal><div className="social-links"><a href={links.code}>{copy.links.code}<span aria-hidden="true">↗</span></a><ExternalLink href={links.github}>GitHub <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.luogu}>Luogu <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.cnblogs}>Cnblogs <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.csdn}>CSDN <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.bilibili}>Bilibili <span aria-hidden="true">↗</span></ExternalLink></div></div><div className="footer-bottom"><span>© 2026 {copy.hero.name}</span><a href="#/">{copy.actions.top} ↑</a></div></footer>
+      {route.view === 'links' ? <footer className="footer section view" id="links"><div className="footer-main"><Reveal><p className="eyebrow">{copy.links.label}</p><h2>{copy.links.heading}</h2><p className="section-intro">{copy.links.description}</p></Reveal><div className="social-links"><a href={links.code}>{copy.links.code}<span aria-hidden="true">↗</span></a><ExternalLink href={links.github}>GitHub <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.luogu}>Luogu <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.cnblogs}>Cnblogs <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.csdn}>CSDN <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.bilibili}>Bilibili <span aria-hidden="true">↗</span></ExternalLink></div></div><div className="footer-bottom"><span>© 2026 {copy.hero.name}</span><a href="#/">{copy.actions.top} ↑</a></div></footer>
       : <footer className="footer footer-slim"><div className="footer-bottom"><span>© 2026 {copy.hero.name}</span><a href="#/links">{copy.nav.links} <span aria-hidden="true">↗</span></a></div></footer>}
     </div>
     {exploring && <SolarExplorer language={language} selected={selectedBody} paused={paused} scaleMode={scaleMode} timeScale={timeScale} galacticRing={galacticRing} galacticView={galacticView} onSelect={setSelectedBody} onPause={() => setPaused(value => !value)} onReset={() => { setSelectedBody(null); setSceneReset(value => value + 1) }} onZoom={direction => setSceneZoom(value => value + direction)} onScaleMode={() => setScaleMode(value => value === 'artistic' ? 'true' : 'artistic')} onTimeScale={setTimeScale} onGalacticRing={setGalacticRing} onGalacticView={setGalacticView} onClose={closeExplorer} onSurface={setSurface} />}
   </>
 }
 
-function ProjectCard({ id, index, copy, onPulse, visitLabel }: { id: ProjectId; index: number; copy: { category: string; title: string; description: string }; onPulse: () => void; visitLabel: string }) {
+function ProjectCard({ id, index, copy, onPulse, visitLabel }: { id: ProjectId; index: number; copy: ProjectContent; onPulse: () => void; visitLabel: string }) {
+  return <Reveal delay={index * .1}><a className={`project-card project-${id}`} href={`#/work/${id}`} onPointerEnter={onPulse} onFocus={onPulse}><div className="project-art" aria-hidden="true"><span /><i /><b /></div><div className="project-body"><p className="project-category">{copy.category}</p><h3>{copy.title}</h3><p className="project-description">{copy.description}</p><span className="project-open">{visitLabel} <span aria-hidden="true">↗</span></span></div></a></Reveal>
+}
+
+function ProjectDetail({ id, copy, detail, visitLabel }: { id: ProjectId; copy: ProjectContent; detail: { overview: string; highlights: string; stack: string; back: string }; visitLabel: string }) {
   const href = links[id]
-  return <Reveal delay={index * .1}><a className={`project-card project-${id}`} href={href} target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noopener noreferrer' : undefined} onPointerEnter={onPulse} onFocus={onPulse}><div className="project-art" aria-hidden="true"><span /><i /><b /></div><div className="project-body"><p className="project-category">{copy.category}</p><h3>{copy.title}</h3><p className="project-description">{copy.description}</p><span className="project-open">{visitLabel} <span aria-hidden="true">↗</span></span></div></a></Reveal>
+  const external = href.startsWith('http')
+  return <section className="work section view" id="work">
+    <div className="section-heading"><Reveal><p className="eyebrow">{copy.category}</p><h2>{copy.title}</h2></Reveal><Reveal delay={.12}><p className="section-intro">{copy.description}</p></Reveal></div>
+    <div className="project-detail">
+      <Reveal><div className="detail-block"><h3 className="detail-label">{detail.overview}</h3><p className="detail-overview">{copy.overview}</p></div></Reveal>
+      <Reveal delay={.08}><div className="detail-block"><h3 className="detail-label">{detail.highlights}</h3><ul className="detail-highlights">{copy.highlights.map((item) => <li key={item}>{item}</li>)}</ul></div></Reveal>
+      <Reveal delay={.16}><div className="detail-block"><h3 className="detail-label">{detail.stack}</h3><p className="detail-stack">{copy.stack.map((item) => <span className="stack-tag" key={item}>{item}</span>)}</p></div></Reveal>
+      <Reveal delay={.24}><div className="detail-actions"><a className="button-primary" href={href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined}>{visitLabel}<span aria-hidden="true">↗</span></a><a className="button-text" href="#/work">{detail.back}<span aria-hidden="true">↩</span></a></div></Reveal>
+    </div>
+  </section>
 }
 
 function FocusCard({ id, copy, onPulse }: { id: FocusId; copy: { name: string; summary: string }; onPulse: () => void }) {
