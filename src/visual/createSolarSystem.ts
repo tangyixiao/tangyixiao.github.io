@@ -208,7 +208,8 @@ const yieldToMain = async (signal: AbortSignal) => {
   if (signal.aborted) throw new DOMException('Scene disposed', 'AbortError')
 }
 
-export async function createSolarSystem(T: typeof Three, scope: ResourceScope, mobile: boolean, signal: AbortSignal) {
+// T 是 threeCore 的具名再导出命名空间（tree-shaking 边界），类型上收敛为它的形状。
+export async function createSolarSystem(T: typeof import('./threeCore'), scope: ResourceScope, mobile: boolean, signal: AbortSignal) {
   const geometry = <G extends Three.BufferGeometry>(g: G) => scope.track(g, g => g.dispose())
   const material = <M extends Three.Material>(m: M) => scope.track(m, m => m.dispose())
   const texture = <X extends Three.Texture>(t: X) => scope.track(t, t => t.dispose())

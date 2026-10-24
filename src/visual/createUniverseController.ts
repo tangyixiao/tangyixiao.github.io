@@ -22,7 +22,8 @@ const profiles = {
 } as const
 
 export async function createUniverseController(canvas: HTMLCanvasElement, props: UniverseCanvasProps, onContextLost: () => void, onRender?: (count: number) => void, signal?: AbortSignal): Promise<UniverseController> {
-  const [T, { OrbitControls }] = await Promise.all([import('three'), import('three/addons/controls/OrbitControls.js')])
+  // 走 threeCore 具名再导出，three 按用到的导出做 tree-shaking（见 threeCore.ts 头注释）。
+  const [T, { OrbitControls }] = await Promise.all([import('./threeCore'), import('three/addons/controls/OrbitControls.js')])
   const scope = createResourceScope()
   const assetAbort = new AbortController()
   const abort = () => { assetAbort.abort(); try { scope.cleanup() } catch { /* Finish every disposer. */ } }

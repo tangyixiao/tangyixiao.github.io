@@ -8,7 +8,8 @@ const assetDirectory = path.join(root, 'dist', 'assets')
 const assets = await readdir(assetDirectory)
 const initial = assets.find((file) => /^index-[^/]+\.js$/.test(file))
 const scene = assets.find((file) => /^UniverseCanvas-[^/]+\.js$/.test(file))
-const three = assets.find((file) => /^three\.module-[^/]+\.js$/.test(file))
+// three 走 src/visual/threeCore.ts 的具名再导出做 tree-shaking，chunk 名从 three.module 变为 threeCore。
+const three = assets.find((file) => /^threeCore-[^/]+\.js$/.test(file))
 
 assert.ok(initial, 'production build must contain the initial app chunk')
 assert.ok(scene, 'production build must contain a distinct scene chunk')
@@ -21,6 +22,6 @@ const [initialSource, sceneSource, threeSource] = await Promise.all([
 ])
 
 assert.equal(initialSource.includes('WebGLRenderer'), false, 'initial app chunk must not eagerly absorb Three.js')
-assert.match(sceneSource, /three\.module-[^"']+\.js/, 'scene chunk must reference the Three.js chunk')
+assert.match(sceneSource, /threeCore-[^"']+\.js/, 'scene chunk must reference the Three.js chunk')
 assert.match(threeSource, /WebGLRenderer/, 'Three.js chunk must contain the renderer')
 console.log(`lazy chunks passed: ${initial} ${scene} ${three}`)
