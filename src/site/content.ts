@@ -30,12 +30,13 @@ interface ProjectContent {
 
 interface SiteContent {
   meta: { title: string; description: string }
-  nav: { home: string; work: string; lab: string; focus: string; about: string; links: string }
+  nav: { home: string; work: string; lab: string; focus: string; now: string; about: string; links: string }
   lab: { label: string; heading: string; intro: string; items: Record<LabId, { name: string; summary: string; href: string }> }
   actions: { projects: string; about: string; visit: string; top: string; themeLight: string; themeDark: string; language: string; menuOpen: string; menuClose: string }
   hero: { label: string; name: string; alternateName: string; headline: string; description: string; scroll: string }
   work: { label: string; heading: string; intro: string; projects: Record<ProjectId, ProjectContent>; detail: { overview: string; highlights: string; stack: string; back: string } }
   focus: { label: string; heading: string; intro: string; items: Record<FocusId, { name: string; summary: string }> }
+  now: { label: string; heading: string; intro: string; updatedLabel: string; updatedAt: string; blocks: { title: string; detail: string }[]; readingLabel: string; reading: string[] }
   about: { label: string; heading: string; paragraph1: string; paragraph2: string; toolsLabel: string; interestsLabel: string; interests: string }
   links: { label: string; heading: string; description: string; code: string }
 }
@@ -43,7 +44,7 @@ interface SiteContent {
 export const siteContent: Record<Language, SiteContent> = {
   zh: {
     meta: { title: '唐一潇 · 算法、数学与智能系统', description: '唐一潇的个人网站：算法、数学、物理与智能系统的学习实践和精选项目。' },
-    nav: { home: '首页', work: '项目', lab: '实验场', focus: '方向', about: '关于', links: '联系' },
+    nav: { home: '首页', work: '项目', lab: '实验场', focus: '方向', now: '现在', about: '关于', links: '联系' },
     lab: {
       label: 'PLAYGROUND / 实验场', heading: '一些亲手写的小实验。', intro: '独立运行的 WebGL 小页面，点开即玩——引力、混沌与动画的小玩具。',
       items: {
@@ -88,12 +89,24 @@ export const siteContent: Record<Language, SiteContent> = {
         intelligence: { name: 'AI 与智能体', summary: '阅读、实验并记录模型与工具如何真正帮助人解决问题。' },
       },
     },
+    now: {
+      label: 'NOW / 现在', heading: '最近在做什么，在读什么。', intro: '这一页记录我此刻正在推进的事情和正在读的东西，不追求完整履历——想看全貌，去「项目」和「关于」。',
+      updatedLabel: '最后更新', updatedAt: '2026-10-24',
+      blocks: [
+        { title: '打磨太阳系探索器', detail: '继续给首页的 WebGL 太阳系做减法与校准：贴图一张张瘦身，读数等待改成确定性的几何计算，让慢一点的机器上也不再出现竞态和闪烁。' },
+        { title: '把博客搬进 Markdown', detail: '博客正文改成 Markdown 源文件加零依赖生成器，写一篇东西的门槛降到只剩一个文本文件，RSS 和评论也顺势接上。' },
+        { title: '给网站做性能与收录', detail: '首页的 Lighthouse 分数从 42 一路磨到 76，路由也换成了 history 模式——每个版面都有了能被搜索引擎独立收录的地址。' },
+        { title: '沉淀算法与数学笔记', detail: 'CodeHub 和高中数学库保持缓慢但持续的更新：做过的题写成题解，推过的公式留下完整推导，不让理解在记忆里蒸发。' },
+      ],
+      readingLabel: '在读 / 在学',
+      reading: ['《算法导论》选章重读：图算法与动态规划', '费曼物理学讲义 · 卷二（电磁学）', 'Three.js 官方文档：着色器与后期处理'],
+    },
     about: { label: 'ABOUT / 关于我', heading: '保持好奇，也认真验证。', paragraph1: '我关注算法、数学、物理与人工智能，也喜欢用代码解决问题，并把学习过程整理成可查找的资料。', paragraph2: '面对新问题时，我习惯先拆解，再用实现、推导和记录检验自己的理解。这里收集的是这段持续学习与构建的轨迹。', toolsLabel: '常用工具', interestsLabel: '长期关注', interests: '算法 · 数学 · 物理 · AI' },
     links: { label: 'CONNECT / 保持联系', heading: '从这里，继续交流。', description: '欢迎查看项目、阅读记录，或在公开平台找到我。', code: 'CodeHub' },
   },
   en: {
     meta: { title: 'Tang Yixiao · Algorithms, Mathematics & Intelligent Systems', description: 'Tang Yixiao’s personal website: selected work and learning notes on algorithms, mathematics, physics, and intelligent systems.' },
-    nav: { home: 'Home', work: 'Work', lab: 'Lab', focus: 'Focus', about: 'About', links: 'Contact' },
+    nav: { home: 'Home', work: 'Work', lab: 'Lab', focus: 'Focus', now: 'Now', about: 'About', links: 'Contact' },
     lab: {
       label: 'PLAYGROUND', heading: 'Small experiments, built by hand.', intro: 'Standalone WebGL pages — open one and play with gravity, chaos, and animation.',
       items: {
@@ -137,6 +150,18 @@ export const siteContent: Record<Language, SiteContent> = {
         mathematics: { name: 'Mathematics & Physics', summary: 'I connect ideas through derivation, proof, and well-organized learning materials.' },
         intelligence: { name: 'AI & Agents', summary: 'I read, experiment, and document how models and tools help people solve real problems.' },
       },
+    },
+    now: {
+      label: 'NOW', heading: 'What I am doing and reading lately.', intro: 'This page tracks what I am currently building and reading — not a complete resume. For the full picture, see Work and About.',
+      updatedLabel: 'Last updated', updatedAt: '2026-10-24',
+      blocks: [
+        { title: 'Polishing the solar explorer', detail: 'Still trimming and calibrating the WebGL solar system on the homepage: slimming textures one by one and replacing timing-based waits with deterministic geometry, so slower machines no longer race or flicker.' },
+        { title: 'Moving the blog into Markdown', detail: 'Blog posts now live as Markdown sources behind a zero-dependency generator — writing one comes down to a single text file, with RSS and comments wired in along the way.' },
+        { title: 'Tuning performance and indexing', detail: 'The homepage Lighthouse score has been ground up from 42 to 76, and routing moved to the History API so every view has its own indexable URL.' },
+        { title: 'Keeping notes alive', detail: 'CodeHub and my high-school mathematics library keep growing slowly but steadily: solved problems become write-ups, derived formulas keep their full derivations, and understanding does not evaporate.' },
+      ],
+      readingLabel: 'Reading / Learning',
+      reading: ['Revisiting CLRS chapters on graphs and dynamic programming', 'The Feynman Lectures, Vol. II (electromagnetism)', 'Three.js docs: shaders and post-processing'],
     },
     about: { label: 'ABOUT', heading: 'Stay curious. Verify carefully.', paragraph1: 'I am interested in algorithms, mathematics, physics, and AI. I enjoy solving problems with code and organizing what I learn into useful resources.', paragraph2: 'When I meet a new problem, I break it down and test my understanding through implementation, derivation, and notes. This site traces that continuing practice.', toolsLabel: 'Tools I use', interestsLabel: 'Long-term interests', interests: 'Algorithms · Mathematics · Physics · AI' },
     links: { label: 'CONNECT', heading: 'Continue the conversation.', description: 'Explore my projects, read my notes, or find me on public platforms.', code: 'CodeHub' },

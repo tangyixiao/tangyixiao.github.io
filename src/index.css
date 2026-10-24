@@ -88,7 +88,7 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
 .hero-bottom { position: absolute; right: clamp(24px, 8vw, 130px); bottom: 26px; left: clamp(24px, 8vw, 130px); display: flex; justify-content: space-between; color: var(--muted); font: 500 .59rem/1.4 'DejaVu Sans Mono', monospace; letter-spacing: .13em; }
 .hero-bottom b { margin-left: 6px; color: var(--gold); font-size: 1rem; }
 
-.work, .focus, .about, .footer { padding: clamp(100px, 12vw, 190px) clamp(24px, 8vw, 130px); background: var(--section); }
+.work, .focus, .now, .about, .footer { padding: clamp(100px, 12vw, 190px) clamp(24px, 8vw, 130px); background: var(--section); }
 .work { border-top: 1px solid var(--line); }
 .project-list { max-width: 1400px; margin: auto; border-top: 1px solid var(--line); }
 .project-list > .reveal { border-bottom: 1px solid var(--line); }
@@ -147,6 +147,17 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
 .about-facts p { margin: 17px 0 0; color: var(--muted); font-size: .85rem; line-height: 1.9; }
 .tool-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .tool-list span { padding: 5px 8px; border: 1px solid var(--line); border-radius: 5px; }
+
+.now-list { display: grid; gap: 14px; max-width: 1400px; margin: auto; }
+.now-item { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 20px; padding: 28px 30px; border: 1px solid var(--line); border-radius: 14px; background: var(--glass); }
+.now-index { color: var(--gold); font: 600 .72rem/2.2 'DejaVu Sans Mono', 'Noto Sans CJK SC', monospace; letter-spacing: .12em; }
+.now-item h3 { margin: 0 0 10px; font-size: clamp(1.15rem, 1.6vw, 1.5rem); font-weight: 600; }
+.now-item p { max-width: 46em; margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.85; }
+.now-reading { max-width: 1400px; margin: 56px auto 0; padding-top: 30px; border-top: 1px solid var(--line); }
+.now-reading ul { display: grid; gap: 8px; margin: 17px 0 0; padding: 0; list-style: none; }
+.now-reading li { position: relative; padding-left: 24px; color: var(--muted); font-size: .85rem; line-height: 1.8; }
+.now-reading li::before { position: absolute; left: 0; top: 3px; content: '✳'; color: var(--gold); font-size: .72rem; }
+.now-updated { margin: 36px 0 0; color: var(--muted); font: 500 .64rem/1.5 'DejaVu Sans Mono', 'Noto Sans CJK SC', monospace; letter-spacing: .08em; }
 
 .footer { padding-bottom: 34px; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 95%, transparent); }
 .footer-main { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(280px, .9fr); gap: clamp(40px, 10vw, 170px); max-width: 1400px; margin: 0 auto 150px; }
@@ -211,7 +222,8 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
   .orbit-two { top: 13%; left: 12%; width: 80%; }
   .diagram-label { display: none; }
   .hero-bottom { right: 23px; bottom: 22px; left: 23px; }
-  .work, .focus, .about, .footer { padding: 100px 23px; }
+  .work, .focus, .now, .about, .footer { padding: 100px 23px; }
+  .now-item { grid-template-columns: 1fr; gap: 8px; padding: 22px; }
   .section-heading { margin-bottom: 46px; }
   .section-heading h2, .about h2, .footer h2 { font-size: clamp(2.35rem, 9vw, 3.4rem); }
   .project-card { display: block; padding: 20px 0 40px; }
