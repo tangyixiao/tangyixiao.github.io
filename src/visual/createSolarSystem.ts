@@ -249,6 +249,9 @@ export async function createSolarSystem(T: typeof Three, scope: ResourceScope, m
   // 浅色主题下把太阳的发光统一压暗：主题只切换了 glow 的混合方式与不透明度，
   // 加法混合下的日珥在浅色背景上会白成一片，所以色球强度与点光源都要跟着主题走。
   let themeDim = 1
+  // 主题明暗：setTheme 与 setScaleMode 都要按它给轨道线分档，用一个显式初值而不是靠
+  // 「先调用一次 setTheme」的隐式约定（light 主题下初始化就切比例时，lineOpacity 会拿错档）。
+  let themeDark = true
   const live = new Map<BodyId, { orbit: number; radius: number; speed: number }>()
   for (const body of bodies) live.set(body.id, scaleValue(body, scaleMode))
   const frames = new Map<BodyId, OrbitFrame>()
@@ -662,7 +665,11 @@ void main() {
         // 拖尾弧长按行星速度缩放：越慢的行星在参考视频里的亮弧扫过自己轨道的比例越大
         // （f_012 里外行星的长弧最抢眼）。arcSpan 是「整条弧」的张角，均分给 63 段；
         // 上限 4.2 rad（约 240°），再长就盖过整圈轨道、看不出公转的方向感了。
-        const arcSpan = T.MathUtils.clamp(1.15 * Math.pow(metrics.speed / live.get('mercury')!.speed, -.28), .3, 4.2)
+        // 真实比例下再乘 2.2：1 AU = 1.55 单位让整条椭圆缩到画面左侧一小块，1.15 的系数
+        // 扫过的弧度只跨几个像素，拖尾成了标记环上的一个短刺。加长后弧在画面上占到
+        // 轨道的可见一段，「行星沿自己的轨道前进」才读得出来；上限仍是 4.2 rad。
+        const spanBoost = scaleMode === 'true' ? 2.2 : 1
+        const arcSpan = T.MathUtils.clamp(1.15 * spanBoost * Math.pow(metrics.speed / live.get('mercury')!.speed, -.28), .3, 4.2)
         for (let j = 0; j < 64; j++) {
           const Ej = keplerE(body.ecc, M - (63 - j) * (arcSpan / 63))
           const tx = metrics.orbit * (Math.cos(Ej) - body.ecc), ty = metrics.orbit * Math.sqrt(1 - body.ecc * body.ecc) * Math.sin(Ej)
@@ -691,7 +698,13 @@ void main() {
     // 呼吸节拍：日冕的缩放、点光源的亮度与色球的强度共用 solarPulse 这一个低频正弦，
     // 于是行星的受光面也随太阳脉动，而不只是贴片在闪；三者同相，太阳才像同一个光源。
     const solarPulse = .5 + .5 * Math.sin(time * .3)
-    glow.scale.setScalar(live.get('sun')!.radius * (2.3 + solarPulse * .05 + energy * .12))
+    // 太阳的光晕半径按比例模式分档：真实比例下太阳半径只有 .144 单位，2.3 倍就是 .33——
+    // 在全景（相机 173.6 单位）里约 1.7 px，观感就是「一个亮点」，而八颗行星是 0.02 px，
+    // 于是用户只看到太阳。真实比例给 9 倍，光晕铺到约 1.3 单位、画面上几十像素，
+    // 与标记环的量级匹配：太阳仍是画面里最亮、最大的东西（它本来就是 109 倍地球），
+    // 但不再大到遮住「太阳系还有别的成员」这件事。艺术模式保持 2.3 倍不变。
+    const glowScale = scaleMode === 'true' ? 9 : 2.3
+    glow.scale.setScalar(live.get('sun')!.radius * (glowScale + solarPulse * .05 + energy * .12))
     sunLight.intensity = 12 * (.92 + solarPulse * .08) + energy * 1.4
     sunHalo.uniforms.intensity.value = (.34 + solarPulse * .07 + energy * .16) * themeDim
     // 金色行进光束：+y 对齐公转速度方向 +l90（system 的位移方向），亮度随太阳的呼吸脉动。
@@ -718,11 +731,17 @@ void main() {
   }
   const setTheme = (theme: SceneTheme) => {
     ambient.value = theme === 'dark' ? .045 : .12
-    orbits.forEach(line => { (line.material as Three.LineBasicMaterial).opacity = theme === 'dark' ? .16 : .3 })
-    satOrbits.forEach(line => { (line.material as Three.LineBasicMaterial).opacity = theme === 'dark' ? .16 : .3 })
+    // 轨道线的不透明度按比例模式分档：真实比例下 1 AU = 1.55 单位，八大行星的椭圆收得只有
+    // 画面左侧一小块，.16 的灰线在星空里等于不存在；太阳系于是在真实比例下只剩一个亮点，
+    // 连「有几条轨道」都读不出来。真实比例给到 .58，线是同一条几何线，只是亮到能看见。
+    // 卫星线沿用同一档（真实比例下卫星锚点本来就整体隐藏，见 setScaleMode）。
+    const lineOpacity = themeDark ? (scaleMode === 'true' ? .58 : .16) : (scaleMode === 'true' ? .68 : .3)
+    orbits.forEach(line => { (line.material as Three.LineBasicMaterial).opacity = lineOpacity })
+    satOrbits.forEach(line => { (line.material as Three.LineBasicMaterial).opacity = lineOpacity })
     ;(glow.material as Three.SpriteMaterial).blending = theme === 'dark' ? T.AdditiveBlending : T.NormalBlending
     ;(glow.material as Three.SpriteMaterial).opacity = theme === 'dark' ? .7 : .45
-    themeDim = theme === 'dark' ? 1 : .55
+    themeDark = theme === 'dark'
+    themeDim = themeDark ? 1 : .55
   }
   // 真实比例：距离 1:1、所有天体共用同一个放大系数（比例严格真实）、速度遵循开普勒第三定律。
   const setScaleMode = (mode: ScaleMode) => {
@@ -766,6 +785,11 @@ void main() {
     for (const body of bodies) if (body.parent) planets.get(body.id)!.anchor.visible = mode === 'artistic'
     if (saturnRing) saturnRing.scale.setScalar(live.get('saturn')!.radius / .71)
     dustMaterial.uniforms.uTrueMix.value = mode === 'true' ? 1 : 0
+    // 轨道线亮度跟着比例模式换档（见 setTheme 的同款分档）：真实比例下不换挡，
+    // 切进真实比例时八大行星的椭圆仍然是 .16 的灰线，等于没画。
+    const lineOpacity = themeDark ? (mode === 'true' ? .58 : .16) : (mode === 'true' ? .68 : .3)
+    orbits.forEach(line => { (line.material as Three.LineBasicMaterial).opacity = lineOpacity })
+    satOrbits.forEach(line => { (line.material as Three.LineBasicMaterial).opacity = lineOpacity })
     placeTrojans(mode, clock.value)
     sizeGalaxy()
   }
@@ -778,7 +802,7 @@ void main() {
     sizeGalaxy()
     update(clock.value, 0)
   }
-  sizeGalaxy(); update(0, 0); highlight(null)
+  sizeGalaxy(); setTheme('dark'); update(0, 0); highlight(null)
   // 天球朝向：stars_milky_way 实测银道带基本是直线——把每列亮度重心拟合一个正弦，
   // 振幅只有 4.2°（图高的 2.3%），所以它是银道面（l/b）投影；另一张 NASA Deep Star Maps
   // 同样拟合出来是 35.7° 的大振幅正弦（图高的 19.8%，赤道投影的理论值是 27.13°/90 = 30.1%），

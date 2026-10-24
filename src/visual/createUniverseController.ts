@@ -5,12 +5,20 @@ import { bodies, GALAXY, TRUE_SCALE } from './solarData'
 import type { BodyId, ScaleMode, SceneMode, ScenePhase, SceneTheme, UniverseCanvasProps, UniverseController } from './types'
 
 export const particleCountForWidth = (width: number) => width <= 760 ? 420 : 1100
+// 浏览模式（主页各 section 的背景构图）的机位。tilt 是「黄道面离正对相机多远」的唯一旋钮，
+// 也是「轨迹看着像一张平面圆盘」的根因：旧值 .68 rad ≈ 39° 时整个太阳系几乎正对着相机，
+// 行星垂直于盘面的前后起伏被压成一条线，画面上剩下的就是这张扁盘沿银道面整体滑行——
+// 正是用户反馈的「平面轨迹的平移」。抬到 1.0–1.2 rad（57–69°）后盘面明显侧转，
+// 内外行星的椭圆轨道在画面上拉开前后差，公转才读得出三维。
+// turn 只定盘面方位，取值时避开「巡游残差的方向与屏幕轴重合」：残差方向 = 世界旋转变换后的
+// +l90（银经 90°），它离黄道极只有 30°，tilt 一大就容易整段压成垂直下落；这里取让残差
+// 斜向漂移、并保留指向相机分量的方位，位移才同时有屏幕位移与进深。
 const profiles = {
-  hero: { x: 15, tilt: .68, turn: -.15, scale: .026, cameraZ: 60 },
-  projects: { x: 9, tilt: .48, turn: .35, scale: .021, cameraZ: 61 },
-  focus: { x: 8, tilt: 1.04, turn: -.3, scale: .02, cameraZ: 63 },
-  about: { x: -9, tilt: .57, turn: .6, scale: .019, cameraZ: 62 },
-  links: { x: 8, tilt: .8, turn: -.5, scale: .018, cameraZ: 66 },
+  hero: { x: 15, tilt: 1.05, turn: .25, scale: .026, cameraZ: 60 },
+  projects: { x: 9, tilt: .84, turn: .4, scale: .021, cameraZ: 61 },
+  focus: { x: 8, tilt: 1.18, turn: -.34, scale: .02, cameraZ: 63 },
+  about: { x: -9, tilt: .96, turn: .52, scale: .019, cameraZ: 62 },
+  links: { x: 8, tilt: 1.04, turn: -.46, scale: .018, cameraZ: 66 },
 } as const
 
 export async function createUniverseController(canvas: HTMLCanvasElement, props: UniverseCanvasProps, onContextLost: () => void, onRender?: (count: number) => void, signal?: AbortSignal): Promise<UniverseController> {
@@ -156,7 +164,8 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       if (!compact) return { ...p, y: 0 }
       const scale = Math.min(innerWidth * .85, 410) * 57 * Math.tan(T.MathUtils.degToRad(21)) / (600 * innerHeight)
       const y = (innerHeight * .5 - 195) * 2 * Math.tan(T.MathUtils.degToRad(21)) * 57 / innerHeight
-      return { ...p, x: 0, y: phase === 'hero' ? y : 0, tilt: phase === 'hero' ? .5 : p.tilt, scale: phase === 'hero' ? scale : .012, cameraZ: 57 }
+      // 窄屏 hero 同样要把盘面侧过来：竖屏本来就把视场压扁，再近正俯视就只剩一条带子。
+      return { ...p, x: 0, y: phase === 'hero' ? y : 0, tilt: phase === 'hero' ? .82 : p.tilt, scale: phase === 'hero' ? scale : .012, cameraZ: 57 }
     }
     // 把「太阳系已经走了多远」拆成两部分：留在画面上的 residualScene（有上限）与相机跟掉的
     // shiftScene（其余部分）。cruise 是 system 在 world 局部空间的位移，先换算到场景空间
@@ -213,7 +222,9 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
         // 浏览模式的构图先落位：ρ 的换算要用到本帧 world 的朝向与缩放。
         solar.world.position.lerp(followScratch.set(p.x, p.y, 0), rate)
         solar.world.scale.setScalar(T.MathUtils.lerp(solar.world.scale.x, p.scale, rate))
-        solar.world.rotation.x = T.MathUtils.lerp(solar.world.rotation.x, p.tilt + pointer.y * .035, rate)
+        // 指针微动只拨方位角，不再俯仰：tilt 是被设计出来的倾角（见 profiles 的注释），
+        // 鼠标上下轻扫把它抹回接近正俯视，轨道又会读成一张平面圆盘。
+        solar.world.rotation.x = T.MathUtils.lerp(solar.world.rotation.x, p.tilt, rate)
         solar.world.rotation.y = T.MathUtils.lerp(solar.world.rotation.y, p.turn + pointer.x * .06, rate)
       }
       solar.update(simulationTime, pulseEnergy)
@@ -233,8 +244,8 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       const viewDistance = p ? p.cameraZ : controls ? camera.position.distanceTo(controls.target) : solar.span()
       computeShift(viewDistance, p ? .3 : .28, delta, !galacticView)
       if (p) {
-        // 相机整体平移 shiftScene、朝向仍锁在原点：太阳系在画面里只挪动 residual，天球与背景星不动，
-        // 视向随位移微微转动——那点视差就是「整个太阳系正在银河里前进」的读数。
+        // 浏览模式：相机整体平移 shiftScene、朝向仍锁在原点。太阳系在画面里只挪动 residual，
+        // 天球与背景星不动，于是视向随位移微微转动——那点视差就是「整个太阳系正在银河里前进」。
         camera.position.lerp(followScratch.set(0, 0, p.cameraZ).add(shiftScene), rate)
         camera.lookAt(0, 0, 0)
         followApplied.copy(shiftScene)
