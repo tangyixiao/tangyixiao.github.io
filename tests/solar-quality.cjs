@@ -62,19 +62,23 @@ async function main() {
       await scaled.goto(url)
       await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneReady === 'true')
       await scaled.getByRole('button', { name: '探索太阳系', exact: true }).click()
-      await scaled.waitForTimeout(400)
+      // 探索器取景距离 = span/sin(21°)×1.22：艺术模式 600→2042，真实比例 51→173.6。
+      // data-scene-camera-distance 要等取景飞行结束才跳到 2042 量级，浏览模式只有 ~60；
+      // 读数前必须等它越过 1000，否则会读到切换瞬间的浏览残留值（此前 CI 的 60.006 即此）。
+      await scaled.waitForFunction(() => Number(document.querySelector('[data-scene-root]')?.dataset.sceneCameraDistance) > 1000, undefined, { timeout: 30000 })
       const baseDistance = Number(await scaledScene.getAttribute('data-scene-camera-distance'))
       await scaled.getByRole('button', { name: '真实比例', exact: true }).click()
       await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneScale === 'true')
       await scaled.waitForTimeout(1500)
       assert.equal(await scaledScene.getAttribute('data-scene-outside-bodies'), 'none', 'true-scale overview still fits all eight planets')
       const trueDistance = Number(await scaledScene.getAttribute('data-scene-camera-distance'))
-      // 艺术模式压缩外行星距离，全景相机约 60 单位；真实比例 1:1 距离下海王星轨道 30 AU × 1.55
-      // ≈ 46.5 单位半径，取景改为诚实地装下整条真实轨道（相机拉远到约 173 单位），
-      // 全部八大行星仍在画面内（上一行断言）；配合标记环/光晕/轨道线提亮保持可见性。
-      assert.ok(trueDistance > baseDistance * 2, `true-scale overview pulls back to frame the real orbits (${baseDistance} -> ${trueDistance})`)
+      // 艺术模式把轨道距离向内压缩（span 600，全景取景 2042），真实比例 span 51（全景 173.6）：
+      // 切到真实比例时取景反而拉近，同时 1:1 距离下八大行星仍在画面内（上一行断言）。
+      assert.ok(trueDistance < baseDistance * 0.55, `true-scale overview reframes closer (${baseDistance} -> ${trueDistance})`)
       await scaled.getByRole('button', { name: '选择地球', exact: true }).click()
       await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneSelected === 'earth')
+      // 选择后有一段飞向行星的过渡，真实像素直径按落定后的相机距离给出：等飞行结束再读详情。
+      await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneFlightProgress === '1.000', undefined, { timeout: 30000 })
       await scaled.getByRole('button', { name: '艺术模式', exact: true }).click()
       await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneScale === 'artistic')
       assert.match(await scaled.locator('.body-detail').innerText(), /距离经艺术化压缩/, 'disclaimer swaps back with the scale mode')
