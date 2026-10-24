@@ -1,13 +1,13 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { focusIds, links, projectIds, siteContent, type FocusId, type Language, type ProjectContent, type ProjectId, type Theme } from './site/content'
+import { focusIds, labIds, links, projectIds, siteContent, type FocusId, type LabId, type Language, type ProjectContent, type ProjectId, type Theme } from './site/content'
 import type { BodyId, ScaleMode, TimeScale, UniverseCanvasProps } from './visual/types'
 import { solarCopy } from './visual/solarData'
 import SolarExplorer from './visual/SolarExplorer'
 import { useSpatialCards } from './visual/useSpatialCards'
 
 const UniverseCanvas = lazy(() => import('./visual/UniverseCanvas'))
-const SECTION_PHASES = { home: 'hero', work: 'projects', focus: 'focus', about: 'about', links: 'links' } as const
+const SECTION_PHASES = { home: 'hero', work: 'projects', focus: 'focus', lab: 'focus', about: 'about', links: 'links' } as const
 type RouteId = keyof typeof SECTION_PHASES
 const ROUTE_IDS = Object.keys(SECTION_PHASES) as RouteId[]
 const tools = ['C++', 'Python', 'LaTeX', 'Markdown', 'Git']
@@ -127,6 +127,7 @@ function App() {
 
   const nav = [
     { id: 'home', label: copy.nav.home }, { id: 'work', label: copy.nav.work },
+    { id: 'lab', label: copy.nav.lab },
     { id: 'blog', label: language === 'zh' ? '博客' : 'Blog' },
     { id: 'focus', label: copy.nav.focus }, { id: 'about', label: copy.nav.about },
     { id: 'links', label: copy.nav.links },
@@ -167,6 +168,8 @@ function App() {
 
         {route.view === 'focus' && <section className="focus section view" id="focus"><div className="section-heading"><Reveal><p className="eyebrow">{copy.focus.label}</p><h2>{copy.focus.heading}</h2></Reveal><Reveal delay={.1}><p className="section-intro">{copy.focus.intro}</p></Reveal></div><div className="focus-grid">{focusIds.map((id) => <FocusCard key={id} id={id} copy={copy.focus.items[id]} onPulse={pulseScene} />)}</div></section>}
 
+        {route.view === 'lab' && <section className="lab section view" id="lab"><div className="section-heading"><Reveal><p className="eyebrow">{copy.lab.label}</p><h2>{copy.lab.heading}</h2></Reveal><Reveal delay={.1}><p className="section-intro">{copy.lab.intro}</p></Reveal></div><div className="focus-grid lab-grid">{labIds.map((id, index) => <LabCard key={id} id={id} index={index} copy={copy.lab.items[id]} />)}</div></section>}
+
         {route.view === 'about' && <section className="about section view" id="about"><div className="about-heading"><Reveal><p className="eyebrow">{copy.about.label}</p><h2>{copy.about.heading}</h2></Reveal><span className="about-cross" aria-hidden="true">✳</span></div><div className="about-content"><Reveal><p>{copy.about.paragraph1}</p><p>{copy.about.paragraph2}</p></Reveal><Reveal delay={.12}><div className="about-facts"><div><span className="fact-label">{copy.about.toolsLabel}</span><p className="tool-list">{tools.map((tool) => <span key={tool}>{tool}</span>)}</p></div><div><span className="fact-label">{copy.about.interestsLabel}</span><p>{copy.about.interests}</p></div></div></Reveal></div></section>}
       </main>
 
@@ -198,6 +201,12 @@ function ProjectDetail({ id, copy, detail, visitLabel }: { id: ProjectId; copy: 
 function FocusCard({ id, copy, onPulse }: { id: FocusId; copy: { name: string; summary: string }; onPulse: () => void }) {
   const href = id === 'algorithms' ? links.code : id === 'mathematics' ? links.math : links.agents
   return <Reveal><a className={`focus-card focus-${id}`} href={href} target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noopener noreferrer' : undefined} onPointerEnter={onPulse} onFocus={onPulse}><span className="focus-glyph" aria-hidden="true">{id === 'algorithms' ? '⌘' : id === 'mathematics' ? '∿' : '✳'}</span><h3>{copy.name}</h3><p>{copy.summary}</p><span className="focus-arrow" aria-hidden="true">↗</span></a></Reveal>
+}
+
+const labGlyphs: Record<LabId, string> = { blackhole: '◉', threebody: '✦', thechao: '∿', thechaos: '∞', pelican: '✳' }
+
+function LabCard({ id, index, copy }: { id: LabId; index: number; copy: { name: string; summary: string; href: string } }) {
+  return <Reveal delay={index * .08}><a className="focus-card lab-card" href={copy.href} target="_blank" rel="noopener noreferrer"><span className="focus-glyph" aria-hidden="true">{labGlyphs[id]}</span><h3>{copy.name}</h3><p>{copy.summary}</p><span className="focus-arrow" aria-hidden="true">↗</span></a></Reveal>
 }
 
 export default App

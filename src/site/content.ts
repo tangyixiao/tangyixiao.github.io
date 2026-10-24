@@ -2,6 +2,7 @@ export type Language = 'zh' | 'en'
 export type Theme = 'light' | 'dark'
 export type ProjectId = 'code' | 'math' | 'agents'
 export type FocusId = 'algorithms' | 'mathematics' | 'intelligence'
+export type LabId = 'blackhole' | 'threebody' | 'thechao' | 'thechaos' | 'pelican'
 
 export const links = {
   code: '/Code/',
@@ -16,6 +17,7 @@ export const links = {
 
 export const projectIds: ProjectId[] = ['code', 'math', 'agents']
 export const focusIds: FocusId[] = ['algorithms', 'mathematics', 'intelligence']
+export const labIds: LabId[] = ['blackhole', 'threebody', 'thechao', 'thechaos', 'pelican']
 
 interface ProjectContent {
   category: string
@@ -28,7 +30,8 @@ interface ProjectContent {
 
 interface SiteContent {
   meta: { title: string; description: string }
-  nav: { home: string; work: string; focus: string; about: string; links: string }
+  nav: { home: string; work: string; lab: string; focus: string; about: string; links: string }
+  lab: { label: string; heading: string; intro: string; items: Record<LabId, { name: string; summary: string; href: string }> }
   actions: { projects: string; about: string; visit: string; top: string; themeLight: string; themeDark: string; language: string; menuOpen: string; menuClose: string }
   hero: { label: string; name: string; alternateName: string; headline: string; description: string; scroll: string }
   work: { label: string; heading: string; intro: string; projects: Record<ProjectId, ProjectContent>; detail: { overview: string; highlights: string; stack: string; back: string } }
@@ -40,7 +43,17 @@ interface SiteContent {
 export const siteContent: Record<Language, SiteContent> = {
   zh: {
     meta: { title: '唐一潇 · 算法、数学与智能系统', description: '唐一潇的个人网站：算法、数学、物理与智能系统的学习实践和精选项目。' },
-    nav: { home: '首页', work: '项目', focus: '方向', about: '关于', links: '联系' },
+    nav: { home: '首页', work: '项目', lab: '实验场', focus: '方向', about: '关于', links: '联系' },
+    lab: {
+      label: 'PLAYGROUND / 实验场', heading: '一些亲手写的小实验。', intro: '独立运行的 WebGL 小页面，点开即玩——引力、混沌与动画的小玩具。',
+      items: {
+        blackhole: { name: '黑洞 · Gargantua', summary: '拖拽环视、滚轮推近，看引力透镜如何弯折吸积盘的光。', href: '/blackhole.html' },
+        threebody: { name: '三体 · 半人马座α', summary: '用滑杆调整初始条件，看三颗恒星在引力下跳出不可预测的轨道。', href: '/threebody.html' },
+        thechao: { name: '双摆 · Double Pendulum', summary: '松手让双摆甩动，摆锤的轨迹会画出一条逐渐消隐的混沌尾迹。', href: '/thechao.html' },
+        thechaos: { name: '双摆 · 混沌增强版', summary: '另一个双摆：第二个摆锤带渐隐尾迹，并附一块实时读数面板。', href: '/thechaos.html' },
+        pelican: { name: '鹈鹕的海边兜风', summary: '一只鹈鹕沿海边慢慢骑行的小动画，顺风就出发。', href: '/pelican/' },
+      },
+    },
     actions: { projects: '查看项目', about: '了解我', visit: '访问项目', top: '回到顶部', themeLight: '切换到浅色模式', themeDark: '切换到深色模式', language: 'Switch to English', menuOpen: '打开导航', menuClose: '关闭导航' },
     hero: { label: 'ALGORITHMS · MATHEMATICS · INTELLIGENCE', name: '唐一潇', alternateName: 'Tang Yixiao', headline: '从算法与数学出发，探索智能系统。', description: '把问题拆解、验证，再将理解写成代码、笔记与工具。', scroll: '向下探索' },
     work: {
@@ -80,7 +93,17 @@ export const siteContent: Record<Language, SiteContent> = {
   },
   en: {
     meta: { title: 'Tang Yixiao · Algorithms, Mathematics & Intelligent Systems', description: 'Tang Yixiao’s personal website: selected work and learning notes on algorithms, mathematics, physics, and intelligent systems.' },
-    nav: { home: 'Home', work: 'Work', focus: 'Focus', about: 'About', links: 'Contact' },
+    nav: { home: 'Home', work: 'Work', lab: 'Lab', focus: 'Focus', about: 'About', links: 'Contact' },
+    lab: {
+      label: 'PLAYGROUND', heading: 'Small experiments, built by hand.', intro: 'Standalone WebGL pages — open one and play with gravity, chaos, and animation.',
+      items: {
+        blackhole: { name: 'Black Hole · Gargantua', summary: 'Drag to orbit and scroll to zoom in on a gravitationally lensed accretion disk.', href: '/blackhole.html' },
+        threebody: { name: 'Three-Body · Alpha Centauri', summary: 'Adjust the initial conditions with sliders and watch three stars weave unpredictable orbits.', href: '/threebody.html' },
+        thechao: { name: 'Double Pendulum', summary: 'Release the pendulum and watch its bob trace a slowly fading chaotic trail.', href: '/thechao.html' },
+        thechaos: { name: 'Double Pendulum · Chaos', summary: 'A second take: a fading trail on the second bob and a live readout panel.', href: '/thechaos.html' },
+        pelican: { name: 'A Pelican Ride', summary: 'A little animation of a pelican cycling along the seaside — tailwind included.', href: '/pelican/' },
+      },
+    },
     actions: { projects: 'Explore projects', about: 'About me', visit: 'Visit project', top: 'Back to top', themeLight: 'Switch to light mode', themeDark: 'Switch to dark mode', language: '切换到中文', menuOpen: 'Open navigation', menuClose: 'Close navigation' },
     hero: { label: 'ALGORITHMS · MATHEMATICS · INTELLIGENCE', name: 'Tang Yixiao', alternateName: '唐一潇', headline: 'Exploring intelligent systems through algorithms and mathematics.', description: 'I break problems down, test ideas, and turn what I learn into code, notes, and tools.', scroll: 'Scroll to explore' },
     work: {
