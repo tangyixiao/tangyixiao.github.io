@@ -6,7 +6,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 LEGACY = [
     "notes.html", "login.html", "register.html", "thechao.html", "thechaos.html", "blackhole.html",
-    "threebody.html", "auth.js", "notes-worker.js", "_config.yml", ".nojekyll",
+    "threebody.html", "auth.js", "notes-worker.js", ".nojekyll",
 ]
 
 
