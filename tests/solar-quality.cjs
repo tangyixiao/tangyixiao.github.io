@@ -44,7 +44,9 @@ async function main() {
     await page.waitForFunction(distance => Number(document.querySelector('[data-scene-root]')?.dataset.sceneCameraDistance) > distance * 1.5, landscapeDistance)
     const portraitDistance = Number(await scene.getAttribute('data-scene-camera-distance'))
     await page.getByRole('button', { name: '重置视角', exact: true }).click()
-    await page.waitForTimeout(100)
+    // 重置走 overview() 同步传送（不产生 flight），但相机距离诊断要到下一帧渲染才刷新：
+    // 等机位读数回到 portrait 的取景距离，再断言「resize 本身已装下整个体系」。
+    await page.waitForFunction(distance => Math.abs(Number(document.querySelector('[data-scene-root]')?.dataset.sceneCameraDistance) - distance) < .1, portraitDistance, { timeout: 30000 })
     assert.ok(Math.abs(Number(await scene.getAttribute('data-scene-camera-distance')) - portraitDistance) < .1, 'resize already fits the whole system without requiring reset')
     // 时间流速新增 240× / 720× 两挡：切换必须落到 data-scene-time-scale 上。
     await page.getByRole('button', { name: '时间流速 720×', exact: true }).click()
@@ -69,8 +71,13 @@ async function main() {
       const baseDistance = Number(await scaledScene.getAttribute('data-scene-camera-distance'))
       await scaled.getByRole('button', { name: '真实比例', exact: true }).click()
       await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneScale === 'true')
-      await scaled.waitForTimeout(1500)
+      // 全景（未选中）换比例走 overview() 同步传送，不产生 flight，但相机距离读数下一帧才刷新：
+      // 等机位落到真实比例全景量级，再断言八行星都还在画面内。
+      await scaled.waitForFunction(base => Number(document.querySelector('[data-scene-root]')?.dataset.sceneCameraDistance) < base * .55, baseDistance, { timeout: 30000 })
       assert.equal(await scaledScene.getAttribute('data-scene-outside-bodies'), 'none', 'true-scale overview still fits all eight planets')
+      // 标记环覆盖九个主天体是「真实比例全景」的性质：九个天体都在画面内才各有各的环；
+      // 选中地球后的特写里其余行星根本不在画面（老位置靠 400ms 撞上的飞行中途机位蒙混过去）。
+      assert.equal(await scaled.locator('.celestial-marker:not([hidden])').count(), 9, 'every primary body gets a position marker in true scale overview')
       const trueDistance = Number(await scaledScene.getAttribute('data-scene-camera-distance'))
       // 艺术模式把轨道距离向内压缩（span 600，全景取景 2042），真实比例 span 51（全景 173.6）：
       // 切到真实比例时取景反而拉近，同时 1:1 距离下八大行星仍在画面内（上一行断言）。
@@ -85,16 +92,27 @@ async function main() {
       await scaled.getByRole('button', { name: '真实比例', exact: true }).click()
       await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneScale === 'true')
       assert.match(await scaled.locator('.body-detail').innerText(), /1 AU ≈ 1\.55 单位/, 'true-scale disclaimer is shown')
-      // 单一放大系数：读数给出 k 与被选天体的真实像素直径，九个标记环覆盖九个主天体。
-      await scaled.waitForTimeout(400)
+      // 单一放大系数：读数给出 k 与被选天体的真实像素直径（标记环覆盖断言已前移到全景处）。
+      // 换比例对选中天体是就地重飞：setScaleMode → selectBody(selected, true) 会起一段
+      // 1.25s 的 flight（createUniverseController.ts），「本视图真实直径」按落定后的相机距离给出。
+      // 面板又靠 200ms 轮询读 data-scene-body-pixels（SolarExplorer.tsx），所以只等 flight=1.000
+      // 还可能读到轮询留下的飞行中途值：等 flight 回到 1.000 且面板显示的数字与当前读数一致。
+      // 落定后地球占画面数百 px——旧断言的 0.\d+ 恰好匹配的是 400ms 硬等待撞上的飞行中途值。
+      await scaled.waitForFunction(() => {
+        const root = document.querySelector('[data-scene-root]')
+        if (root?.dataset.sceneFlightProgress !== '1.000') return false
+        const shown = document.querySelector('.body-detail')?.textContent?.match(/本视图真实直径\s*\|?\s*(\d+(?:\.\d+)?) px/)
+        return !!shown && shown[1] === root.dataset.sceneBodyPixels
+      }, undefined, { timeout: 30000 })
       const detailText = await scaled.locator('.body-detail').innerText()
       assert.match(detailText, /统一放大系数\s*\|?\s*20×/, 'uniform magnification factor is disclosed')
-      assert.match(detailText, /本视图真实直径\s*\|?\s*0\.\d+ px/, 'selected body publishes its true pixel diameter')
-      assert.equal(await scaled.locator('.celestial-marker:not([hidden])').count(), 9, 'every primary body gets a position marker in true scale')
+      assert.match(detailText, /本视图真实直径\s*\|?\s*\d+(?:\.\d+)? px/, 'selected body publishes its true pixel diameter')
       // 「星系视角」：整条银心轨道进入画面，比例尺亮出真实半径与倍数。
       await scaled.getByRole('button', { name: '星系视角', exact: true }).click()
       await scaled.waitForFunction(() => document.querySelector('[data-scene-root]')?.dataset.sceneView === 'galactic')
-      await scaled.waitForTimeout(600)
+      // 星系视角走 galacticOverview() 同步传送（无 flight），距离读数同样下一帧才刷新：
+      // 等机位读数越过银心轨道半径（取景距离 = 半径×2.12/sin21°，必然更大），再断言构图。
+      await scaled.waitForFunction(() => { const s = document.querySelector('[data-scene-root]')?.dataset; return Number(s?.sceneCameraDistance) > Number(s?.sceneGalacticRadius) }, undefined, { timeout: 30000 })
       assert.ok(Number(await scaledScene.getAttribute('data-scene-camera-distance')) > Number(await scaledScene.getAttribute('data-scene-galactic-radius')), 'galactic view frames the whole ring, not the system')
       const scaleCard = await scaled.locator('.galactic-scale').innerText()
       assert.match(scaleCard, /8\.277 kpc/, 'scale bar states the real galactic-centre distance')
