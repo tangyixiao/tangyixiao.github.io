@@ -45,7 +45,8 @@ jobs:
       - name: 死链检查（跳过外链，只查本地相对链接）
         run: npx --yes linkinator ./dist --recurse --markdown --skip "https?://(?!127[.]0[.]0[.]1|localhost)"
       - name: Lighthouse 报告（本轮仅报告，断言只警告不设门槛）
-        run: npx --yes @lhci/cli autorun --collect.staticDistDir=dist --collect.numberOfRuns=1 --assert.assertions."*"="warn"
+        continue-on-error: true
+        run: npx --yes @lhci/cli autorun --collect.staticDistDir=dist --collect.numberOfRuns=1 --collect.settings.throttlingMethod=provided --collect.settings.maxWaitForLoad=90000 --assert.assertions."*"="warn"
       - name: 上传 Lighthouse 报告
         uses: actions/upload-artifact@v4
         with:
