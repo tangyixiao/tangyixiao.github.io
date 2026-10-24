@@ -9,6 +9,9 @@
 - **个人主页**：中英双语（跟随浏览器语言，偏好存于 localStorage）、明暗双主题（跟随系统 `prefers-color-scheme`，可手动切换）；使用 hash 路由的五个区块（home / work / focus / about / links），Three.js 宇宙背景按需懒加载；
 - **太阳系探索器**：Three.js 驱动的交互式太阳系，行星轨道、自转周期与天体大小之间保持真实比例关系（如太阳直径 = 109 个地球），支持真实比例与取景压缩两种模式；
 - **静态博客**：`public/blog/` 下的独立静态页面，与主页共用星空纹理和主题脚本；
+  评论区基于 [giscus](https://giscus.app)，默认关闭，关闭时文章页不输出任何评论 DOM；
+  启用方式：仓库 Settings 开启 Discussions → 安装 [giscus App](https://github.com/apps/giscus) → 在 [giscus.app](https://giscus.app) 选择映射方式后复制 repo-id / category-id；
+  将其填入 `scripts/build-blog.mjs` 顶部的 `COMMENTS` 配置（`repoId`、`categoryId`，并把 `enabled` 改为 `true`），重新 `npm run build` 即可在文章页底部挂载评论区；
 - **多个独立 WebGL 页面**：黑洞（blackhole）、三体（threebody）、thechao 等传统单文件 HTML 页面，通过构建脚本原样复制进产物，与 React 主应用并行共存于同一站点。
 
 技术栈：Vite 8、React 19、Three.js 0.185、motion（动画）、TypeScript、Playwright（浏览器测试）。

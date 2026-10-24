@@ -15,6 +15,19 @@ const BLOG_URL = SITE_URL + '/blog'
 const FAVICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23080b10'/%3E%3Cpath d='M16 5v22M5 16h22M8 8l16 16M8 24L24 8' stroke='%2384d5c8' stroke-width='2'/%3E%3C/svg%3E"
 const SITE_DESCRIPTION = '唐一潇的个人博客。记录算法与竞赛、数学与物理、AI 与智能体的学习、推导和实验。'
 
+// ---- 评论区（giscus，默认关闭）----
+// 启用步骤：仓库开启 Discussions → 安装 giscus App（https://github.com/apps/giscus）
+// → 在 https://giscus.app 生成并复制 repo-id / category-id 填入下方 → 重新 npm run build。
+// enabled 为 true 且 repoId / categoryId 都非空时，文章页底部才注入 giscus；
+// 否则完全不输出任何评论区 DOM，产物与无评论时逐字一致。
+const COMMENTS = {
+  enabled: false,
+  repo: 'tangyixiao/tangyixiao.github.io',
+  repoId: '',
+  category: 'Announcements',
+  categoryId: '',
+}
+
 function escapeHtml(text) {
   return String(text)
     .replace(/&/g, '&amp;')
@@ -179,6 +192,28 @@ function postMetaRow(post) {
   return `<div class="post-meta"><span class="tag">${escapeHtml(post.tags[0])}</span><time datetime="${post.date}">${formatDate(post.date)}</time><span>约 ${post.minutes} 分钟</span></div>`
 }
 
+function commentsSection() {
+  if (!COMMENTS.enabled || !COMMENTS.repoId || !COMMENTS.categoryId) return ''
+  const attrs = [
+    ['data-repo', COMMENTS.repo],
+    ['data-repo-id', COMMENTS.repoId],
+    ['data-category', COMMENTS.category],
+    ['data-category-id', COMMENTS.categoryId],
+    ['data-mapping', 'pathname'],
+    ['data-strict', '0'],
+    ['data-reactions-enabled', '1'],
+    ['data-emit-metadata', '0'],
+    ['data-input-position', 'top'],
+    // 站点默认深色；下方内联脚本在 blog.js 切换 html[data-theme] 时把新主题同步给 giscus iframe。
+    ['data-theme', 'dark'],
+    ['data-lang', 'zh-CN'],
+    ['data-loading', 'lazy'],
+  ]
+  const script = `<script src="https://giscus.app/client.js" ${attrs.map(([key, value]) => `${key}="${escapeHtml(value)}"`).join(' ')} crossorigin="anonymous" async></script>`
+  const sync = '<script>(function(){var root=document.documentElement;var send=function(){var frame=document.querySelector(\'iframe.giscus-frame\');if(!frame)return;frame.contentWindow.postMessage({giscus:{setConfig:{theme:root.dataset.theme===\'light\'?\'light\':\'dark\'}}},\'https://giscus.app\')};new MutationObserver(send).observe(root,{attributes:true,attributeFilter:[\'data-theme\']})})()</script>'
+  return `<section class="comments" aria-label="文章评论">${script}${sync}</section>`
+}
+
 function postPage(post, prev, next) {
   const postUrl = `${BLOG_URL}/posts/${post.slug}.html`
   const ld = {
@@ -193,6 +228,7 @@ function postPage(post, prev, next) {
     keywords: post.tags.join('、'),
   }
   const ldJson = JSON.stringify(ld).replace(/</g, '\\u003c')
+  const comments = commentsSection()
   const toc = post.headings.length
     ? `<aside class="toc" aria-label="文章目录"><p class="eyebrow">ON THIS PAGE</p><ol>${post.headings.map((h) => `<li><a href="#${h.id}">${escapeHtml(h.text)}</a></li>`).join('')}</ol></aside>`
     : ''
@@ -217,7 +253,7 @@ function postPage(post, prev, next) {
 <div class="article-layout"><article><header>${postMetaRow(post)}<h1 class="article-title">${post.displayTitle ?? escapeHtml(post.title)}</h1><p class="article-lead">${post.leadHtml}</p></header>
 <div class="article-body">
 ${post.bodyHtml}
-</div><nav class="article-end" aria-label="文章导航"><a href="../index.html#writing">← 返回全部文章</a>${prev ? `<a href="${prev.slug}.html">← 上一篇：${escapeHtml(prev.title)}</a>` : ''}${next ? `<a href="${next.slug}.html">下一篇：${escapeHtml(next.title)} →</a>` : ''}</nav>
+</div><nav class="article-end" aria-label="文章导航"><a href="../index.html#writing">← 返回全部文章</a>${prev ? `<a href="${prev.slug}.html">← 上一篇：${escapeHtml(prev.title)}</a>` : ''}${next ? `<a href="${next.slug}.html">下一篇：${escapeHtml(next.title)} →</a>` : ''}</nav>${comments}
 </article>${toc}</div>
 </main>
 <footer class="site-footer wrap"><div><span>© 2026 唐一潇</span><a href="https://tangyixiao.github.io/">个人主页 ↗</a></div></footer>
