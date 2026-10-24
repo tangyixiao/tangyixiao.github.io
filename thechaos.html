@@ -108,9 +108,34 @@
             0% { opacity: 0.7; }
             100% { opacity: 1; }
         }
+
+        .lab-back {
+            position: fixed;
+            top: max(14px, env(safe-area-inset-top));
+            left: max(14px, env(safe-area-inset-left));
+            z-index: 50;
+            padding: 9px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 999px;
+            background: rgba(10, 12, 18, 0.72);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .lab-back:hover {
+            background: rgba(10, 12, 18, 0.9);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
     </style>
 </head>
 <body>
+<a class="lab-back" href="/">← 返回主页</a>
 <div>
     <div class="simulation-container">
         <canvas id="pendulumCanvas" width="900" height="600" style="width:100%; height:auto; max-width:900px; aspect-ratio:900/600"></canvas>
