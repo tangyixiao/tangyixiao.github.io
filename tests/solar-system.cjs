@@ -8,8 +8,15 @@ const chrome = [process.env.CHROME_PATH, chromium.executablePath(), path.join(pr
 
 async function main() {
   const server = http.createServer((req, res) => {
-    const file = path.resolve(root, '.' + (new URL(req.url, 'http://localhost').pathname === '/' ? '/index.html' : new URL(req.url, 'http://localhost').pathname))
-    if (!file.startsWith(root + path.sep) || !fs.existsSync(file)) { res.writeHead(404); return res.end() }
+    const pathname = new URL(req.url, 'http://localhost').pathname
+    const file = path.resolve(root, '.' + (pathname === '/' ? '/index.html' : pathname))
+    if (!file.startsWith(root + path.sep) || !fs.existsSync(file)) {
+      // 与 GitHub Pages 行为对齐：未知路径回退到 404.html（404 状态码），应用引导后按 pathname 渲染。
+      if (!path.extname(pathname) && fs.existsSync(path.join(root, '404.html'))) {
+        res.writeHead(404, { 'content-type': 'text/html' }); return res.end(fs.readFileSync(path.join(root, '404.html')))
+      }
+      res.writeHead(404); return res.end()
+    }
     res.setHeader('content-type', file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html')
     res.end(fs.readFileSync(file))
   })
@@ -100,11 +107,12 @@ async function main() {
       assert.equal(await attr('selected'), 'none')
       await page.keyboard.press('Escape')
     }
-    for (const [hash, phase] of [['#/', 'hero'], ['#/work', 'projects'], ['#/focus', 'focus'], ['#/about', 'about'], ['#/links', 'links']]) {
-      await page.evaluate((next) => { window.location.hash = next }, hash)
+    for (const [route, phase] of [['/', 'hero'], ['/work', 'projects'], ['/focus', 'focus'], ['/about', 'about'], ['/links', 'links']]) {
+      await page.evaluate((next) => { window.history.pushState({}, '', next); window.dispatchEvent(new PopStateEvent('popstate')) }, route)
       await waitAttr('phase', phase)
+      assert.equal(new URL(page.url()).pathname, route, `${route} is reflected in the history pathname`)
     }
-    await page.evaluate(() => { window.location.hash = '#/' })
+    await page.evaluate(() => { window.history.pushState({}, '', '/'); window.dispatchEvent(new PopStateEvent('popstate')) })
     await page.locator('#home').waitFor()
     await page.getByRole('button', { name: '探索太阳系', exact: true }).click()
     await dialog.getByRole('button', { name: '选择地球', exact: true }).click()

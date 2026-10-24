@@ -18,6 +18,13 @@ function serve() {
     const pathname = new URL(request.url, 'http://127.0.0.1').pathname
     const target = path.resolve(root, `.${pathname === '/' ? '/index.html' : pathname}`)
     if (!target.startsWith(`${root}${path.sep}`) || !fs.existsSync(target)) {
+      // 与 GitHub Pages 行为对齐：未知路径回退到 404.html（404 状态码），应用引导后按 pathname 渲染。
+      if (!path.extname(pathname) && fs.existsSync(path.join(root, '404.html'))) {
+        response.statusCode = 404
+        response.setHeader('content-type', 'text/html')
+        response.end(fs.readFileSync(path.join(root, '404.html')))
+        return
+      }
       response.statusCode = 404
       response.end('not found')
       return
@@ -27,6 +34,11 @@ function serve() {
     response.end(fs.readFileSync(target))
   })
   return new Promise((resolve) => server.listen(18768, '127.0.0.1', () => resolve(server)))
+}
+
+// 站内路由切换（不重载页面）：pushState 后派发 popstate，等价于用户前进/后退所走的路径。
+function pushRoute(page, route) {
+  return page.evaluate((next) => { window.history.pushState({}, '', next); window.dispatchEvent(new PopStateEvent('popstate')) }, route)
 }
 
 async function main() {
@@ -47,35 +59,37 @@ async function main() {
     await zh.locator('[data-scene-root]').waitFor()
     assert.equal(await zh.locator('[data-scene-theme]').count(), 1, 'the scene exposes its active palette')
     assert.equal(await zh.locator('[data-scene-root]').getAttribute('data-scene-theme'), 'dark')
-    for (const [hash, phase] of [['#/', 'hero'], ['#/work', 'projects'], ['#/focus', 'focus'], ['#/about', 'about'], ['#/links', 'links']]) {
-      await zh.evaluate((next) => { window.location.hash = next }, hash)
+    for (const [route, phase] of [['/', 'hero'], ['/work', 'projects'], ['/focus', 'focus'], ['/about', 'about'], ['/links', 'links']]) {
+      await pushRoute(zh, route)
       await zh.waitForFunction((expected) => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === expected, phase)
-      const viewId = hash === '#/' ? 'home' : hash.slice(2)
+      assert.equal(new URL(zh.url()).pathname, route, `${route} is reflected in the history pathname`)
+      const viewId = route === '/' ? 'home' : route.slice(1)
       for (const other of ['home', 'work', 'focus', 'about', 'links'].filter((id) => id !== viewId)) {
-        assert.equal(await zh.locator('#' + other).count(), 0, `${hash} renders its own view alone (no #${other})`)
+        assert.equal(await zh.locator('#' + other).count(), 0, `${route} renders its own view alone (no #${other})`)
       }
     }
-    await zh.evaluate(() => { window.location.hash = '#/about' })
+    await pushRoute(zh, '/about')
     await zh.locator('#about').waitFor()
     assert.match(await zh.locator('#about').innerText(), /C\+\+.*Python.*LaTeX/s, 'About describes documented tools')
-    assert.equal(await zh.locator('.nav-links a[href="#/lab"]').count(), 1, 'the primary navigation exposes exactly one Lab entry')
-    await zh.evaluate(() => { window.location.hash = '#/lab' })
+    assert.equal(await zh.locator('.nav-links a[href="/lab"]').count(), 1, 'the primary navigation exposes exactly one Lab entry')
+    await pushRoute(zh, '/lab')
     await zh.locator('#lab').waitFor()
     assert.equal(await zh.locator('.lab-card').count(), 5, 'the lab view lists the five WebGL experiments')
     assert.equal(await zh.locator('.lab-card[target="_blank"][rel*="noopener"]').count(), 5, 'every lab card opens its experiment in a new tab')
-    await zh.evaluate(() => { window.location.hash = '#/work' })
+    await pushRoute(zh, '/work')
     await zh.locator('#work').waitFor()
     assert.equal(await zh.locator('a[href="/Code/"]').count(), 0, 'the work list no longer jumps straight to external links')
-    await zh.locator('a[href="#/work/code"]').click()
+    await zh.locator('a[href="/work/code"]').click()
     await zh.locator('.project-detail').waitFor()
+    assert.equal(new URL(zh.url()).pathname, '/work/code', 'the project card navigates to its history route')
     assert.equal(await zh.locator('#work').count(), 1, 'the project detail renders in the work view')
     assert.equal(await zh.locator('a[href="/Code/"]').count(), 1, 'the code detail exposes exactly one CodeHub anchor')
     assert.match(await zh.locator('#work').innerText(), /项目概述|技术栈/, 'the detail page shows its overview and stack sections')
-    assert.equal(await zh.locator('.detail-actions a[href="#/work"]').count(), 1, 'the detail page offers a way back to the project list')
-    await zh.evaluate(() => { window.location.hash = '#/links' })
+    assert.equal(await zh.locator('.detail-actions a[href="/work"]').count(), 1, 'the detail page offers a way back to the project list')
+    await pushRoute(zh, '/links')
     await zh.locator('#links').waitFor()
     assert.equal(await zh.locator('a[href="/Code/"]').count(), 1, 'links view exposes exactly one CodeHub anchor')
-    await zh.evaluate(() => { window.location.hash = '#/' })
+    await pushRoute(zh, '/')
     await zh.locator('h1').waitFor()
 
     await zh.getByRole('button', { name: '切换到浅色模式' }).click()

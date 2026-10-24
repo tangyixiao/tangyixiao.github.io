@@ -73,16 +73,20 @@ async function main() {
     assert.equal(await page.getByRole('button', { name: 'Close navigation' }).getAttribute('aria-expanded'), 'true')
     await page.getByRole('link', { name: 'Work', exact: true }).click()
     assert.equal(await page.getByRole('button', { name: 'Open navigation' }).getAttribute('aria-expanded'), 'false')
-    assert.equal(await page.evaluate(() => window.location.hash), '#/work', 'nav switches to the work view')
+    assert.equal(new URL(page.url()).pathname, '/work', 'nav switches to the work view')
     await page.locator('#work').waitFor()
     assert.equal(await page.locator('#home').count(), 0, 'the hero is not rendered on the work view')
     assert.equal(await page.locator('a[href="/Code/"]').count(), 0, 'the work list links to in-site detail pages only')
-    await page.locator('a[href="#/work/code"]').click()
+    await page.locator('a[href="/work/code"]').click()
     await page.locator('.project-detail').waitFor()
+    assert.equal(new URL(page.url()).pathname, '/work/code', 'the project card navigates to its history route')
     assert.equal(await page.locator('a[href="/Code/"]').count(), 1, 'the code project detail exposes its CodeHub entry')
-    for (const [hash, phase] of [['#/', 'hero'], ['#/work', 'projects'], ['#/focus', 'focus'], ['#/about', 'about'], ['#/links', 'links']]) {
-      await page.evaluate((next) => { window.location.hash = next }, hash)
+    // 与 GitHub Pages 行为对齐：未知路径（/work 等无静态文件）由 404.html 回退接管，
+    // 应用引导后按 pathname 渲染，所以 goto 直达各版面是一次真实的 deep-link 验证。
+    for (const [route, phase] of [['/', 'hero'], ['/work', 'projects'], ['/focus', 'focus'], ['/about', 'about'], ['/links', 'links']]) {
+      await page.goto(`http://127.0.0.1:${port}${route}`, { waitUntil: 'domcontentloaded' })
       await page.waitForFunction((nextPhase) => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === nextPhase, phase)
+      assert.equal(new URL(page.url()).pathname, route, `deep link ${route} keeps its history pathname`)
     }
     console.log('homepage mobile browser smoke passed')
   } finally {

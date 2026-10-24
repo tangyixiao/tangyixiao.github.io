@@ -23,13 +23,22 @@ const chromeCandidates = [
 ].filter(Boolean)
 const chrome = chromeCandidates.find((candidate) => fs.existsSync(candidate))
 const screenshotDirectory = process.env.SCREENSHOT_DIR
+let siteUrl = process.env.SITE_URL || 'http://127.0.0.1:18766/'
 
 function serve() {
   const server = http.createServer((request, response) => {
     const pathname = new URL(request.url, 'http://127.0.0.1').pathname
     const target = pathname === '/' ? 'index.html' : pathname.slice(1)
     const file = path.join(root, target)
-    if (!file.startsWith(root) || !fs.existsSync(file)) return response.end('not found')
+    if (!file.startsWith(root) || !fs.existsSync(file)) {
+      // 与 GitHub Pages 行为对齐：未知路径回退到 404.html（404 状态码），应用引导后按 pathname 渲染。
+      if (!path.extname(pathname) && fs.existsSync(path.join(root, '404.html'))) {
+        response.statusCode = 404
+        response.setHeader('content-type', 'text/html')
+        return response.end(fs.readFileSync(path.join(root, '404.html')))
+      }
+      return response.end('not found')
+    }
     if (file.endsWith('.js')) response.setHeader('content-type', 'text/javascript')
     if (file.endsWith('.css')) response.setHeader('content-type', 'text/css')
     response.end(fs.readFileSync(file))
@@ -37,14 +46,14 @@ function serve() {
   return new Promise((resolve) => server.listen(18766, '127.0.0.1', () => resolve(server)))
 }
 
-const ROUTE_PHASES = [['#/', 'hero'], ['#/work', 'projects'], ['#/focus', 'focus'], ['#/about', 'about'], ['#/links', 'links']]
+const ROUTE_PHASES = [['/', 'hero'], ['/work', 'projects'], ['/focus', 'focus'], ['/about', 'about'], ['/links', 'links']]
 
-async function expectPhase(page, hash, phase) {
-  await page.evaluate((next) => { window.location.hash = next }, hash)
+async function expectPhase(page, route, phase) {
+  await page.goto(siteUrl.replace(/\/$/, '') + route, { waitUntil: 'domcontentloaded' })
   await page.waitForFunction((nextPhase) => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === nextPhase, phase)
-  const viewId = hash === '#/' ? 'home' : hash.slice(2)
+  const viewId = route === '/' ? 'home' : route.slice(1)
   for (const other of ['home', 'work', 'focus', 'about', 'links'].filter((id) => id !== viewId)) {
-    assert.equal(await page.locator('#' + other).count(), 0, `${hash} renders its own view alone (no #${other})`)
+    assert.equal(await page.locator('#' + other).count(), 0, `${route} renders its own view alone (no #${other})`)
   }
 }
 
@@ -60,7 +69,7 @@ async function expectDelayedControllerReplay(page, siteUrl) {
     await page.locator('[data-scene-root]').waitFor()
     await page.locator('.button-primary').dispatchEvent('pointerdown')
     await page.waitForFunction(() => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-pulse') !== '0.000')
-    await page.evaluate(() => { window.location.hash = '#/focus' })
+    await page.evaluate(() => { window.history.pushState({}, '', '/focus'); window.dispatchEvent(new PopStateEvent('popstate')) })
     await page.waitForFunction(() => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === 'focus')
     const expectedPulse = await page.locator('[data-scene-root]').getAttribute('data-scene-pulse')
     releaseThree()
@@ -87,10 +96,11 @@ async function main() {
     assert.ok(fs.existsSync(path.join(root, route)), `missing built legacy route: ${route}`)
   }
   assert.ok(fs.existsSync(path.join(root, 'assets')), 'missing copied legacy assets directory')
+  assert.ok(fs.existsSync(path.join(root, '404.html')), 'missing 404.html SPA fallback for GitHub Pages')
+  assert.equal(fs.readFileSync(path.join(root, '404.html'), 'utf8'), fs.readFileSync(path.join(root, 'index.html'), 'utf8'), '404.html must be a copy of index.html')
   const chrome = chromeCandidates.find((candidate) => fs.existsSync(candidate))
   assert.ok(chrome, 'A Chromium executable is required for homepage browser smoke tests')
   if (screenshotDirectory) fs.mkdirSync(screenshotDirectory, { recursive: true })
-  const siteUrl = process.env.SITE_URL || 'http://127.0.0.1:18766/'
   const server = process.env.SITE_URL ? null : await serve()
   const browser = await chromium.launch({
     headless: true,
@@ -101,7 +111,16 @@ async function main() {
     const consoleErrors = []
     const desktop = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'en-US' })
     desktop.on('pageerror', (error) => consoleErrors.push(error.message))
-    desktop.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()) })
+    // deep-link（/work 等）由 404.html 回退接管，文档请求本身带 404 状态码——这是 Pages 方案的已知代价，
+    // 不算场景错误；但任何带扩展名的静态资源 404 仍然必须抓出来。
+    desktop.on('console', (message) => {
+      if (message.type() !== 'error') return
+      if (/the server responded with a status of 404/.test(message.text())) return
+      consoleErrors.push(message.text())
+    })
+    desktop.on('response', (response) => {
+      if (response.status() === 404 && path.extname(new URL(response.url()).pathname)) consoleErrors.push('missing asset: ' + response.url())
+    })
     await desktop.goto(siteUrl, { waitUntil: 'domcontentloaded' })
     await desktop.getByRole('heading', { name: 'Tang Yixiao' }).waitFor()
     await desktop.locator('[data-scene-root]').waitFor()
@@ -111,17 +130,20 @@ async function main() {
     assert.equal(await desktop.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'desktop must not overflow horizontally')
     if (screenshotDirectory) await desktop.screenshot({ path: path.join(screenshotDirectory, 'homepage-desktop.png'), fullPage: true })
     await expectDelayedControllerReplay(desktop, siteUrl)
-    for (const [hash, phase] of ROUTE_PHASES) await expectPhase(desktop, hash, phase)
+    for (const [route, phase] of ROUTE_PHASES) await expectPhase(desktop, route, phase)
     assert.equal(await desktop.locator('a[href="/Code/"]').count(), 1, 'links view exposes its CodeHub entry')
-    await expectPhase(desktop, '#/work', 'projects')
+    await expectPhase(desktop, '/work', 'projects')
     assert.equal(await desktop.locator('a[href="/Code/"]').count(), 0, 'the work list links to in-site detail pages only')
-    await desktop.locator('a[href="#/work/code"]').click()
+    await desktop.locator('a[href="/work/code"]').click()
     await desktop.locator('.project-detail').waitFor()
+    assert.equal(new URL(desktop.url()).pathname, '/work/code', 'the project card navigates to its history route')
     assert.equal(await desktop.locator('#work').count(), 1, 'the project detail stays in the work view')
     assert.equal(await desktop.locator('a[href="/Code/"]').count(), 1, 'the code project detail exposes its CodeHub entry')
-    await expectPhase(desktop, '#/focus', 'focus')
+    await expectPhase(desktop, '/focus', 'focus')
     assert.equal(await desktop.locator('a[href="/Code/"]').count(), 1, 'focus view exposes its CodeHub entry')
-    await expectPhase(desktop, '#/', 'hero')
+    await expectPhase(desktop, '/', 'hero')
+    // expectPhase 现在是整页 goto：等场景控制器就绪后再派发 contextlost，否则事件落在监听器挂上之前。
+    await desktop.waitForFunction(() => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-ready') === 'true', undefined, { timeout: 20_000 })
     await desktop.evaluate(() => document.querySelector('[data-scene-canvas]').dispatchEvent(new Event('webglcontextlost', { cancelable: true })))
     await desktop.waitForFunction(() => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-fallback') === 'active')
     await desktop.locator('.universe-fallback').waitFor({ state: 'visible' })
