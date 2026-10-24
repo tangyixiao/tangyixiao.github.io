@@ -179,7 +179,7 @@ function postMetaRow(post) {
   return `<div class="post-meta"><span class="tag">${escapeHtml(post.tags[0])}</span><time datetime="${post.date}">${formatDate(post.date)}</time><span>约 ${post.minutes} 分钟</span></div>`
 }
 
-function postPage(post, next, nextLabel) {
+function postPage(post, prev, next) {
   const postUrl = `${BLOG_URL}/posts/${post.slug}.html`
   const ld = {
     '@context': 'https://schema.org',
@@ -196,7 +196,6 @@ function postPage(post, next, nextLabel) {
   const toc = post.headings.length
     ? `<aside class="toc" aria-label="文章目录"><p class="eyebrow">ON THIS PAGE</p><ol>${post.headings.map((h) => `<li><a href="#${h.id}">${escapeHtml(h.text)}</a></li>`).join('')}</ol></aside>`
     : ''
-  const nextLabelHtml = next ? escapeHtml(nextLabel ?? `下一篇：${next.title} →`) : ''
   return `<!doctype html>
 <html lang="zh-CN" data-theme="dark">
 <head>
@@ -208,7 +207,7 @@ function postPage(post, next, nextLabel) {
 <meta property="og:url" content="${postUrl}">
 <meta property="article:published_time" content="${post.date}">
 <script type="application/ld+json">${ldJson}</script>
-<link rel="icon" type="image/svg+xml" href="${FAVICON}"><link rel="stylesheet" href="../assets/blog.css"><script src="../assets/blog.js" defer></script>
+<link rel="alternate" type="application/rss+xml" title="唐一潇 · 个人博客" href="/blog/rss.xml"><link rel="icon" type="image/svg+xml" href="${FAVICON}"><link rel="stylesheet" href="../assets/blog.css"><script src="../assets/blog.js" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -218,7 +217,7 @@ function postPage(post, next, nextLabel) {
 <div class="article-layout"><article><header>${postMetaRow(post)}<h1 class="article-title">${post.displayTitle ?? escapeHtml(post.title)}</h1><p class="article-lead">${post.leadHtml}</p></header>
 <div class="article-body">
 ${post.bodyHtml}
-</div><nav class="article-end" aria-label="文章导航"><a href="../index.html#writing">← 返回全部文章</a>${next ? `<a href="${next.slug}.html">${nextLabelHtml}</a>` : ''}</nav>
+</div><nav class="article-end" aria-label="文章导航"><a href="../index.html#writing">← 返回全部文章</a>${prev ? `<a href="${prev.slug}.html">← 上一篇：${escapeHtml(prev.title)}</a>` : ''}${next ? `<a href="${next.slug}.html">下一篇：${escapeHtml(next.title)} →</a>` : ''}</nav>
 </article>${toc}</div>
 </main>
 <footer class="site-footer wrap"><div><span>© 2026 唐一潇</span><a href="https://tangyixiao.github.io/">个人主页 ↗</a></div></footer>
@@ -301,11 +300,12 @@ async function main() {
   await mkdir(path.join(outDir, 'posts'), { recursive: true })
   await writeFile(path.join(outDir, 'index.html'), indexPage(posts))
   await writeFile(path.join(outDir, 'rss.xml'), rssXml(posts))
+  // posts 已按「日期新→旧」（同日按 order 小→大）排序：i-1 是更新一篇，i+1 是更旧一篇。
   for (let i = 0; i < posts.length; i++) {
-    const next = posts[(i + 1) % posts.length]
     const post = posts[i]
-    const nextLabel = i + 1 === posts.length ? '从第一篇继续阅读 →' : undefined
-    const html = postPage(post, next, nextLabel)
+    const prev = i + 1 < posts.length ? posts[i + 1] : null
+    const next = i > 0 ? posts[i - 1] : null
+    const html = postPage(post, prev, next)
     await writeFile(path.join(outDir, 'posts', `${post.slug}.html`), html)
   }
   console.log(`blog generated: ${posts.length} posts -> dist/blog/ (index, rss.xml, ${posts.map((p) => p.slug).join(', ')})`)
