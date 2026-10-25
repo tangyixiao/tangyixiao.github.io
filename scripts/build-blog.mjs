@@ -211,7 +211,7 @@ function commentsSection() {
   ]
   const script = `<script src="https://giscus.app/client.js" ${attrs.map(([key, value]) => `${key}="${escapeHtml(value)}"`).join(' ')} crossorigin="anonymous" async></script>`
   const sync = '<script>(function(){var root=document.documentElement;var send=function(){var frame=document.querySelector(\'iframe.giscus-frame\');if(!frame)return;frame.contentWindow.postMessage({giscus:{setConfig:{theme:root.dataset.theme===\'light\'?\'light\':\'dark\'}}},\'https://giscus.app\')};new MutationObserver(send).observe(root,{attributes:true,attributeFilter:[\'data-theme\']})})()</script>'
-  return `<section class="comments" aria-label="文章评论">${script}${sync}</section>`
+  return `<section class="comments" data-pagefind-ignore aria-label="文章评论">${script}${sync}</section>`
 }
 
 function postPage(post, prev, next) {
@@ -250,10 +250,10 @@ function postPage(post, prev, next) {
 <header class="site-header wrap"><a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">✳</span><span>唐一潇 <small>JOURNAL</small></span></a><nav aria-label="主导航"><a href="../index.html#writing">全部文章</a><a class="home-link" href="https://tangyixiao.github.io/">个人主页 ↗</a><button class="theme-toggle" type="button" aria-label="切换到浅色模式" hidden>☼</button></nav></header>
 <main id="main" class="wrap">
 <nav class="breadcrumb" aria-label="面包屑"><a href="../index.html">博客</a><span aria-hidden="true">/</span><span>${escapeHtml(post.tags[0])}</span></nav>
-<div class="article-layout"><article><header>${postMetaRow(post)}<h1 class="article-title">${post.displayTitle ?? escapeHtml(post.title)}</h1><p class="article-lead">${post.leadHtml}</p></header>
+<div class="article-layout"><article data-pagefind-body><header>${postMetaRow(post)}<h1 class="article-title" data-pagefind-meta="title">${post.displayTitle ?? escapeHtml(post.title)}</h1><p class="article-lead">${post.leadHtml}</p></header>
 <div class="article-body">
 ${post.bodyHtml}
-</div><nav class="article-end" aria-label="文章导航"><a href="../index.html#writing">← 返回全部文章</a>${prev ? `<a href="${prev.slug}.html">← 上一篇：${escapeHtml(prev.title)}</a>` : ''}${next ? `<a href="${next.slug}.html">下一篇：${escapeHtml(next.title)} →</a>` : ''}</nav>${comments}
+</div><nav class="article-end" data-pagefind-ignore aria-label="文章导航"><a href="../index.html#writing">← 返回全部文章</a>${prev ? `<a href="${prev.slug}.html">← 上一篇：${escapeHtml(prev.title)}</a>` : ''}${next ? `<a href="${next.slug}.html">下一篇：${escapeHtml(next.title)} →</a>` : ''}</nav>${comments}
 </article>${toc}</div>
 </main>
 <footer class="site-footer wrap"><div><span>© 2026 唐一潇</span><a href="https://tangyixiao.github.io/">个人主页 ↗</a></div></footer>
@@ -277,8 +277,23 @@ function indexPage(posts) {
   <link rel="icon" type="image/svg+xml" href="${FAVICON}">
   <link rel="stylesheet" href="assets/blog.css">
   <script src="assets/blog.js" defer></script>
+  <style>
+    /* 全文搜索（Pagefind）：搜索框由 JS 揭示，无 JS 时保持隐藏。 */
+    .blog-search{padding:26px 0 0;max-width:520px}
+    .blog-search-input{width:100%;padding:12px 16px;font:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:0}
+    .blog-search-input:focus{outline:none;border-color:var(--accent)}
+    .blog-search-input::placeholder{color:var(--muted)}
+    .blog-search-results{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-top:0}
+    .blog-search-results[hidden]{display:none}
+    .blog-search-item{display:block;padding:14px 16px;border-top:1px solid var(--line);font-size:12px;line-height:1.9;color:var(--muted)}
+    .blog-search-item:first-child{border-top:0}
+    .blog-search-item b{display:block;font-size:14px;font-weight:500;color:var(--ink);margin-bottom:4px}
+    .blog-search-item:hover b,.blog-search-item:focus-visible b{color:var(--accent)}
+    .blog-search-item mark{background:none;color:var(--gold);padding:0}
+    .blog-search-empty{margin:0;padding:14px 16px;font-size:12px;color:var(--muted)}
+  </style>
 </head>
-<body>
+<body data-pagefind-ignore>
   <a class="skip-link" href="#main">跳到主要内容</a>
   <header class="site-header wrap">
     <a class="brand" href="index.html" aria-label="唐一潇博客首页"><span class="brand-mark" aria-hidden="true">✳</span><span>唐一潇 <small>JOURNAL</small></span></a>
@@ -291,6 +306,10 @@ function indexPage(posts) {
     </section>
     <section id="writing" class="writing" aria-labelledby="writing-title">
       <div class="section-label"><h2 id="writing-title">最近的记录</h2><span class="mono">WRITING / 001—${String(posts.length).padStart(3, '0')}</span></div>
+      <div class="blog-search" data-pagefind-ignore>
+        <input id="blog-search" class="blog-search-input" type="search" placeholder="搜索文章…" aria-label="搜索文章" autocomplete="off" hidden>
+        <div id="blog-search-results" class="blog-search-results" hidden></div>
+      </div>
       <div class="writing-layout"><div class="post-list">
         ${rows}
       </div><aside class="sidebar" aria-label="博客介绍"><p class="eyebrow">FIELD NOTES</p><h3>思考的途中，<br>留下一些坐标。</h3><p>围绕算法、数学与智能系统，记录能被检验、也能被继续使用的理解。</p><div class="fields"><span>01 <b>算法与竞赛</b></span><span>02 <b>数学与物理</b></span><span>03 <b>AI 与智能体</b></span></div><a class="quiet-link" href="https://github.com/tangyixiao" target="_blank" rel="noopener noreferrer">在 GitHub 查看项目 <span aria-hidden="true">↗</span></a></aside></div>
@@ -298,6 +317,48 @@ function indexPage(posts) {
     <section id="about" class="about" aria-labelledby="about-title"><div><p class="eyebrow">ABOUT THE JOURNAL</p><h2 id="about-title">保持好奇，<br>也认真验证。</h2></div><div class="about-copy"><p>我是唐一潇，关注算法、数学、物理与人工智能。个人主页展示正在探索的方向与项目，这里则用文章把思路展开。</p><p>从问题的拆解，到实现与推导，再到复盘与记录；希望每一篇文字，都能留下下一次继续探索的起点。</p><div class="about-links"><a href="https://tangyixiao.github.io/">回到个人主页 ↗</a><a href="https://www.luogu.com.cn/blog/TangyixiaoQAQ/" target="_blank" rel="noopener noreferrer">洛谷博客 ↗</a></div></div></section>
   </main>
   <footer class="site-footer wrap"><div><span>© 2026 唐一潇</span><span class="mono">KEEP EXPLORING.</span></div><div class="footer-small"><span>星空纹理：<a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer">Solar System Scope</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a> · 已转为 WebP</span><a href="#main">回到顶部 ↑</a></div></footer>
+  <script type="module">
+    // 全文搜索：动态加载 Pagefind 索引（build 时由 pagefind 生成到 pagefind/）。
+    // 加载失败（索引缺失或无 JS）时搜索框保持 hidden，列表页阅读不受影响。
+    const input = document.getElementById('blog-search')
+    const results = document.getElementById('blog-search-results')
+    if (input && results) {
+      try {
+        const pagefind = await import('./pagefind/pagefind.js')
+        // 结果链接是相对站点根（dist/blog）的路径，按当前页面位置补全前缀。
+        const base = new URL('./', document.baseURI).pathname
+        input.hidden = false
+        let token = 0
+        input.addEventListener('input', async () => {
+          const query = input.value.trim()
+          const current = ++token
+          if (!query) { results.hidden = true; results.replaceChildren(); return }
+          const found = await pagefind.search(query)
+          const items = await Promise.all(found.results.slice(0, 8).map((result) => result.data()))
+          if (current !== token) return
+          const nodes = items.map((item) => {
+            const link = document.createElement('a')
+            link.className = 'blog-search-item'
+            link.href = item.url.startsWith('/') ? item.url : base + item.url
+            const title = document.createElement('b')
+            title.textContent = item.meta?.title || item.url
+            const excerpt = document.createElement('span')
+            excerpt.innerHTML = item.excerpt || ''
+            link.append(title, excerpt)
+            return link
+          })
+          if (!nodes.length) {
+            const empty = document.createElement('p')
+            empty.className = 'blog-search-empty'
+            empty.textContent = '没有找到相关文章。'
+            nodes.push(empty)
+          }
+          results.replaceChildren(...nodes)
+          results.hidden = false
+        })
+      } catch { /* 索引不可用时保持隐藏 */ }
+    }
+  </script>
 </body>
 </html>
 `
