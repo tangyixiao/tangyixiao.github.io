@@ -290,7 +290,7 @@ function ProjectDetail({ id, language, detail, visitLabel }: { id: string; langu
   const href = project.link
   const external = href.startsWith('http')
   return <section className="work section view" id="work">
-    <div className="section-heading"><Reveal><p className="eyebrow">{copy.category}</p><h2>{copy.title}</h2></Reveal><Reveal delay={.12}><p className="section-intro">{copy.description}</p></Reveal></div>
+    <div className="section-heading"><Reveal><p className="eyebrow">{copy.category}</p><h2>{project.title}</h2></Reveal><Reveal delay={.12}><p className="section-intro">{copy.description}</p></Reveal></div>
     <div className="project-detail">
       <Reveal><div className="detail-block"><h3 className="detail-label">{detail.overview}</h3><p className="detail-overview">{copy.overview}</p></div></Reveal>
       <Reveal delay={.08}><div className="detail-block"><h3 className="detail-label">{detail.highlights}</h3><ul className="detail-highlights">{copy.highlights.map((item) => <li key={item}>{item}</li>)}</ul></div></Reveal>

@@ -1,5 +1,5 @@
 name = "tangyixiao-api-gihub-io"
-main = "worker.js"
+main = "notes-worker.js"
 compatibility_date = "2026-04-21"
 
 [[d1_databases]]

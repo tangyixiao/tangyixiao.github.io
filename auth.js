@@ -16,6 +16,7 @@ async function sha256(message) {
 }
 
 // --- 认证核心对象 ---
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Auth 通过经典 script 挂到全局，由 login/register/notes 页面的内联脚本调用
 const Auth = (function () {
   // 获取当前登录用户 (从 localStorage 读取)
   function getCurrentUser() {

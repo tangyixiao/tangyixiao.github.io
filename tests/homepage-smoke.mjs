@@ -37,11 +37,6 @@ const waitFor = async (check, message) => {
   throw new Error(message)
 }
 
-async function expectPhase(page, selector, phase) {
-  await page.locator(selector).scrollIntoViewIfNeeded()
-  await page.waitForFunction((nextPhase) => document.querySelector('[data-scene-root]')?.getAttribute('data-scene-phase') === nextPhase, phase)
-}
-
 async function stopProcess(processHandle) {
   if (!processHandle || processHandle.exitCode !== null) return
   const exited = once(processHandle, 'exit')

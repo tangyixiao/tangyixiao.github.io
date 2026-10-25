@@ -1,6 +1,6 @@
 import type * as Three from 'three'
 import type { ResourceScope } from './resourceScope'
-import { artisticOrbit, BELT, beltEccentricAnomaly, beltPoint, bodies, ellipsePoint, GALACTIC, GALAXY, keplerE, meanAnomaly, MOON, orbitFrame, rayleigh, SATELLITE, scaleValue, satelliteSpinRate, spanFor, SPIN, spinRate, TROJANS, TRUE_SCALE, type OrbitFrame } from './solarData'
+import { artisticOrbit, BELT, beltEccentricAnomaly, beltPoint, bodies, ellipsePoint, GALACTIC, GALAXY, keplerE, meanAnomaly, MOON, orbitFrame, rayleigh, SATELLITE, scaleValue, satelliteSpinRate, spanFor, spinRate, TROJANS, TRUE_SCALE, type OrbitFrame } from './solarData'
 import type { BodyId, ScaleMode, SceneTheme } from './types'
 
 // 拖尾要读三个场景量：相机在 model 空间的位置、本帧的时间、以及渲染分辨率。

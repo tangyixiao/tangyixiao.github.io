@@ -77,10 +77,14 @@ npx playwright install chromium
 
 部署由 GitHub Actions（`.github/workflows/pages.yml`）自动完成：
 
-- **push 到 `main`**：执行 `npm ci` → 安装 Playwright Chromium → `npm run build` → Python 单元测试（`tests/test_*.py`）→ `npm run test:unit` → `npm run test:browser`，全部通过后将 `dist/` 部署到 GitHub Pages；
+- **push 到 `main`**：执行 `npm ci` → 安装 Playwright Chromium → `npm run lint` → `npm run typecheck` → `npm run build` → Python 单元测试（`tests/test_*.py`）→ `npm run test:unit` → `npm run test:browser`，全部通过后将 `dist/` 部署到 GitHub Pages；
 - **Pull Request**：跑同一条完整流水线（构建 + 全部测试）用于验证，但不触发部署。
 
 即：任何进 main 的改动都会先经过完整构建与测试，Pages 上的站点始终与 main 最新提交一致。
+
+### notes 子系统（与 Pages 部署无关）
+
+notes.html / login.html / register.html 三个页面（前端脚本在 `auth.js`）依赖**单独部署的 Cloudflare Worker**（`notes-worker.js`）+ D1 数据库（绑定配置见 `wrangler.toml`，`main` 指向 `notes-worker.js`）。该 Worker 通过 `wrangler deploy` 独立发布到 Cloudflare，**不在 GitHub Pages 部署链路内**：Pages 的构建与测试流水线既不构建也不校验 notes 后端，Worker 的改动需要单独部署才会生效。
 
 ## 当前重点
 
