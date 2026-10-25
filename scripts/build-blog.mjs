@@ -17,12 +17,11 @@ const SITE_DESCRIPTION = '唐一潇的个人博客。记录算法与竞赛、数
 
 // ---- 评论区（giscus，默认关闭）----
 // 启用步骤：仓库开启 Discussions → 安装 giscus App（https://github.com/apps/giscus）
-// Discussions 已开启，repo-id / category-id 已回填；剩下唯一一步：
-// 在 https://github.com/apps/giscus 安装 App（对本仓库授权），然后把 enabled 翻为 true 并重新 npm run build。
-// enabled 为 true 且 repoId / categoryId 都非空时，文章页底部才注入 giscus；
-// 否则完全不输出任何评论区 DOM，产物与无评论时逐字一致。
+// giscus App 已安装、Discussions 已开启、repo-id / category-id 已回填：
+// 评论区已启用（enabled: true）。想临时关闭：翻回 false 并重新 npm run build。
+// 注入条件：enabled 为 true 且 repoId / categoryId 都非空；否则不输出任何评论区 DOM。
 const COMMENTS = {
-  enabled: false,
+  enabled: true,
   repo: 'tangyixiao/tangyixiao.github.io',
   repoId: 'R_kgDORJ3d0A',
   category: 'General',
