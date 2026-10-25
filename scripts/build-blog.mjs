@@ -28,6 +28,16 @@ const COMMENTS = {
   categoryId: 'DIC_kwDORJ3d0M4DJgd0',
 }
 
+// ---- 「问我的笔记」问答面板（Worker /api/ask 代理 GLM）----
+// 注入条件：enabled 为 true；endpoint 留空时面板照常输出，但按钮禁用并显示「服务未开通」。
+// 启用步骤：部署 notes-worker.js 后（wrangler secret put ZHIPU_API_KEY → wrangler deploy），
+// 把 endpoint 填成完整的 https://<name>.<subdomain>.workers.dev/api/ask 再重新 npm run build。
+// 回答区一律用 textContent 渲染纯文本（防注入）；enabled 为 false 时整个面板不输出、不发请求。
+const ASK = {
+  enabled: true,
+  endpoint: '',
+}
+
 function escapeHtml(text) {
   return String(text)
     .replace(/&/g, '&amp;')
@@ -215,6 +225,20 @@ function commentsSection() {
   return `<section class="comments" data-pagefind-ignore aria-label="文章评论">${script}${sync}</section>`
 }
 
+function askPanel() {
+  if (!ASK.enabled) return ''
+  const ready = Boolean(ASK.endpoint)
+  const attrs = `data-ask-endpoint="${escapeHtml(ASK.endpoint)}"${ready ? '' : ' data-ask-disabled="true"'}`
+  return `<details class="ask-panel" ${attrs} data-pagefind-ignore>
+          <summary>问我的笔记</summary>
+          <p class="ask-note">回答由 GLM（智谱）根据站点公开内容生成，可能有误，请以文章原文为准。</p>
+          <label class="visually-hidden" for="ask-question">向本站笔记提问</label>
+          <textarea id="ask-question" maxlength="500" rows="4" placeholder="问一个关于本站笔记的问题…（最多 500 字）"></textarea>
+          <div class="ask-actions"><span class="ask-status" data-ask-status aria-live="polite"></span><button class="ask-submit" data-ask-submit type="button">提问</button></div>
+          <div class="ask-answer" data-ask-answer hidden></div>
+        </details>`
+}
+
 function postPage(post, prev, next) {
   const postUrl = `${BLOG_URL}/posts/${post.slug}.html`
   const ld = {
@@ -266,6 +290,7 @@ function indexPage(posts) {
   const rows = posts
     .map((post, idx) => `<article class="post-row"><span class="post-number" aria-hidden="true">${String(idx + 1).padStart(2, '0')}</span><div>${postMetaRow(post)}<h3><a href="posts/${post.slug}.html">${escapeHtml(post.title)}<span class="post-arrow" aria-hidden="true">↗</span></a></h3><p>${escapeHtml(post.summary)}</p></div></article>`)
     .join('\n        ')
+  const ask = askPanel()
   return `<!doctype html>
 <html lang="zh-CN" data-theme="dark">
 <head>
@@ -292,6 +317,21 @@ function indexPage(posts) {
     .blog-search-item:hover b,.blog-search-item:focus-visible b{color:var(--accent)}
     .blog-search-item mark{background:none;color:var(--gold);padding:0}
     .blog-search-empty{margin:0;padding:14px 16px;font-size:12px;color:var(--muted)}
+    /* 「问我的笔记」问答面板：折叠态与搜索区共用同一套边框与配色语言。 */
+    .ask-panel{margin-top:28px;background:var(--surface);border:1px solid var(--line)}
+    .ask-panel summary{cursor:pointer;padding:14px 16px;font-size:14px;font-weight:500;color:var(--ink)}
+    .ask-panel summary::marker{color:var(--muted)}
+    .ask-panel[open] summary{border-bottom:1px solid var(--line)}
+    .ask-note{margin:12px 16px 0;font-size:11px;line-height:1.7;color:var(--muted)}
+    .ask-panel textarea{display:block;width:calc(100% - 32px);margin:12px 16px 0;padding:10px 12px;font:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:0;resize:vertical}
+    .ask-panel textarea:focus{outline:none;border-color:var(--accent)}
+    .ask-panel textarea::placeholder{color:var(--muted)}
+    .ask-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px 16px}
+    .ask-status{font-size:12px;color:var(--muted)}
+    .ask-submit{padding:8px 18px;font:inherit;font-size:13px;color:var(--ink);background:none;border:1px solid var(--line);cursor:pointer}
+    .ask-submit:hover:not(:disabled),.ask-submit:focus-visible{border-color:var(--accent);color:var(--accent)}
+    .ask-submit:disabled{opacity:.55;cursor:not-allowed}
+    .ask-answer{margin:0 16px 16px;padding:12px;border:1px solid var(--line);font-size:13px;line-height:1.9;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
   </style>
 </head>
 <body data-pagefind-ignore>
@@ -313,7 +353,7 @@ function indexPage(posts) {
       </div>
       <div class="writing-layout"><div class="post-list">
         ${rows}
-      </div><aside class="sidebar" aria-label="博客介绍"><p class="eyebrow">FIELD NOTES</p><h3>思考的途中，<br>留下一些坐标。</h3><p>围绕算法、数学与智能系统，记录能被检验、也能被继续使用的理解。</p><div class="fields"><span>01 <b>算法与竞赛</b></span><span>02 <b>数学与物理</b></span><span>03 <b>AI 与智能体</b></span></div><a class="quiet-link" href="https://github.com/tangyixiao" target="_blank" rel="noopener noreferrer">在 GitHub 查看项目 <span aria-hidden="true">↗</span></a></aside></div>
+      </div><aside class="sidebar" aria-label="博客介绍"><p class="eyebrow">FIELD NOTES</p><h3>思考的途中，<br>留下一些坐标。</h3><p>围绕算法、数学与智能系统，记录能被检验、也能被继续使用的理解。</p><div class="fields"><span>01 <b>算法与竞赛</b></span><span>02 <b>数学与物理</b></span><span>03 <b>AI 与智能体</b></span></div><a class="quiet-link" href="https://github.com/tangyixiao" target="_blank" rel="noopener noreferrer">在 GitHub 查看项目 <span aria-hidden="true">↗</span></a>${ask ? '\n        ' + ask : ''}</aside></div>
     </section>
     <section id="about" class="about" aria-labelledby="about-title"><div><p class="eyebrow">ABOUT THE JOURNAL</p><h2 id="about-title">保持好奇，<br>也认真验证。</h2></div><div class="about-copy"><p>我是唐一潇，关注算法、数学、物理与人工智能。个人主页展示正在探索的方向与项目，这里则用文章把思路展开。</p><p>从问题的拆解，到实现与推导，再到复盘与记录；希望每一篇文字，都能留下下一次继续探索的起点。</p><div class="about-links"><a href="https://tangyixiao.github.io/">回到个人主页 ↗</a><a href="https://www.luogu.com.cn/blog/TangyixiaoQAQ/" target="_blank" rel="noopener noreferrer">洛谷博客 ↗</a></div></div></section>
   </main>
@@ -359,6 +399,65 @@ function indexPage(posts) {
         })
       } catch { /* 索引不可用时保持隐藏 */ }
     }
+  </script>
+  <script>
+    // 「问我的笔记」：仅当 build 时配置了 Worker endpoint 才会发请求；
+    // 回答用 textContent 渲染纯文本（防注入）；错误统一显示友好提示。
+    ;(function () {
+      var panel = document.querySelector('.ask-panel')
+      if (!panel) return
+      var endpoint = panel.getAttribute('data-ask-endpoint') || ''
+      var submit = panel.querySelector('[data-ask-submit]')
+      var status = panel.querySelector('[data-ask-status]')
+      var answer = panel.querySelector('[data-ask-answer]')
+      var input = panel.querySelector('#ask-question')
+      var say = function (text) { status.textContent = text }
+      // endpoint 为空：按钮禁用、不发任何请求。
+      if (!endpoint || panel.hasAttribute('data-ask-disabled')) {
+        submit.disabled = true
+        input.disabled = true
+        say('服务未开通')
+        return
+      }
+      var FRIENDLY = {
+        not_configured: '服务未配置，请稍后再试。',
+        rate_limited: '提问太频繁了，请稍等 10 秒再试。',
+        question_too_long: '问题超过 500 字，请精简后再试。',
+        upstream_error: '回答服务暂时不可用，请稍后再试。'
+      }
+      var asking = false
+      submit.addEventListener('click', function () {
+        if (asking) return
+        var question = input.value.trim()
+        if (!question) { say('请先输入问题。'); return }
+        if (question.length > 500) { say(FRIENDLY.question_too_long); return }
+        asking = true
+        submit.disabled = true
+        answer.hidden = true
+        answer.textContent = ''
+        say('思考中…')
+        fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: question })
+        }).then(function (res) {
+          return res.json().catch(function () { return {} }).then(function (data) {
+            if (res.ok && data.answer) {
+              answer.textContent = data.answer
+              answer.hidden = false
+              say('')
+              return
+            }
+            say(FRIENDLY[data.error] || '提问失败，请稍后再试。')
+          })
+        }).catch(function () {
+          say('网络错误，请稍后再试。')
+        }).finally(function () {
+          asking = false
+          submit.disabled = false
+        })
+      })
+    })()
   </script>
 </body>
 </html>
