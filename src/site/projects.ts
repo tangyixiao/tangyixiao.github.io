@@ -1,5 +1,3 @@
-import type { Language } from './content'
-
 // 项目结构化数据：加一个项目 = 在 projects 数组里加一个对象，
 // 卡片、详情页、分类筛选全部从数组渲染，组件零改动。
 // id 同时用作 /work/<id> 路由与 project-<id> 卡片样式钩子（无专属样式时回退到默认卡片美术）。

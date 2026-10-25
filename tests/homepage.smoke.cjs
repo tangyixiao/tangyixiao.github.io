@@ -21,7 +21,6 @@ const chromeCandidates = [
     process.env.PROGRAMFILES && path.join(process.env.PROGRAMFILES, 'Google', 'Chrome', 'Application', 'chrome.exe'),
   ] : []),
 ].filter(Boolean)
-const chrome = chromeCandidates.find((candidate) => fs.existsSync(candidate))
 const screenshotDirectory = process.env.SCREENSHOT_DIR
 let siteUrl = process.env.SITE_URL || 'http://127.0.0.1:18766/'
 

@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "vite build && node scripts/build-blog.mjs && node scripts/copy-legacy.mjs && node scripts/verify-lazy-chunks.mjs && npx --yes pagefind --site dist/blog",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "format": "npx --yes prettier --write .",
     "test:unit": "node --experimental-strip-types --test tests/visual-lifecycle.test.mjs tests/solar-geometry.test.mjs",
     "test:browser": "node tests/homepage-smoke.mjs && node tests/homepage.smoke.cjs && node tests/homepage-redesign.cjs && node tests/solar-system.cjs && node tests/solar-quality.cjs && node tests/blog.smoke.cjs",
     "og": "node scripts/generate-og.mjs",
@@ -21,8 +24,10 @@
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.185.4",
     "@vitejs/plugin-react": "^5.1.1",
+    "eslint": "^9.39.4",
     "playwright": "^1.62.1",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.0",
     "vite": "^8.2.2"
   }
 }

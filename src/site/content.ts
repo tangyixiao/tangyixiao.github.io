@@ -30,7 +30,7 @@ export interface SiteContent {
   work: { label: string; heading: string; intro: string; allLabel: string; filterLabel: string; detail: { overview: string; highlights: string; stack: string; back: string } }
   focus: { label: string; heading: string; intro: string; items: Record<FocusId, { name: string; summary: string }> }
   now: { label: string; heading: string; intro: string; updatedLabel: string; updatedAt: string; blocks: { title: string; detail: string }[]; readingLabel: string; reading: string[] }
-  about: { label: string; heading: string; paragraph1: string; paragraph2: string; toolsLabel: string; interestsLabel: string; interests: string }
+  about: { label: string; heading: string; paragraph1: string; paragraph2: string; toolsLabel: string; interestsLabel: string; interests: string; timelineLabel: string }
   links: { label: string; heading: string; description: string; code: string }
 }
 

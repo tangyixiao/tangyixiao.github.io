@@ -3,7 +3,7 @@ import { createUniverseController, particleCountForWidth } from './createUnivers
 import type { ScenePhase, SceneTheme, UniverseCanvasProps, UniverseController } from './types'
 
 export default function UniverseCanvas(props: UniverseCanvasProps) {
-  const { phase, theme, pulse, reducedMotion, mode, scaleMode, selected, paused, reset, zoom, timeScale, galacticRing, galacticView, interactionElement, onAvailability } = props
+  const { phase, theme, pulse, reducedMotion, mode, scaleMode, selected, paused, reset, zoom, timeScale, galacticRing, galacticView, interactionElement } = props
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const controllerRef = useRef<UniverseController | null>(null)

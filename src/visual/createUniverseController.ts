@@ -486,7 +486,7 @@ export async function createUniverseController(canvas: HTMLCanvasElement, props:
       // 公转位移如今留在画面上（residual 预算），真实比例下行星可能只有零点几个像素，
       // 射线永远打不中 mesh；以光标为中心、阈值随相机距离放宽的最近邻拾取兜底，
       // 「点到天体附近就是它」在 1px 和 1000px 的尺度上都成立。命中 mesh 优先。
-      const origin = raycaster.ray.origin, direction = raycaster.ray.direction
+      const origin = raycaster.ray.origin
       let best: { id: BodyId; score: number } | null = null
       for (const body of meshes) {
         const radius = solar.metrics(body.userData.bodyId as BodyId).radius * solar.world.scale.x

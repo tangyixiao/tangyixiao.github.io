@@ -78,6 +78,7 @@ function renderInline(raw) {
   text = text.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>')
   text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
   text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>')
+  // eslint-disable-next-line no-control-regex -- \x00 是行内代码占位符的哨兵字符，正文中不会出现
   text = text.replace(/\x00(\d+)\x00/g, (_, i) => codes[Number(i)])
   return text
 }
