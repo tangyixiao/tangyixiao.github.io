@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { focusIds, labIds, links, projectIds, siteContent, type FocusId, type LabId, type Language, type ProjectContent, type ProjectId, type Theme } from './site/content'
+import { focusIds, labIds, links, milestones, projectIds, projects, siteContent, type FocusId, type LabId, type Language, type ProjectRecord, type Theme } from './site/content'
 import type { BodyId, ScaleMode, TimeScale, UniverseCanvasProps } from './visual/types'
 import { solarCopy } from './visual/solarData'
 import SolarExplorer from './visual/SolarExplorer'
@@ -39,7 +39,7 @@ type RouteId = keyof typeof SECTION_PHASES
 const ROUTE_IDS = Object.keys(SECTION_PHASES) as RouteId[]
 const tools = ['C++', 'Python', 'LaTeX', 'Markdown', 'Git']
 
-type Route = { view: RouteId; project?: ProjectId }
+type Route = { view: RouteId; project?: string }
 
 // v1.4 起路由读 location.pathname（history 路由），GitHub Pages 上未知路径回退到 404.html
 // （构建脚本复制 index.html 而来），应用引导后按 pathname 渲染，各版面才有可被独立收录的 URL。
@@ -48,7 +48,7 @@ function parsePath(pathname: string): Route | null {
   if (segments.length === 0) return { view: 'home' }
   const [base, sub] = segments
   if (!(ROUTE_IDS as string[]).includes(base)) return null
-  if (base === 'work' && sub) return (projectIds as string[]).includes(sub) ? { view: 'work', project: sub as ProjectId } : null
+  if (base === 'work' && sub) return projectIds.includes(sub) ? { view: 'work', project: sub } : null
   return { view: base as RouteId }
 }
 
@@ -75,7 +75,7 @@ function migrateLegacyHash(): void {
     const [base, sub] = segments
     if ((ROUTE_IDS as string[]).includes(base)) {
       route = base === 'work' && sub
-        ? ((projectIds as string[]).includes(sub) ? { view: 'work', project: sub as ProjectId } : null)
+        ? (projectIds.includes(sub) ? { view: 'work', project: sub } : null)
         : { view: base as RouteId }
     }
   }
@@ -239,12 +239,9 @@ function App() {
           <div className="hero-bottom"><span>TY / 2026</span><a href="/work">{copy.hero.scroll} <b aria-hidden="true">↓</b></a></div>
         </section>}
 
-        {route.view === 'work' && !route.project && <section className="work section view" id="work">
-          <div className="section-heading"><Reveal><p className="eyebrow">{copy.work.label}</p><h2>{copy.work.heading}</h2></Reveal><Reveal delay={.12}><p className="section-intro">{copy.work.intro}</p></Reveal></div>
-          <div className="project-list">{projectIds.map((id, index) => <ProjectCard key={id} id={id} index={index} copy={copy.work.projects[id]} onPulse={pulseScene} visitLabel={copy.actions.visit} />)}</div>
-        </section>}
+        {route.view === 'work' && !route.project && <WorkList language={language} copy={copy.work} visitLabel={copy.actions.visit} onPulse={pulseScene} />}
 
-        {route.view === 'work' && route.project && <ProjectDetail id={route.project} copy={copy.work.projects[route.project]} detail={copy.work.detail} visitLabel={copy.actions.visit} />}
+        {route.view === 'work' && route.project && <ProjectDetail id={route.project} language={language} detail={copy.work.detail} visitLabel={copy.actions.visit} />}
 
         {route.view === 'focus' && <section className="focus section view" id="focus"><div className="section-heading"><Reveal><p className="eyebrow">{copy.focus.label}</p><h2>{copy.focus.heading}</h2></Reveal><Reveal delay={.1}><p className="section-intro">{copy.focus.intro}</p></Reveal></div><div className="focus-grid">{focusIds.map((id) => <FocusCard key={id} id={id} copy={copy.focus.items[id]} onPulse={pulseScene} />)}</div></section>}
 
@@ -256,7 +253,7 @@ function App() {
           <Reveal delay={.2}><div className="now-reading"><span className="fact-label">{copy.now.readingLabel}</span><ul>{copy.now.reading.map((item) => <li key={item}>{item}</li>)}</ul><p className="now-updated">{copy.now.updatedLabel} · {copy.now.updatedAt}</p></div></Reveal>
         </section>}
 
-        {route.view === 'about' && <section className="about section view" id="about"><div className="about-heading"><Reveal><p className="eyebrow">{copy.about.label}</p><h2>{copy.about.heading}</h2></Reveal><span className="about-cross" aria-hidden="true">✳</span></div><div className="about-content"><Reveal><p>{copy.about.paragraph1}</p><p>{copy.about.paragraph2}</p></Reveal><Reveal delay={.12}><div className="about-facts"><div><span className="fact-label">{copy.about.toolsLabel}</span><p className="tool-list">{tools.map((tool) => <span key={tool}>{tool}</span>)}</p></div><div><span className="fact-label">{copy.about.interestsLabel}</span><p>{copy.about.interests}</p></div></div></Reveal></div></section>}
+        {route.view === 'about' && <section className="about section view" id="about"><div className="about-heading"><Reveal><p className="eyebrow">{copy.about.label}</p><h2>{copy.about.heading}</h2></Reveal><span className="about-cross" aria-hidden="true">✳</span></div><div className="about-content"><Reveal><p>{copy.about.paragraph1}</p><p>{copy.about.paragraph2}</p></Reveal><Reveal delay={.12}><div className="about-facts"><div><span className="fact-label">{copy.about.toolsLabel}</span><p className="tool-list">{tools.map((tool) => <span key={tool}>{tool}</span>)}</p></div><div><span className="fact-label">{copy.about.interestsLabel}</span><p>{copy.about.interests}</p></div></div></Reveal><Reveal delay={.2}><div className="about-timeline"><span className="fact-label">{copy.about.timelineLabel}</span><ol>{milestones.map((milestone) => <li key={milestone.year}><span className="timeline-year">{milestone.year}</span><p>{milestone[language]}</p></li>)}</ol></div></Reveal></div></section>}
       </main>
 
       {route.view === 'links' ? <footer className="footer section view" id="links"><div className="footer-main"><Reveal><p className="eyebrow">{copy.links.label}</p><h2>{copy.links.heading}</h2><p className="section-intro">{copy.links.description}</p></Reveal><div className="social-links"><a href={links.code}>{copy.links.code}<span aria-hidden="true">↗</span></a><ExternalLink href={links.github}>GitHub <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.luogu}>Luogu <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.cnblogs}>Cnblogs <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.csdn}>CSDN <span aria-hidden="true">↗</span></ExternalLink><ExternalLink href={links.bilibili}>Bilibili <span aria-hidden="true">↗</span></ExternalLink></div></div><div className="footer-bottom"><span>© 2026 {copy.hero.name}</span><a href="/">{copy.actions.top} ↑</a></div></footer>
@@ -266,12 +263,31 @@ function App() {
   </>
 }
 
-function ProjectCard({ id, index, copy, onPulse, visitLabel }: { id: ProjectId; index: number; copy: ProjectContent; onPulse: () => void; visitLabel: string }) {
-  return <Reveal delay={index * .1}><a className={`project-card project-${id}`} href={`/work/${id}`} onPointerEnter={onPulse} onFocus={onPulse}><div className="project-art" aria-hidden="true"><span /><i /><b /></div><div className="project-body"><p className="project-category">{copy.category}</p><h3>{copy.title}</h3><p className="project-description">{copy.description}</p><span className="project-open">{visitLabel} <span aria-hidden="true">↗</span></span></div></a></Reveal>
+// Work 列表：卡片完全由 projects 数组渲染；分类 chips 是纯前端 state，只过滤卡片、不改 URL。
+function WorkList({ language, copy, visitLabel, onPulse }: { language: Language; copy: { label: string; heading: string; intro: string; allLabel: string; filterLabel: string }; visitLabel: string; onPulse: () => void }) {
+  const [category, setCategory] = useState<string | null>(null)
+  const categories = [...new Set(projects.map((project) => project[language].category))]
+  const visible = category ? projects.filter((project) => project[language].category === category) : projects
+  return <section className="work section view" id="work">
+    <div className="section-heading"><Reveal><p className="eyebrow">{copy.label}</p><h2>{copy.heading}</h2></Reveal><Reveal delay={.12}><p className="section-intro">{copy.intro}</p></Reveal></div>
+    <Reveal delay={.08}><div className="work-filter" role="group" aria-label={copy.filterLabel}>
+      <button type="button" aria-pressed={category === null} onClick={() => setCategory(null)}>{copy.allLabel}</button>
+      {categories.map((name) => <button key={name} type="button" aria-pressed={category === name} onClick={() => setCategory(category === name ? null : name)}>{name}</button>)}
+    </div></Reveal>
+    <div className="project-list">{visible.map((project, index) => <ProjectCard key={project.id} project={project} index={index} language={language} onPulse={onPulse} visitLabel={visitLabel} />)}</div>
+  </section>
 }
 
-function ProjectDetail({ id, copy, detail, visitLabel }: { id: ProjectId; copy: ProjectContent; detail: { overview: string; highlights: string; stack: string; back: string }; visitLabel: string }) {
-  const href = links[id]
+function ProjectCard({ project, index, language, onPulse, visitLabel }: { project: ProjectRecord; index: number; language: Language; onPulse: () => void; visitLabel: string }) {
+  const copy = project[language]
+  return <Reveal delay={index * .1}><a className={`project-card project-${project.id}`} href={`/work/${project.id}`} onPointerEnter={onPulse} onFocus={onPulse}><div className="project-art" aria-hidden="true"><span /><i /><b /></div><div className="project-body"><p className="project-category">{copy.category} · {project.year}</p><h3>{project.title}</h3><p className="project-description">{copy.description}</p><p className="project-tags">{project.tags.join(' · ')}</p><span className="project-open">{visitLabel} <span aria-hidden="true">↗</span></span></div></a></Reveal>
+}
+
+function ProjectDetail({ id, language, detail, visitLabel }: { id: string; language: Language; detail: { overview: string; highlights: string; stack: string; back: string }; visitLabel: string }) {
+  const project = projects.find((item) => item.id === id)
+  if (!project) return null
+  const copy = project[language]
+  const href = project.link
   const external = href.startsWith('http')
   return <section className="work section view" id="work">
     <div className="section-heading"><Reveal><p className="eyebrow">{copy.category}</p><h2>{copy.title}</h2></Reveal><Reveal delay={.12}><p className="section-intro">{copy.description}</p></Reveal></div>
