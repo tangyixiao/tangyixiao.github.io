@@ -47,6 +47,13 @@ async function main() {
       assert.equal(await page.locator('html').getAttribute('data-theme'),'light')
       await page.getByRole('button',{name:'切换到深色模式'}).click()
       assert.equal(dark,'dark')
+      // 搜索入口：Pagefind 索引加载成功后输入框揭示，中文关键词可搜到文章页。
+      await page.fill('#blog-search','算法')
+      await page.locator('.blog-search-item').first().waitFor()
+      assert.ok(await page.locator('.blog-search-item').count() >= 1)
+      assert.equal(await page.locator('.blog-search-item').evaluateAll(nodes => nodes.every(node => node.getAttribute('href').includes('posts/'))),true)
+      await page.fill('#blog-search','')
+      assert.equal(await page.locator('#blog-search-results').isHidden(),true)
       if (process.env.BLOG_SCREENSHOT_DIR && base === '/') {
         fs.mkdirSync(process.env.BLOG_SCREENSHOT_DIR,{recursive:true})
         await page.screenshot({path:path.join(process.env.BLOG_SCREENSHOT_DIR,'blog-desktop.png'),fullPage:true})
