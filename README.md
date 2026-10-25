@@ -86,6 +86,28 @@ npx playwright install chromium
 
 notes.html / login.html / register.html 三个页面（前端脚本在 `auth.js`）依赖**单独部署的 Cloudflare Worker**（`notes-worker.js`）+ D1 数据库（绑定配置见 `wrangler.toml`，`main` 指向 `notes-worker.js`）。该 Worker 通过 `wrangler deploy` 独立发布到 Cloudflare，**不在 GitHub Pages 部署链路内**：Pages 的构建与测试流水线既不构建也不校验 notes 后端，Worker 的改动需要单独部署才会生效。
 
+### 「问我的笔记」问答（Worker `/api/ask` 代理 GLM）
+
+博客列表页有一个「问我的笔记」折叠面板（v2.2）：提问会发送到 notes Worker 的 `POST /api/ask`，由 Worker 内嵌站点知识作为 system prompt、调用智谱 `glm-4-flash` 生成回答。安全设计：API Key 只通过 wrangler secret 注入（不进仓库）；CORS 只放行 `https://tangyixiao.github.io` 与 `http://127.0.0.1:*`；同一 IP 每 10 秒最多 1 次（Worker 内存限流，多实例下尽力而为）；浏览器端回答用 `textContent` 渲染纯文本防注入。
+
+**启用步骤**（面板默认渲染但按钮禁用、显示「服务未开通」）：
+
+```bash
+npx wrangler secret put ZHIPU_API_KEY   # 输入智谱 API Key（open.bigmodel.cn）
+npx wrangler deploy                     # 部署 notes-worker.js 到 Cloudflare
+```
+
+部署后拿到 workers.dev 地址（形如 `https://tangyixiao-api-gihub-io.<subdomain>.workers.dev`），把它填进 `scripts/build-blog.mjs` 顶部的配置对象：
+
+```js
+const ASK = {
+  enabled: true,
+  endpoint: 'https://tangyixiao-api-gihub-io.<subdomain>.workers.dev/api/ask',
+}
+```
+
+再执行 `npm run build`，面板即向该 endpoint 发起请求。endpoint 留空或 `enabled: false` 时，页面不发任何请求（后者连面板也不输出）。Worker 端单测见 `tests/test_ask_worker.mjs`（`npm run test:unit`）。
+
 ## 当前重点
 
 持续打磨真实比例太阳系探索器的可见性与观感（轨道线分档提亮、小天体取景裁剪等），以及博客与主页内容的日常更新。

@@ -8,7 +8,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "format": "npx --yes prettier --write .",
-    "test:unit": "node --experimental-strip-types --test tests/visual-lifecycle.test.mjs tests/solar-geometry.test.mjs",
+    "test:unit": "node --experimental-strip-types --test tests/visual-lifecycle.test.mjs tests/solar-geometry.test.mjs tests/test_ask_worker.mjs",
     "test:browser": "node tests/homepage-smoke.mjs && node tests/homepage.smoke.cjs && node tests/homepage-redesign.cjs && node tests/solar-system.cjs && node tests/solar-quality.cjs && node tests/blog.smoke.cjs",
     "og": "node scripts/generate-og.mjs",
     "icons": "node scripts/generate-icons.mjs"

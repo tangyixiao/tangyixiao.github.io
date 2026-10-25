@@ -1,6 +1,10 @@
+// 旧版占位 Token：若部署环境注入了全局 GITHUB_TOKEN 则使用之，否则回退占位值。
+// （改为 module worker 后 secrets 走 env 绑定，这里检查 globalThis 避免自引用 TDZ。）
 const GITHUB_TOKEN =
   "Bearer " +
-  (typeof GITHUB_TOKEN !== "undefined" ? GITHUB_TOKEN : "你的Token");
+  (typeof globalThis.GITHUB_TOKEN !== "undefined"
+    ? globalThis.GITHUB_TOKEN
+    : "你的Token");
 const REPO_OWNER = "Tangyixiao";
 const REPO_NAME = "Tangyixiao.github.io";
 const NOTES_PATH = "notes.json";
@@ -142,6 +146,108 @@ async function handleRequest(request) {
   }
 }
 
-addEventListener("fetch", (event) =>
-  event.respondWith(handleRequest(event.request)),
-);
+// ---------------------------------------------------------------------------
+// v2.2「问我的笔记」：POST /api/ask —— 代理智谱 GLM 的站点问答。
+// API Key 通过 wrangler secret 注入（wrangler secret put ZHIPU_API_KEY），
+// 绝不写入仓库；站点知识作为 system prompt 内嵌在下方常量里。
+// ---------------------------------------------------------------------------
+
+const GLM_API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
+const GLM_MODEL = "glm-4-flash";
+const ASK_MAX_LENGTH = 500;
+const ASK_RATE_INTERVAL_MS = 10_000;
+
+// 站点知识（从仓库真实内容提炼，<200 字）：只允许依据这些内容回答。
+const SITE_KNOWLEDGE = `你是唐一潇个人网站的问答助手。站点内容：项目 CodeHub（算法竞赛题解与模板库）、HighSchoolMathematics（高中数学公式推导知识库）、Agent Learning Hub（AI Agent 与大模型学习笔记）；太阳系探索器（Three.js 驱动、行星轨道与尺寸保持真实比例的交互太阳系）；实验场（独立运行的 WebGL 小实验合集）；博客文章《从一道题，到一份可复用的题解》《把推导写清楚，把理解留住》《用一个小实验，理解智能体》。只依据以上内容用中文简洁作答；没有依据的内容直接说明不知道。`;
+
+// CORS 只放行正式站点与本地测试端口（其余来源不下发 Allow-Origin）。
+const ASK_ALLOWED_ORIGIN = /^(https:\/\/tangyixiao\.github\.io|http:\/\/127\.0\.0\.1:\d+)$/;
+
+// 简易限流：同一 IP 每 10 秒最多 1 次。Worker 内存 Map 只存在于单个隔离实例，
+// 多实例部署下只是尽力而为，不保证全局精确。
+const askRateLimiter = new Map();
+
+function askResponse(data, status, corsHeaders) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+// 供 fetch handler 与 Node 单测共同调用的纯函数。
+export async function handleAsk(request, env) {
+  const origin = request.headers.get("Origin");
+  const corsHeaders = { "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" };
+  if (origin && ASK_ALLOWED_ORIGIN.test(origin)) {
+    corsHeaders["Access-Control-Allow-Origin"] = origin;
+  }
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+  if (request.method !== "POST") {
+    return askResponse({ error: "method_not_allowed" }, 405, corsHeaders);
+  }
+
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const now = Date.now();
+  if (now - (askRateLimiter.get(ip) || 0) < ASK_RATE_INTERVAL_MS) {
+    return askResponse({ error: "rate_limited" }, 429, corsHeaders);
+  }
+  askRateLimiter.set(ip, now);
+
+  if (!env || !env.ZHIPU_API_KEY) {
+    return askResponse({ error: "not_configured" }, 503, corsHeaders);
+  }
+
+  let question = "";
+  try {
+    const body = await request.json();
+    if (typeof body.question === "string") question = body.question.trim();
+  } catch {
+    question = "";
+  }
+  if (!question) return askResponse({ error: "invalid_question" }, 400, corsHeaders);
+  if (question.length > ASK_MAX_LENGTH) {
+    return askResponse({ error: "question_too_long" }, 400, corsHeaders);
+  }
+
+  try {
+    const upstream = await fetch(GLM_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.ZHIPU_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: GLM_MODEL,
+        messages: [
+          { role: "system", content: SITE_KNOWLEDGE },
+          { role: "user", content: question },
+        ],
+        temperature: 0.5,
+        max_tokens: 400,
+      }),
+    });
+    if (!upstream.ok) {
+      return askResponse({ error: "upstream_error" }, 502, corsHeaders);
+    }
+    const data = await upstream.json();
+    const content = data?.choices?.[0]?.message?.content;
+    const answer = typeof content === "string" ? content.trim() : "";
+    if (!answer) return askResponse({ error: "upstream_error" }, 502, corsHeaders);
+    return askResponse({ answer, model: GLM_MODEL }, 200, corsHeaders);
+  } catch {
+    return askResponse({ error: "upstream_error" }, 502, corsHeaders);
+  }
+}
+
+// Worker 入口：改为 ES Module 格式（module worker）以便读取 env 绑定
+// （ZHIPU_API_KEY）并支持单测导入；notes 既有路由的行为保持不变。
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname === "/api/ask") return handleAsk(request, env);
+    return handleRequest(request);
+  },
+};
