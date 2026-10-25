@@ -113,6 +113,13 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
 .project-open { display: inline-flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--line); padding-bottom: 8px; font-size: .78rem; font-weight: 600; }
 .project-open span { color: var(--gold); font-size: 1rem; }
 .project-card:hover .project-open { border-color: var(--teal); }
+.project-tags { margin: -12px 0 24px; color: var(--muted); font: 500 .68rem/1.6 'DejaVu Sans Mono', 'Noto Sans CJK SC', monospace; letter-spacing: .06em; opacity: .78; }
+
+/* Work 分类筛选 chips：沿用站内 chips（胶囊按钮 + aria-pressed）的设计语言，纯前端过滤。 */
+.work-filter { display: flex; flex-wrap: wrap; gap: 8px; max-width: 1400px; margin: 0 auto 38px; }
+.work-filter button { min-height: 44px; padding: 0 18px; border: 1px solid var(--line); border-radius: 999px; background: var(--glass); color: var(--muted); font: 600 .74rem/1 'DejaVu Sans Mono', 'Noto Sans CJK SC', monospace; letter-spacing: .05em; cursor: pointer; transition: border-color .2s ease, color .2s ease, background .2s ease; }
+.work-filter button:hover { border-color: color-mix(in srgb, var(--teal) 55%, transparent); color: var(--ink); }
+.work-filter button[aria-pressed='true'] { border-color: color-mix(in srgb, var(--teal) 55%, transparent); background: color-mix(in srgb, var(--teal) 12%, transparent); color: var(--teal); }
 
 .project-detail { display: grid; gap: 44px; max-width: 1400px; margin: auto; padding-top: 54px; border-top: 1px solid var(--line); }
 .detail-label { margin: 0 0 14px; color: var(--teal); font: 600 .7rem/1.4 'DejaVu Sans Mono', 'Noto Sans CJK SC', monospace; letter-spacing: .12em; }
@@ -147,6 +154,17 @@ h1, h2 { font-family: 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', G
 .about-facts p { margin: 17px 0 0; color: var(--muted); font-size: .85rem; line-height: 1.9; }
 .tool-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .tool-list span { padding: 5px 8px; border: 1px solid var(--line); border-radius: 5px; }
+/* 里程碑时间线：竖线 + 节点的极简样式。整段是纯静态排版（无动画/过渡），
+   在 prefers-reduced-motion 下不需要额外降级，天然保持可用。 */
+.about-timeline { margin-top: 56px; padding-top: 30px; border-top: 1px solid var(--line); }
+.about-timeline ol { display: grid; gap: 22px; margin: 20px 0 0; padding: 0; list-style: none; }
+.about-timeline li { position: relative; display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 16px; padding-left: 24px; }
+.about-timeline li::before { content: ''; position: absolute; left: 0; top: 16px; bottom: -22px; width: 1px; background: var(--line); }
+.about-timeline li:last-child::before { display: none; }
+.about-timeline li::after { content: ''; position: absolute; left: -3px; top: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 14%, transparent); }
+.timeline-year { color: var(--teal); font: 600 .78rem/1.7 'DejaVu Sans Mono', 'Noto Sans CJK SC', monospace; letter-spacing: .08em; }
+.about-timeline li p { margin: 0; color: var(--muted); font-size: .85rem; line-height: 1.8; }
+@media (max-width: 760px) { .about-timeline li { grid-template-columns: 44px minmax(0, 1fr); gap: 12px; } }
 
 .now-list { display: grid; gap: 14px; max-width: 1400px; margin: auto; }
 .now-item { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 20px; padding: 28px 30px; border: 1px solid var(--line); border-radius: 14px; background: var(--glass); }
