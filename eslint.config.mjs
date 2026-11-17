@@ -60,7 +60,7 @@ export default tseslint.config(
   },
   {
     // 根目录浏览器端脚本（auth.js 由 login/register/notes.html 直接 <script> 引入）。
-    files: ['*.js'],
+    files: ['*.js', 'project-website/site/*.js'],
     languageOptions: {
       globals: {
         console: 'readonly',
@@ -72,6 +72,7 @@ export default tseslint.config(
         fetch: 'readonly',
         TextEncoder: 'readonly',
         Event: 'readonly',
+        CustomEvent: 'readonly',
         setTimeout: 'readonly',
         URL: 'readonly',
       },

@@ -1,0 +1,136 @@
+{
+  "meta": {
+    "description": "Browse Tang Yixiao’s projects, study interests and blog, or use an interactive solar system to compare the sizes of bodies and the scale of their orbits."
+  },
+  "pages": {
+    "home": {
+      "title": "Explore a solar system and a personal site · {project}"
+    },
+    "features": {
+      "title": "Features · {project}",
+      "description": "Browse Tang Yixiao’s projects, study interests and blog, or use an interactive solar system to compare the sizes of bodies and the scale of their orbits."
+    },
+    "download": {
+      "title": "Get started · {project}",
+      "description": "Start with a project or open the solar explorer."
+    },
+    "community": {
+      "title": "Community · {project}",
+      "description": "Find usage guidance, follow discussions and review changes to this project."
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "features": "Features",
+    "download": "Get started",
+    "community": "Community"
+  },
+  "ui": {
+    "skip_link": "Skip to main content",
+    "navigation": "Main navigation",
+    "open_navigation": "Open navigation",
+    "close_navigation": "Close navigation",
+    "language": "Choose language",
+    "theme": "Choose theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "platforms": "Supported platforms",
+    "github": "GitHub",
+    "view_image": "View full illustration",
+    "feature_more": "Explore features",
+    "download": "Visit the personal site",
+    "release_notes": "Source repository",
+    "documentation": "Documentation",
+    "source": "Source repository",
+    "illustration": "First steps",
+    "license": "Apache-2.0 (original website code)"
+  },
+  "hero": {
+    "title": [
+      "Explore a solar system and a personal site"
+    ],
+    "description": [
+      "Browse Tang Yixiao’s projects, study interests and blog, or use an interactive solar system to compare the sizes of bodies and the scale of their orbits."
+    ],
+    "primary_action": "Visit the personal site",
+    "secondary_action": "Explore features"
+  },
+  "preview": {
+    "caption": "First steps",
+    "tabs": [
+      {
+        "label": "Get started",
+        "icon": "book"
+      }
+    ],
+    "items": [
+      {
+        "title": "Visit the homepage",
+        "description": "Start with a project or open the solar explorer.",
+        "icon": "book"
+      },
+      {
+        "title": "Read an article",
+        "description": "Follow the blog index and choose an article to read.",
+        "icon": "link"
+      }
+    ]
+  },
+  "features": {
+    "title": "Project features",
+    "groups": [
+      {
+        "title": "Two ways to see scale",
+        "description": "Switch between physical proportions and compressed framing to see how orbital distances change the view.",
+        "detail": "",
+        "icon": "layers"
+      },
+      {
+        "title": "Projects and writing",
+        "description": "The homepage connects projects and the blog, with Chinese and English presentation and light or dark appearance.",
+        "detail": "",
+        "icon": "book"
+      }
+    ]
+  },
+  "getting_started": {
+    "title": "Get started · {project}",
+    "steps": [
+      {
+        "title": "Visit the homepage",
+        "description": "Start with a project or open the solar explorer.",
+        "icon": "book"
+      },
+      {
+        "title": "Read an article",
+        "description": "Follow the blog index and choose an article to read.",
+        "icon": "link"
+      }
+    ]
+  },
+  "community": {
+    "title": "Community · {project}",
+    "description": "Find usage guidance, follow discussions and review changes to this project.",
+    "links": [
+      {
+        "label": "Help and feedback",
+        "description": "Browse existing reports or describe a reproducible problem.",
+        "icon": "book"
+      },
+      {
+        "label": "Join the discussion",
+        "description": "Read existing topics or share questions and ideas.",
+        "icon": "link"
+      },
+      {
+        "label": "Review changes",
+        "description": "Review open pull requests or prepare a contribution.",
+        "icon": "code"
+      }
+    ]
+  },
+  "footer": {
+    "copyright": "{copyright}"
+  }
+}
