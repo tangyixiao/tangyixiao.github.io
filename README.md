@@ -115,3 +115,7 @@ const ASK = {
 ## License
 
 Apache License 2.0，见 [LICENSE](LICENSE)。
+
+## 项目网站
+
+下载或克隆仓库后，用浏览器打开[中文首页](project-website/site/index.html)或 [English homepage](project-website/site/en/index.html)。两个版本都可以离线阅读。

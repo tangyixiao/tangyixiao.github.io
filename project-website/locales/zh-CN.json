@@ -1,0 +1,136 @@
+{
+  "meta": {
+    "description": "从项目作品、学习方向和博客进入唐一潇的个人网站，也可以打开交互式太阳系，比较天体大小与轨道尺度。"
+  },
+  "pages": {
+    "home": {
+      "title": "在个人网站里探索太阳系 · {project}"
+    },
+    "features": {
+      "title": "项目特点 · {project}",
+      "description": "从项目作品、学习方向和博客进入唐一潇的个人网站，也可以打开交互式太阳系，比较天体大小与轨道尺度。"
+    },
+    "download": {
+      "title": "开始使用 · {project}",
+      "description": "进入首页，从作品或太阳系探索器开始浏览。"
+    },
+    "community": {
+      "title": "参与项目 · {project}",
+      "description": "从这里找到使用说明、已有讨论和项目变更。"
+    }
+  },
+  "nav": {
+    "home": "首页",
+    "features": "项目特点",
+    "download": "开始使用",
+    "community": "参与项目"
+  },
+  "ui": {
+    "skip_link": "跳转到主要内容",
+    "navigation": "主导航",
+    "open_navigation": "打开导航",
+    "close_navigation": "关闭导航",
+    "language": "选择语言",
+    "theme": "选择主题",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统",
+    "platforms": "支持的平台",
+    "github": "GitHub",
+    "view_image": "查看完整演示图",
+    "feature_more": "查看详情",
+    "download": "打开个人网站",
+    "release_notes": "仓库源代码",
+    "documentation": "使用文档",
+    "source": "仓库源代码",
+    "illustration": "使用路径",
+    "license": "Apache-2.0（原创网站代码）"
+  },
+  "hero": {
+    "title": [
+      "在个人网站里探索太阳系"
+    ],
+    "description": [
+      "从项目作品、学习方向和博客进入唐一潇的个人网站，也可以打开交互式太阳系，比较天体大小与轨道尺度。"
+    ],
+    "primary_action": "打开个人网站",
+    "secondary_action": "查看详情"
+  },
+  "preview": {
+    "caption": "使用路径",
+    "tabs": [
+      {
+        "label": "开始使用",
+        "icon": "book"
+      }
+    ],
+    "items": [
+      {
+        "title": "打开个人网站",
+        "description": "进入首页，从作品或太阳系探索器开始浏览。",
+        "icon": "book"
+      },
+      {
+        "title": "回到文字内容",
+        "description": "从站点进入博客索引，选择一篇文章阅读。",
+        "icon": "link"
+      }
+    ]
+  },
+  "features": {
+    "title": "项目特点",
+    "groups": [
+      {
+        "title": "两种太阳系比例",
+        "description": "在真实比例和取景压缩之间切换，观察真实距离如何改变行星系统的全貌。",
+        "detail": "",
+        "icon": "layers"
+      },
+      {
+        "title": "阅读博客与作品",
+        "description": "个人主页、作品和博客共用一个入口，支持中英切换与明暗外观。",
+        "detail": "",
+        "icon": "book"
+      }
+    ]
+  },
+  "getting_started": {
+    "title": "开始使用 · {project}",
+    "steps": [
+      {
+        "title": "打开个人网站",
+        "description": "进入首页，从作品或太阳系探索器开始浏览。",
+        "icon": "book"
+      },
+      {
+        "title": "回到文字内容",
+        "description": "从站点进入博客索引，选择一篇文章阅读。",
+        "icon": "link"
+      }
+    ]
+  },
+  "community": {
+    "title": "参与 · {project}",
+    "description": "从这里找到使用说明、已有讨论和项目变更。",
+    "links": [
+      {
+        "label": "帮助与反馈",
+        "description": "查看已报告的问题，或描述复现步骤。",
+        "icon": "book"
+      },
+      {
+        "label": "参与讨论",
+        "description": "查看已有话题，分享使用方法或改进建议。",
+        "icon": "link"
+      },
+      {
+        "label": "查看项目变更",
+        "description": "查看已有拉取请求或准备贡献。",
+        "icon": "code"
+      }
+    ]
+  },
+  "footer": {
+    "copyright": "{copyright}"
+  }
+}
