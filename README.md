@@ -1,4 +1,4 @@
-# 唐一潇 · Tang Yixiao 个人网站
+# TYX 个人网站
 
 个人主页与博客站点，部署于 GitHub Pages：<https://tangyixiao.github.io/>
 

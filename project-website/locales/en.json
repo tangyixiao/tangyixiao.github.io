@@ -1,6 +1,6 @@
 {
   "meta": {
-    "description": "Browse Tang Yixiao’s projects, study interests and blog, or use an interactive solar system to compare the sizes of bodies and the scale of their orbits."
+    "description": "Browse TYX’s projects, study interests and blog, or use an interactive solar system to compare the sizes of bodies and the scale of their orbits."
   },
   "pages": {
     "home": {
@@ -8,7 +8,7 @@
     },
     "features": {
       "title": "Features · {project}",
-      "description": "Browse Tang Yixiao’s projects, study interests and blog, or use an interactive solar system to compare the sizes of bodies and the scale of their orbits."
+      "description": "Browse TYX’s projects, study interests and blog, or use an interactive solar system to compare the sizes of bodies and the scale of their orbits."
     },
     "download": {
       "title": "Get started · {project}",
@@ -51,7 +51,7 @@
       "Explore a solar system and a personal site"
     ],
     "description": [
-      "Browse Tang Yixiao’s projects, study interests and blog, or use an interactive solar system to compare the sizes of bodies and the scale of their orbits."
+      "Browse TYX’s projects, study interests and blog, or use an interactive solar system to compare the sizes of bodies and the scale of their orbits."
     ],
     "primary_action": "Visit the personal site",
     "secondary_action": "Explore features"
