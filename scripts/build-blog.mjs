@@ -13,7 +13,7 @@ const outDir = path.join(root, 'dist', 'blog')
 const SITE_URL = 'https://tangyixiao.github.io'
 const BLOG_URL = SITE_URL + '/blog'
 const FAVICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23080b10'/%3E%3Cpath d='M16 5v22M5 16h22M8 8l16 16M8 24L24 8' stroke='%2384d5c8' stroke-width='2'/%3E%3C/svg%3E"
-const SITE_DESCRIPTION = 'TYX的个人博客。记录算法与竞赛、数学与物理、AI 与智能体的学习、推导和实验。'
+const SITE_DESCRIPTION = '唐一潇的个人博客。记录算法与竞赛、数学与物理、AI 与智能体的学习、推导和实验。'
 
 // ---- 评论区（giscus，默认关闭）----
 // 启用步骤：仓库开启 Discussions → 安装 giscus App（https://github.com/apps/giscus）
@@ -248,7 +248,7 @@ function postPage(post, prev, next) {
     description: post.description,
     datePublished: post.date,
     inLanguage: 'zh-CN',
-    author: { '@type': 'Person', name: 'TYX', url: SITE_URL + '/' },
+    author: { '@type': 'Person', name: '唐一潇', url: SITE_URL + '/' },
     mainEntityOfPage: postUrl,
     keywords: post.tags.join('、'),
   }
@@ -261,18 +261,18 @@ function postPage(post, prev, next) {
 <html lang="zh-CN" data-theme="dark">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#080b10">
-<meta name="description" content="${escapeHtml(post.description)}"><title>${escapeHtml(post.title)} · TYX</title>
+<meta name="description" content="${escapeHtml(post.description)}"><title>${escapeHtml(post.title)} · 唐一潇</title>
 <meta property="og:type" content="article">
 <meta property="og:title" content="${escapeHtml(post.title)}">
 <meta property="og:description" content="${escapeHtml(post.description)}">
 <meta property="og:url" content="${postUrl}">
 <meta property="article:published_time" content="${post.date}">
 <script type="application/ld+json">${ldJson}</script>
-<link rel="alternate" type="application/rss+xml" title="TYX · 个人博客" href="/blog/rss.xml"><link rel="icon" type="image/svg+xml" href="${FAVICON}"><link rel="stylesheet" href="../assets/blog.css"><script src="../assets/blog.js" defer></script>
+<link rel="alternate" type="application/rss+xml" title="唐一潇 · 个人博客" href="/blog/rss.xml"><link rel="icon" type="image/svg+xml" href="${FAVICON}"><link rel="stylesheet" href="../assets/blog.css"><script src="../assets/blog.js" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
-<header class="site-header wrap"><a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">✳</span><span>TYX <small>JOURNAL</small></span></a><nav aria-label="主导航"><a href="../index.html#writing">全部文章</a><a class="home-link" href="https://tangyixiao.github.io/">个人主页 ↗</a><button class="theme-toggle" type="button" aria-label="切换到浅色模式" hidden>☼</button></nav></header>
+<header class="site-header wrap"><a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">✳</span><span>唐一潇 <small>JOURNAL</small></span></a><nav aria-label="主导航"><a href="../index.html#writing">全部文章</a><a class="home-link" href="https://tangyixiao.github.io/">个人主页 ↗</a><button class="theme-toggle" type="button" aria-label="切换到浅色模式" hidden>☼</button></nav></header>
 <main id="main" class="wrap">
 <nav class="breadcrumb" aria-label="面包屑"><a href="../index.html">博客</a><span aria-hidden="true">/</span><span>${escapeHtml(post.tags[0])}</span></nav>
 <div class="article-layout"><article data-pagefind-body><header>${postMetaRow(post)}<h1 class="article-title" data-pagefind-meta="title">${post.displayTitle ?? escapeHtml(post.title)}</h1><p class="article-lead">${post.leadHtml}</p></header>
@@ -281,7 +281,7 @@ ${post.bodyHtml}
 </div><nav class="article-end" data-pagefind-ignore aria-label="文章导航"><a href="../index.html#writing">← 返回全部文章</a>${prev ? `<a href="${prev.slug}.html">← 上一篇：${escapeHtml(prev.title)}</a>` : ''}${next ? `<a href="${next.slug}.html">下一篇：${escapeHtml(next.title)} →</a>` : ''}</nav>${comments}
 </article>${toc}</div>
 </main>
-<footer class="site-footer wrap"><div><span>© 2026 TYX</span><a href="https://tangyixiao.github.io/">个人主页 ↗</a></div></footer>
+<footer class="site-footer wrap"><div><span>© 2026 唐一潇</span><a href="https://tangyixiao.github.io/">个人主页 ↗</a></div></footer>
 </body></html>
 `
 }
@@ -298,8 +298,8 @@ function indexPage(posts) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#080b10">
   <meta name="description" content="${SITE_DESCRIPTION}">
-  <title>TYX · 个人博客</title>
-  <link rel="alternate" type="application/rss+xml" title="TYX · 个人博客" href="rss.xml">
+  <title>唐一潇 · 个人博客</title>
+  <link rel="alternate" type="application/rss+xml" title="唐一潇 · 个人博客" href="rss.xml">
   <link rel="icon" type="image/svg+xml" href="${FAVICON}">
   <link rel="stylesheet" href="assets/blog.css">
   <script src="assets/blog.js" defer></script>
@@ -337,12 +337,12 @@ function indexPage(posts) {
 <body data-pagefind-ignore>
   <a class="skip-link" href="#main">跳到主要内容</a>
   <header class="site-header wrap">
-    <a class="brand" href="index.html" aria-label="TYX博客首页"><span class="brand-mark" aria-hidden="true">✳</span><span>TYX <small>JOURNAL</small></span></a>
+    <a class="brand" href="index.html" aria-label="唐一潇博客首页"><span class="brand-mark" aria-hidden="true">✳</span><span>唐一潇 <small>JOURNAL</small></span></a>
     <nav aria-label="主导航"><a class="active" href="#writing">文章</a><a href="#about">关于</a><a class="home-link" href="https://tangyixiao.github.io/">个人主页 <span aria-hidden="true">↗</span></a><button class="theme-toggle" type="button" aria-label="切换到浅色模式" hidden>☼</button></nav>
   </header>
   <main id="main" class="wrap">
     <section class="intro" aria-labelledby="intro-title">
-      <div class="intro-copy"><p class="eyebrow"><span class="signal" aria-hidden="true"></span> NOTES FROM A CURIOUS MIND</p><h1 id="intro-title">把探索，<br>写成<span>记录。</span></h1><p class="intro-description">算法里的思路，推导中的线索，实验后的思考。<br>在这里，把零散的好奇连成可以回看的轨迹。</p><div class="intro-bottom"><span>TYX / 个人博客</span><a href="#writing">开始阅读 <span aria-hidden="true">↓</span></a></div></div>
+      <div class="intro-copy"><p class="eyebrow"><span class="signal" aria-hidden="true"></span> NOTES FROM A CURIOUS MIND</p><h1 id="intro-title">把探索，<br>写成<span>记录。</span></h1><p class="intro-description">算法里的思路，推导中的线索，实验后的思考。<br>在这里，把零散的好奇连成可以回看的轨迹。</p><div class="intro-bottom"><span>TANG YIXIAO / 个人博客</span><a href="#writing">开始阅读 <span aria-hidden="true">↓</span></a></div></div>
       <figure class="sky"><img src="assets/sky.webp" alt="" width="2048" height="1024" fetchpriority="high"><div class="sky-caption"><span>保持好奇，认真验证。</span><span class="mono">ALGORITHMS · MATH · AI</span></div><figcaption class="visually-hidden">沿用个人主页的星空纹理。图片来源见页脚。</figcaption></figure>
     </section>
     <section id="writing" class="writing" aria-labelledby="writing-title">
@@ -355,9 +355,9 @@ function indexPage(posts) {
         ${rows}
       </div><aside class="sidebar" aria-label="博客介绍"><p class="eyebrow">FIELD NOTES</p><h3>思考的途中，<br>留下一些坐标。</h3><p>围绕算法、数学与智能系统，记录能被检验、也能被继续使用的理解。</p><div class="fields"><span>01 <b>算法与竞赛</b></span><span>02 <b>数学与物理</b></span><span>03 <b>AI 与智能体</b></span></div><a class="quiet-link" href="https://github.com/tangyixiao" target="_blank" rel="noopener noreferrer">在 GitHub 查看项目 <span aria-hidden="true">↗</span></a>${ask ? '\n        ' + ask : ''}</aside></div>
     </section>
-    <section id="about" class="about" aria-labelledby="about-title"><div><p class="eyebrow">ABOUT THE JOURNAL</p><h2 id="about-title">保持好奇，<br>也认真验证。</h2></div><div class="about-copy"><p>我是 TYX，关注算法、数学、物理与人工智能。个人主页展示正在探索的方向与项目，这里则用文章把思路展开。</p><p>从问题的拆解，到实现与推导，再到复盘与记录；希望每一篇文字，都能留下下一次继续探索的起点。</p><div class="about-links"><a href="https://tangyixiao.github.io/">回到个人主页 ↗</a></div></div></section>
+    <section id="about" class="about" aria-labelledby="about-title"><div><p class="eyebrow">ABOUT THE JOURNAL</p><h2 id="about-title">保持好奇，<br>也认真验证。</h2></div><div class="about-copy"><p>我是唐一潇，关注算法、数学、物理与人工智能。个人主页展示正在探索的方向与项目，这里则用文章把思路展开。</p><p>从问题的拆解，到实现与推导，再到复盘与记录；希望每一篇文字，都能留下下一次继续探索的起点。</p><div class="about-links"><a href="https://tangyixiao.github.io/">回到个人主页 ↗</a><a href="https://www.luogu.com.cn/blog/TangyixiaoQAQ/" target="_blank" rel="noopener noreferrer">洛谷博客 ↗</a></div></div></section>
   </main>
-  <footer class="site-footer wrap"><div><span>© 2026 TYX</span><span class="mono">KEEP EXPLORING.</span></div><div class="footer-small"><span>星空纹理：<a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer">Solar System Scope</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a> · 已转为 WebP</span><a href="#main">回到顶部 ↑</a></div></footer>
+  <footer class="site-footer wrap"><div><span>© 2026 唐一潇</span><span class="mono">KEEP EXPLORING.</span></div><div class="footer-small"><span>星空纹理：<a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer">Solar System Scope</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a> · 已转为 WebP</span><a href="#main">回到顶部 ↑</a></div></footer>
   <script type="module">
     // 全文搜索：动态加载 Pagefind 索引（build 时由 pagefind 生成到 pagefind/）。
     // 加载失败（索引缺失或无 JS）时搜索框保持 hidden，列表页阅读不受影响。
@@ -478,7 +478,7 @@ function rssXml(posts) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>TYX · 个人博客</title>
+    <title>唐一潇 · 个人博客</title>
     <link>${BLOG_URL}/</link>
     <description>${escapeHtml(SITE_DESCRIPTION)}</description>
     <language>zh-CN</language>

@@ -158,7 +158,7 @@ const ASK_MAX_LENGTH = 500;
 const ASK_RATE_INTERVAL_MS = 10_000;
 
 // 站点知识（从仓库真实内容提炼，<200 字）：只允许依据这些内容回答。
-const SITE_KNOWLEDGE = `你是TYX个人网站的问答助手。站点内容：项目 CodeHub（算法竞赛题解与模板库）、HighSchoolMathematics（高中数学公式推导知识库）、Agent Learning Hub（AI Agent 与大模型学习笔记）；太阳系探索器（Three.js 驱动、行星轨道与尺寸保持真实比例的交互太阳系）；实验场（独立运行的 WebGL 小实验合集）；博客文章《从一道题，到一份可复用的题解》《把推导写清楚，把理解留住》《用一个小实验，理解智能体》。只依据以上内容用中文简洁作答；没有依据的内容直接说明不知道。`;
+const SITE_KNOWLEDGE = `你是唐一潇个人网站的问答助手。站点内容：项目 CodeHub（算法竞赛题解与模板库）、HighSchoolMathematics（高中数学公式推导知识库）、Agent Learning Hub（AI Agent 与大模型学习笔记）；太阳系探索器（Three.js 驱动、行星轨道与尺寸保持真实比例的交互太阳系）；实验场（独立运行的 WebGL 小实验合集）；博客文章《从一道题，到一份可复用的题解》《把推导写清楚，把理解留住》《用一个小实验，理解智能体》。只依据以上内容用中文简洁作答；没有依据的内容直接说明不知道。`;
 
 // CORS 只放行正式站点与本地测试端口（其余来源不下发 Allow-Origin）。
 const ASK_ALLOWED_ORIGIN = /^(https:\/\/tangyixiao\.github\.io|http:\/\/127\.0\.0\.1:\d+)$/;

@@ -121,7 +121,7 @@ async function main() {
       if (response.status() === 404 && path.extname(new URL(response.url()).pathname)) consoleErrors.push('missing asset: ' + response.url())
     })
     await desktop.goto(siteUrl, { waitUntil: 'domcontentloaded' })
-    await desktop.getByRole('heading', { name: 'TYX' }).waitFor()
+    await desktop.getByRole('heading', { name: 'Tang Yixiao' }).waitFor()
     await desktop.locator('[data-scene-root]').waitFor()
     assert.equal(await desktop.locator('[data-scene-canvas]').count(), 1, 'desktop renders exactly one scene canvas')
     assert.equal(await desktop.locator('[data-scene-root]').getAttribute('data-scene-phase'), 'hero')

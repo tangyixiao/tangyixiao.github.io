@@ -69,8 +69,8 @@ const html = `<!doctype html>
   </svg>
   <div class="content">
     <div class="site">tangyixiao.github.io</div>
-    <div class="name">TYX</div>
-    <div class="alt-name">TYX</div>
+    <div class="name">唐一潇</div>
+    <div class="alt-name">Tang Yixiao</div>
     <div class="divider"></div>
     <div class="tagline">算法 · 数学 · 智能系统</div>
     <div class="tagline-en">Algorithms · Mathematics · Intelligent Systems</div>

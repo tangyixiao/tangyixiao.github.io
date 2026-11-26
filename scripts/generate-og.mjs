@@ -107,12 +107,12 @@ const html = `<!doctype html>
   <span class="label l2">PERIHELION</span>
   <span class="label l3">APHELION +∞</span>
 
-  <div class="brand"><span class="mark">✳</span><span>TYX</span></div>
+  <div class="brand"><span class="mark">✳</span><span>唐一潇 · Tang Yixiao</span></div>
   <div class="site">tangyixiao.github.io</div>
 
   <div class="content">
     <p class="eyebrow"><span class="dot"></span>PERSONAL SITE</p>
-    <h1>TYX</h1>
+    <h1>唐一潇</h1>
     <p class="sub">算法<span class="sep">·</span>数学<span class="sep">·</span>智能系统</p>
     <div class="rule"></div>
     <p class="alt">ALGORITHMS / MATHEMATICS / INTELLIGENT SYSTEMS</p>
