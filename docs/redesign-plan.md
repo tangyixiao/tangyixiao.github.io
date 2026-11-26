@@ -36,7 +36,7 @@
 - **P5 过时的视觉手法**：全局玻璃拟态（backdrop-filter 15–22px 无处不在）、卡片 3D 倾斜
   （`perspective + rotateX/rotateY` hover，index.css:285–310）、用字符当图标
   （✳ ◉ ✦ ∿ ☼ ☾ ☰ ✺）、FontAwesome 6 beta CDN（notes.html:12）。
-- **P6 内容错误**：`notes.html` 与 `register.html` 的 `<title>` 把「唐一潇」写成「唐一笑」。
+- **P6 内容错误**：`notes.html` 与 `register.html` 的 `<title>` 把「Adrian Werner Keller」写成「旧错别字」。
 - **P7 首页性能税**：three chunk（约 565KB 未压缩）+ 22 张贴图仅为主页背景，
   现靠 1.5s 延迟挂载规避 LCP 污染（`src/App.tsx:18-36` 注释里记录了实测 23s 的教训）——
   背景移走后，这套规避代码也可以整体退役。
@@ -168,7 +168,7 @@ display 级（hero h1）`clamp(2.5rem, 5.5vw, 4rem)`。**最小 12px**。
 
 ### 5.5 笔记页与外围（M3）
 - `notes.html`：内联样式按 §4 重写；删 FontAwesome CDN（图标换内联 SVG）；
-  `body.dark` → `html[data-theme]`，存储键统一为 `site-theme`；修「唐一笑→唐一潇」。
+  `body.dark` → `html[data-theme]`，存储键统一为 `site-theme`；修「旧错别字→Adrian Werner Keller」。
 - `login.html` / `register.html`：同一套令牌的极简表单页，修错别字。
 - `blackhole/threebody/thechao/thechaos.html`：**画布与物理逻辑一行不动**，
   仅统一页头（返回 /lab 链接 + 标题）与 `theme-color`，配少量令牌化 CSS。
@@ -214,4 +214,4 @@ display 级（hero h1）`clamp(2.5rem, 5.5vw, 4rem)`。**最小 12px**。
 - [ ] 深浅双主题 + reduced-motion + 键盘焦点环全站可用。
 - [ ] `npm run build / lint / typecheck / test:unit / test:browser` 全绿，CI 绿。
 - [ ] 首页 Lighthouse LCP < 1.5s（CI Lighthouse 报告佐证）。
-- [ ] 「唐一笑」错别字清零。
+- [ ] 「旧错别字」错别字清零。

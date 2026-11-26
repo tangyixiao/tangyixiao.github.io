@@ -89,9 +89,9 @@ function buildHtml({ size, safe }) {
   <svg class="stars" width="${S}" height="${S}">${stars}</svg>
   <div class="content">
     <span class="mark">✳</span>
-    <span class="name">唐一潇</span>
+    <span class="name">Adrian Werner Keller</span>
     <span class="rule"></span>
-    <span class="alt">TANG YIXIAO</span>
+    <span class="alt">ADRIAN WERNER KELLER</span>
   </div>
 </body></html>`
 }

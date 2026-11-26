@@ -8,9 +8,6 @@ export const links = {
   math: 'https://github.com/tangyixiao/HighSchoolMathematics',
   agents: 'https://github.com/tangyixiao/Agent-Learning-Hub',
   github: 'https://github.com/tangyixiao',
-  luogu: 'https://www.luogu.com.cn/blog/TangyixiaoQAQ/',
-  cnblogs: 'https://home.cnblogs.com/u/TangyixiaoQAQ',
-  csdn: 'https://blog.csdn.net/DCMyyds',
 } as const
 
 // 项目结构化数据与里程碑时间线外部化在 ./projects，这里统一转出口。
@@ -35,7 +32,7 @@ export interface SiteContent {
 
 export const siteContent: Record<Language, SiteContent> = {
   zh: {
-    meta: { title: '唐一潇 · 算法、数学与智能系统', description: '唐一潇的个人网站：算法、数学、物理与智能系统的学习实践和精选项目。' },
+    meta: { title: 'Adrian Werner Keller · 算法、数学与智能系统', description: 'Adrian Werner Keller 的个人网站：算法、数学、物理与智能系统的学习实践和精选项目。' },
     nav: { home: '首页', work: '项目', lab: '实验场', focus: '方向', now: '现在', about: '关于', links: '联系' },
     lab: {
       label: 'PLAYGROUND / 实验场', heading: '一些亲手写的小实验。', intro: '独立运行的 WebGL 小页面，点开即玩——引力、混沌与动画的小玩具。',
@@ -48,7 +45,7 @@ export const siteContent: Record<Language, SiteContent> = {
       },
     },
     actions: { projects: '查看项目', about: '了解我', visit: '访问项目', top: '回到顶部', themeLight: '切换到浅色模式', themeDark: '切换到深色模式', language: 'Switch to English', menuOpen: '打开导航', menuClose: '关闭导航' },
-    hero: { label: 'ALGORITHMS · MATHEMATICS · INTELLIGENCE', name: '唐一潇', alternateName: 'Tang Yixiao', headline: '从算法与数学出发，探索智能系统。', description: '把问题拆解、验证，再将理解写成代码、笔记与工具。', scroll: '向下探索' },
+    hero: { label: 'ALGORITHMS · MATHEMATICS · INTELLIGENCE', name: 'Adrian Werner Keller', alternateName: 'INDEPENDENT ENGINEER', headline: '从算法与数学出发，探索智能系统。', description: '把问题拆解、验证，再将理解写成代码、笔记与工具。', scroll: '向下探索' },
     work: {
       label: 'SELECTED WORK / 精选项目', heading: '让思考成为可以继续使用的作品。', intro: '代码、资料与学习记录，都是理解问题的不同方式。',
       allLabel: '全部', filterLabel: '按分类筛选项目',
@@ -78,7 +75,7 @@ export const siteContent: Record<Language, SiteContent> = {
     links: { label: 'CONNECT / 保持联系', heading: '从这里，继续交流。', description: '欢迎查看项目、阅读记录，或在公开平台找到我。', code: 'CodeHub' },
   },
   en: {
-    meta: { title: 'Tang Yixiao · Algorithms, Mathematics & Intelligent Systems', description: 'Tang Yixiao’s personal website: selected work and learning notes on algorithms, mathematics, physics, and intelligent systems.' },
+    meta: { title: 'Adrian Werner Keller · Algorithms, Mathematics & Intelligent Systems', description: 'Adrian Werner Keller’s personal website: selected work and learning notes on algorithms, mathematics, physics, and intelligent systems.' },
     nav: { home: 'Home', work: 'Work', lab: 'Lab', focus: 'Focus', now: 'Now', about: 'About', links: 'Contact' },
     lab: {
       label: 'PLAYGROUND', heading: 'Small experiments, built by hand.', intro: 'Standalone WebGL pages — open one and play with gravity, chaos, and animation.',
@@ -91,7 +88,7 @@ export const siteContent: Record<Language, SiteContent> = {
       },
     },
     actions: { projects: 'Explore projects', about: 'About me', visit: 'Visit project', top: 'Back to top', themeLight: 'Switch to light mode', themeDark: 'Switch to dark mode', language: '切换到中文', menuOpen: 'Open navigation', menuClose: 'Close navigation' },
-    hero: { label: 'ALGORITHMS · MATHEMATICS · INTELLIGENCE', name: 'Tang Yixiao', alternateName: '唐一潇', headline: 'Exploring intelligent systems through algorithms and mathematics.', description: 'I break problems down, test ideas, and turn what I learn into code, notes, and tools.', scroll: 'Scroll to explore' },
+    hero: { label: 'ALGORITHMS · MATHEMATICS · INTELLIGENCE', name: 'Adrian Werner Keller', alternateName: 'INDEPENDENT ENGINEER', headline: 'Exploring intelligent systems through algorithms and mathematics.', description: 'I break problems down, test ideas, and turn what I learn into code, notes, and tools.', scroll: 'Scroll to explore' },
     work: {
       label: 'SELECTED WORK', heading: 'Ideas become useful when they can be revisited.', intro: 'Code, resources, and learning notes are different ways to understand a problem.',
       allLabel: 'All', filterLabel: 'Filter projects by category',

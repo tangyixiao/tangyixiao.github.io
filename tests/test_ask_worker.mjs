@@ -48,7 +48,7 @@ test('正常路径：调用智谱 API 并返回 answer 与 model', async () => {
   assert.equal(sent.temperature, 0.5)
   assert.equal(sent.max_tokens, 400)
   assert.equal(sent.messages[0].role, 'system')
-  assert.ok(sent.messages[0].content.includes('唐一潇'))
+  assert.ok(sent.messages[0].content.includes('Adrian Werner Keller'))
   assert.equal(sent.messages[1].content, '博客里讲了什么？')
   assert.match(String(calls[0].init.headers.Authorization), /^Bearer test-key$/)
   assert.equal(res.headers.get('Access-Control-Allow-Origin'), ALLOWED_ORIGIN)
